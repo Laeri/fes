@@ -31,7 +31,7 @@ type
     column: int
 
   Parser = ref object of RootObj
-    root: ASTNode
+    root: SequenceNode
     scanner: Scanner
 
 
@@ -153,12 +153,60 @@ proc parse_string(parser: Parser, src: string) =
     else:
       var node = CallWordNode(word_name: token)
       root.add(node)
+  parser.root = root
 
 
 proc newParser(): Parser = 
   var parser = Parser()
   parser.scanner = Scanner()
   return parser
+
+
+proc is_def(node: ASTNode): bool =
+  return (node of DefineWordNode)
+
+proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
+  var selected: seq[T] = @[]
+  var rejected: seq[T] = @[]
+  for el in sequence:
+    if el.pred:
+      selected.add(el)
+    else:
+      rejected.add(el)
+  return (selected, rejected)
+
+proc group_word_defs_last(root: SequenceNode) = 
+  var partition = root.sequence.partition(is_def)
+  root.sequence = partition.rejected & partition.selected
+
+
+method print(node: ASTNode) =
+  echo node[]
+
+
+method print(node: SequenceNode) = 
+  for child in node.sequence:
+    child.print
+
+
+method print(node: ASMNode) =
+  for call in node.asm_calls:
+    echo call
+
+
+method print(node: PushNumberNode) =
+  echo node[]
+
+
+method print(node: DefineWordNode) =
+  echo "define_node: " & node.word_name
+  node.definition.print
+  echo "end_define"
+
+
+method print(node: CallWordNode) =
+  echo "call: "
+  echo node[]
 
 
 var test_src = """
@@ -173,7 +221,9 @@ var test_src = """
 """ 
 var parser = newParser()
 parser.parse_string(test_src)
-
+#parser.root.print
+parser.root.group_word_defs_last()
+parser.root.print
 
 
 
