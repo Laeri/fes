@@ -1,0 +1,12 @@
+Name: Optimize_JMP_Before_RTS
+ID: 1
+Descr:
+If we JSR to another subroutine las in a given subroutine we 
+can jump directly
+----------------
+JSR $1
+RTS
+================
+JMP $1
+---------------
+TEST

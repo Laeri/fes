@@ -282,7 +282,7 @@ proc nonempty(lines: seq[string], index = 0): bool =
   return false
 
 
-proc read_string(scanner: Scanner, src: string) =
+proc read_string*(scanner: Scanner, src: string) =
   scanner.src = src
   scanner.lines = splitLines(src)
   if scanner.lines.len != 0:
@@ -292,18 +292,33 @@ proc read_string(scanner: Scanner, src: string) =
   scanner.line = 0
   scanner.column = 0
 
+proc has_next*(scanner: Scanner): bool = 
+  return (scanner.column < scanner.columns.len - 1) or (nonempty(scanner.lines, scanner.line + 1))
 
-proc skip_to_next_line(scanner: Scanner) =
+
+proc skip_to_next_line*(scanner: Scanner) =
   scanner.line += 1
   scanner.column = 0
   scanner.columns = scanner.lines[scanner.line].splitWhitespace
 
-proc skip_empty_lines(scanner: Scanner) =
-  while scanner.lines[scanner.line].len == 0:
-    scanner.skip_to_next_line
 
+proc skip_empty_lines*(scanner: Scanner) =
+  if scanner.has_next:
+    while scanner.lines[scanner.line].len == 0:
+      scanner.skip_to_next_line
 
-proc advance(scanner: Scanner) =
+proc backtrack*(scanner: Scanner, times = 1) =
+  var back = times
+  while back > 0:
+    if scanner.column > 0:
+      scanner.column -= 1
+      back -= 1
+    else:
+      scanner.column = 0
+      scanner.line -= 1
+      scanner.columns = scanner.lines[scanner.line].splitWhitespace
+
+proc advance*(scanner: Scanner) =
   scanner.column += 1
   if scanner.column >= scanner.columns.len:
     scanner.column = 0
@@ -313,16 +328,13 @@ proc advance(scanner: Scanner) =
     scanner.advance 
 
 
-proc has_next(scanner: Scanner): bool = 
-  return (scanner.column < scanner.columns.len - 1) or (nonempty(scanner.lines, scanner.line + 1))
 
-
-proc next(scanner: Scanner): string = 
+proc next*(scanner: Scanner): string = 
   var token = scanner.columns[scanner.column]
   scanner.advance
   return token
 
-proc upto_next_line(scanner: Scanner): seq[string] =  
+proc upto_next_line*(scanner: Scanner): seq[string] =  
   var line_tokens = scanner.columns[scanner.column .. (scanner.columns.len - 1)]
   scanner.skip_to_next_line()
   scanner.skip_empty_lines()
@@ -365,23 +377,30 @@ proc isInteger(str: string): bool =
      return false
   return true
 
-
+proc parse_asm_line*(tokens: seq[string]): ASMAction =
+  if tokens.len == 1:
+      if tokens[0].contains(":"):
+        return ASMLabel(label_name: tokens[0])
+      else:
+        return ASMCall(op: parseEnum[OPCODE] tokens[0], with_arg: false)
+  elif tokens.len == 2:
+    var arg_string = tokens[1]
+    return ASMCall(op: parseEnum[OPCODE] tokens[0], param: arg_string, with_arg: true)
 
 proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
   var tokens: seq[string] = parser.scanner.upto_next_line()
   var end_block = false
   while not(end_block):
-    for token in tokens:
-      if token == "]":
-        end_block = true
-      elif tokens.len == 1:
-        if tokens[0].contains(":"):
-          asm_node.add(ASMLabel(label_name: tokens[0]))
-        else:
-          asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0], with_arg: false))
-      elif tokens.len == 2:
-        var arg_string = tokens[1]
-        asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0], param: arg_string, with_arg: true))
+    if tokens[0] == "]":
+      end_block = true
+    elif tokens.len == 1:
+      if tokens[0].contains(":"):
+        asm_node.add(ASMLabel(label_name: tokens[0]))
+      else:
+        asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0], with_arg: false))
+    elif tokens.len == 2:
+      var arg_string = tokens[1]
+      asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0], param: arg_string, with_arg: true))
     if not(end_block):
       tokens = parser.scanner.upto_next_line()
 
@@ -417,7 +436,7 @@ proc parse_comment(parser: Parser) =
     elif token.contains("("):
       parser.parse_comment
 
-proc parse_string(parser: Parser, src: string) = 
+proc parse_string*(parser: Parser, src: string) = 
   parser.scanner.read_string(src)
   var root = newSequenceNode()
   while parser.scanner.has_next:
@@ -448,7 +467,7 @@ proc parse_file(parser: Parser, name: string) =
   parser.parse_string(src)
 
 
-proc newParser(): Parser = 
+proc newParser*(): Parser = 
   var parser = Parser()
   parser.scanner = Scanner()
   return parser
@@ -468,11 +487,11 @@ proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected
       rejected.add(el)
   return (selected, rejected)
 
-proc group_word_defs_last(root: SequenceNode) = 
+proc group_word_defs_last*(root: SequenceNode) = 
   var partition = root.sequence.partition(is_def)
   root.sequence = partition.rejected & partition.selected
 
-proc add_start_label(root: SequenceNode) =
+proc add_start_label*(root: SequenceNode) =
   var asm_node = newASMNode()
   asm_node.add(ASMLabel(label_name: "Start:"))
   var tmp_seq: seq[ASTNode] = @[]
@@ -552,34 +571,34 @@ proc pad_to_even(hex: var string): string =
   return hex
 
 
-method emit(node: ASTNode, asm_code: var seq[ASMAction]) =
+method emit*(node: ASTNode, asm_code: var seq[ASMAction]) =
   echo "error, node without code to emit"
   discard
 
-method emit(node: SequenceNode, asm_code: var seq[ASMAction]) = 
+method emit*(node: SequenceNode, asm_code: var seq[ASMAction]) = 
   for node in node.sequence:
     node.emit(asm_code)
 
-method emit(node: CallWordNode, asm_code: var seq[ASMAction]) =
+method emit*(node: CallWordNode, asm_code: var seq[ASMAction]) =
   asm_code.add(ASMCall(op: JSR, param: node.word_name & "\n"))
 
-method emit(node: DefineWordNode, asm_code: var seq[ASMAction]) =
+method emit*(node: DefineWordNode, asm_code: var seq[ASMAction]) =
   asm_code.add(ASMLabel(label_name: (node.word_name & ":")))
   node.definition.emit(asm_code)
   asm_code.add(ASMCall(op: RTS, param: "", with_arg:true))
 
-method emit(node: PushNumberNode, asm_code: var seq[ASMAction]) =
+method emit*(node: PushNumberNode, asm_code: var seq[ASMAction]) =
   var param = node.number.num_to_hex
   param = param.pad_to_even
   var call = ASMCall(op: LDA, param: param, with_arg: true)
   asm_code.add(call)
 
-method emit(node: ASMNode, asm_code: var seq[ASMAction]) =
+method emit*(node: ASMNode, asm_code: var seq[ASMAction]) =
   for call in node.asm_calls:
     asm_code.add(call)
     
 
-proc aasm_to_string(asm_actions: seq[ASMAction]): string =
+proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
   var result = ""
   for asm_code in asm_actions:
     if asm_code of ASMCall:
@@ -636,7 +655,7 @@ proc generate_and_assemble(asm_code: seq[ASMAction], asm_file_name: string) =
   #var exit_code3 = execCmd "fceux " & nes_name
   #var (output2, exitCoe4) = execCmdEx "fceux " & nes_name
 
-
+#[
 var parser = newParser()
 parser.parse_file("test_files/core.fth")
 parser.root.group_word_defs_last()
@@ -646,7 +665,7 @@ parser.root.emit(asm_calls)
 var asm_str = aasm_to_string(asm_calls)
 #generate_and_store(asm_calls, "TEST.asm")
 generate_and_assemble(asm_calls, "TEST.asm")
-
+]#
 
 
 

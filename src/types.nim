@@ -1,6 +1,3 @@
-import
-  compiler
-
 type
   ASTNode* = ref object of RootObj
 
