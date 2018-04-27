@@ -25,6 +25,7 @@ type
     op: OPCODE
     param: string
     mode: OP_MODE
+    with_arg: bool
 
   ASMLabel = ref object of ASMAction
     label_name: string
@@ -59,16 +60,6 @@ type
   Parser = ref object of RootObj
     root: SequenceNode
     scanner: Scanner
-
-
-proc `$`(call: ASMCall): string = 
-  return $call[]
-
-proc `$`(node: ASMNode): string =
-  return $(node[])
-
-proc `$`(label: ASMLabel): string =
-  return $(label[])
 
 
 proc isOPCODE(str: string): bool =
@@ -279,9 +270,10 @@ proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
         if tokens[0].contains(":"):
           asm_node.add(ASMLabel(label_name: tokens[0]))
         else:
-          asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0]))
+          asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0], with_arg: false))
       elif tokens.len == 2:
-        asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0]))
+        var arg_string = tokens[1]
+        asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0], param: arg_string, with_arg: true))
     if not(end_block):
       tokens = parser.scanner.upto_next_line()
 
@@ -304,12 +296,9 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       def_node.add(node)
 
 proc parse_comment(parser: Parser) =
-  echo "parse_comment"
   while parser.scanner.has_next:
     var token = parser.scanner.next
-    echo token
     if token.contains(")"):
-      echo "finish_parse_comment"
       return
     elif token.contains("("):
       parser.parse_comment
@@ -329,7 +318,7 @@ proc parse_string(parser: Parser, src: string) =
       var asm_node = newASMNode()
       parser.parse_asm_block(asm_node)
       root.add(asm_node)
-    elif token == "(":
+    elif token.contains("("):
       parser.parse_comment()
     elif token.isInteger:
       var node = PushNumberNode()
@@ -354,6 +343,7 @@ proc newParser(): Parser =
 proc is_def(node: ASTNode): bool =
   return (node of DefineWordNode)
 
+
 proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
   var selected: seq[T] = @[]
   var rejected: seq[T] = @[]
@@ -368,64 +358,67 @@ proc group_word_defs_last(root: SequenceNode) =
   var partition = root.sequence.partition(is_def)
   root.sequence = partition.rejected & partition.selected
 
+proc add_start_label(root: SequenceNode) =
+  var asm_node = newASMNode()
+  asm_node.add(ASMLabel(label_name: "Start:"))
+  var tmp_seq: seq[ASTNode] = @[]
+  tmp_seq.add(asm_node)
+  root.sequence = tmp_seq & root.sequence
 
-method print(node: ASTNode) =
-  echo node[]
 
+method string_rep(node: ASTNode, prefix = ""): string =
+  echo "error: node with no print function!!!"
+  return prefix & $node[]
 
-method print(node: SequenceNode) = 
+method string_rep(node: SequenceNode, prefix = ""): string =
+  var str: string = prefix & "SequenceNode:\n" 
   for child in node.sequence:
-    child.print
+    str &= child.string_rep(prefix & "  ") & "\n"
+  return str
 
+method string_rep(action: ASMAction, prefix = ""): string =
+  echo "UNSPECIFIED ASM ACTION"
+  return "!!!!!"
 
-method print(node: ASMNode) =
-  echo node
+method string_rep(call: ASMCall, prefix = ""): string =
+  var arg = "  "
+  if (call.with_arg):
+    arg &= call.param
+  result = prefix & "ASMCall: " & $call.op & arg
+  return result
 
+method string_rep(label: ASMLabel, prefix = ""): string =
+  result = prefix & "ASMLabel: " & label.label_name
+  return result
 
-method print(node: PushNumberNode) =
-  echo node[]
+method string_rep(node: ASMNode, prefix = ""): string =
+  var str: string = prefix & "ASMNode:\n"
+  for action in node.asm_calls:
+    str &= prefix & action.string_rep(prefix & "  ") & "\n"
+  return str
 
+method string_rep(node: PushNumberNode, prefix = ""): string =
+  return prefix & "PushNumberNode: " & $node.number
 
-method print(node: DefineWordNode) =
-  echo "define_node: " & node.word_name
-  node.definition.print
-  echo "end_define"
+method string_rep(node: DefineWordNode, prefix = ""): string =
+  var define_str = prefix & "DefineWordNode: " & node.word_name & "\n"
+  define_str &= node.definition.string_rep(prefix & "  ")
+  return define_str
 
+method string_rep(node: CallWordNode, prefix = ""): string =
+  return prefix & "CallWordNode: " & node.word_name
 
-method print(node: CallWordNode) =
-  echo "call: "
-  echo node[]
-
-method emit(node: ASTNode, asm_code: var seq[ASMCall]) =
-  echo "error, node without code to emit"
-  discard
-method emit(node: SequenceNode, asm_code: var seq[ASMCall]) = 
-  for node in node.sequence:
-    node.emit(asm_code)
-method emit(node: CallWordNode, asm_code: var seq[ASMCall]) =
-  asm_code.add(ASMCall(str: ("  JSR " & node.word_name & "\n")))
-
-method emit(node: DefineWordNode, asm_code: var seq[ASMCall]) =
-  asm_code.add(ASMCall(str: (node.word_name & ":\n")))
-  node.definition.emit(asm_code)
-  asm_code.add(ASMCall(str: ("  RTS\n")))
-
-method emit(node: PushNumberNode, asm_code: var seq[ASMCall]) =
-  asm_code.add(ASMCall(str: "  PEA " & intToStr(node.number) & "\n"))
-
-method emit(node: ASMNode, asm_code: var seq[ASMCall]) =
-  echo "string should not contain yet asm calls"
-  discard
-    
 
 proc digit_to_hex(number: int): string =
   var hex = @["A", "B", "C", "D", "E", "F"]
+  var result = ""
   if number < 10:
-    return number.intToStr
+    result = number.intToStr
   else:
-    return hex[number - 10]
+    result = hex[number - 10]
+  return result
 
-proc num_to_hex(number: int) =
+proc num_to_hex(number: int): string =
   var hex: string = ""
   var n = number
   if n == 0:
@@ -436,33 +429,62 @@ proc num_to_hex(number: int) =
     hex = rem.digit_to_hex & hex
     n = int(val)
   hex = "$" & hex
+  return hex
 
-proc pad_to_even(hex: var string) = 
+proc pad_to_even(hex: var string): string = 
   var str: string = "" & hex[2 .. hex.len]
   if ((str.len - 1) mod 2) == 1:
     hex = "0x0" & str
+  return hex
 
-var test_src = """
-1 2 3
-: name1
-4 5 6
-;
-: name2
-7 8 name1
-;
-9 10 11
-""" 
+
+method emit(node: ASTNode, asm_code: var seq[ASMAction]) =
+  echo "error, node without code to emit"
+  discard
+
+method emit(node: SequenceNode, asm_code: var seq[ASMAction]) = 
+  for node in node.sequence:
+    node.emit(asm_code)
+
+method emit(node: CallWordNode, asm_code: var seq[ASMAction]) =
+  asm_code.add(ASMCall(op: JSR, param: node.word_name & "\n"))
+
+method emit(node: DefineWordNode, asm_code: var seq[ASMAction]) =
+  asm_code.add(ASMLabel(label_name: (node.word_name & ":")))
+  node.definition.emit(asm_code)
+  asm_code.add(ASMCall(op: RTS, param: "", with_arg:true))
+
+method emit(node: PushNumberNode, asm_code: var seq[ASMAction]) =
+  var param = node.number.num_to_hex
+  param = param.pad_to_even
+  var call = ASMCall(op: LDA, param: param, with_arg: true)
+  asm_code.add(call)
+
+method emit(node: ASMNode, asm_code: var seq[ASMAction]) =
+  for call in node.asm_calls:
+    asm_code.add(call)
+    
+
+proc aasm_to_string(asm_actions: seq[ASMAction]): string =
+  var result = ""
+  for asm_code in asm_actions:
+    if asm_code of ASMCall:
+      var call = cast[ASMCall](asm_code)
+      var arg = ""
+      if call.with_arg:
+        arg = " " & call.param
+      result &= "  " & $call.op & arg & "\n"
+    elif asm_code of ASMLabel:
+      var label = cast[ASMLabel](asm_code)
+      result &= cast[ASMLabel](asm_code).label_name & "\n"
+  return result
+
+
 var parser = newParser()
 parser.parse_file("test_files/core.fth")
-#parser.parse_string(test_src)
-parser.root.print
-#parser.root.group_word_defs_last()
-#parser.root.print
-#var asm_calls: seq[ASMCall] = @[]
-#parser.root.emit(asm_calls)
-
-#var output_str: string = ""
-#for c in asm_calls:
-#  output_str = output_str & c.str
-
-#echo output_str
+parser.root.group_word_defs_last()
+parser.root.add_start_label()
+var asm_calls: seq[ASMAction] = @[]
+parser.root.emit(asm_calls)
+var asm_str = aasm_to_string(asm_calls)
+echo asm_str
