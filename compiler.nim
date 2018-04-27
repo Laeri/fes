@@ -1,4 +1,4 @@
-import strutils, patty
+import strutils, patty, sequtils, tables, typetraits, macros, os
 type
   ASTNode = ref object of RootObj
 
@@ -16,11 +16,39 @@ type
     word_name: string
 
   ASMNode = ref object of ASTNode
-    asm_calls: seq[string]
+    asm_calls: seq[ASMAction]
 
-  ASMCall = ref object of RootObj
+  ASMAction = ref object of RootObj
+
+  ASMCall = ref object of ASMAction
     str: string
+    op: OPCODE
+    param: string
+    mode: OP_MODE
 
+  ASMLabel = ref object of ASMAction
+    label_name: string
+
+  OPCODE = enum
+    ADC, AND, ASL, BIT, BPL, BMI, BVC, BVS, BCC, BCS, BNE, BEQ, BRK, CMP, CPX, CPY,
+    DEC, EOR,
+    CLC, SEC, CLI, SEI, CLV, CLD, SED,
+    INC, JMP, JSR,
+    LDA, LDX, LDY,
+    LSR, NOP, ORA,
+    TAX, TXA, DEX, INX, TAY, TYA, DEY, INY,
+    ROL, ROR, RTI, RTS, SBC, STA,
+    TXS, TSX, PHA, PLA, PHP, PLP,
+    STX, STY
+  
+  OP_MODE = enum
+    Immediate, Zero_Page, Zero_Page_X, Absolute, Absolute_X, Absolute_Y, Indirect_X, Indirect_Y, Accumulator, Relative, Implied
+
+  ASMInfo = ref object of ASTNode
+    mode: OP_MODE
+    len: int
+    time: int
+   
   Scanner = ref object of RootObj
     src: string
     lines: seq[string]
@@ -33,6 +61,121 @@ type
     scanner: Scanner
 
 
+proc `$`(call: ASMCall): string = 
+  return $call[]
+
+proc `$`(node: ASMNode): string =
+  return $(node[])
+
+proc `$`(label: ASMLabel): string =
+  return $(label[])
+
+
+proc isOPCODE(str: string): bool =
+  try:
+    discard parseEnum[OPCODE] str
+  except ValueError:
+     return false
+  return true
+
+proc isOP_MODE(str: string): bool =
+  try:
+    discard parseEnum[OP_MODE] str
+  except ValueError:
+     return false
+  return true
+
+proc newASMInfo(op_mode: OP_MODE, op_length: int, op_time: int): ASMInfo =
+  return ASMInfo(mode: op_mode, len: op_length, time: op_time)
+
+template asm_data(op_mode: OP_MODE, op_length: int, op_time: int): ASMInfo =
+  ASMInfo(mode: op_mode, len: op_length,time: op_time)
+
+
+var info_table = newTable[OPCODE, TableRef[OP_MODE, ASMInfo]]()
+
+proc setup(info_table: TableRef[OPCODE, TableRef[OP_MODE, ASMInfo]], args: varargs[string, `$`]) =
+  var opcode: OPCODE
+  var mode: OP_MODE
+  var op_len: int
+  var op_time: int
+  var read_all = false
+  var i: int = 0
+  while not(read_all):
+    if (args[i]).isOPCODE:
+      opcode = parseEnum[OPCODE] args[i]
+      info_table[opcode] = newTable[OP_MODE, ASMInfo]()
+      i = i + 1
+    else:
+      mode = parseEnum[OP_MODE] args[i]
+      op_len = args[i+1].parseInt
+      op_time = args[i+2].parseInt
+      info_table[opcode].add(mode, newASMInfo(mode, op_len, op_time))
+      i = i + 3
+    if i >= args.len:
+      read_all = true
+
+info_table.setup(
+  ADC,
+  Immediate, 2, 2,
+  Zero_Page, 2, 3,
+  Zero_Page_X, 2, 4,
+  Absolute, 3, 4,
+  Absolute_X, 3, 4,
+  Absolute_Y, 3, 4,
+  Indirect_X, 2, 6,
+  Indirect_Y, 2, 5,
+  AND,
+  Immediate, 2, 2,
+  Zero_Page, 2, 3,
+  Zero_Page_X, 2, 4,
+  Absolute, 3, 4,
+  Absolute_X, 3, 4,
+  Absolute_Y, 3, 4,
+  Indirect_X, 2, 6,
+  Indirect_Y, 2, 5,
+  ASL,
+  Accumulator, 1, 2,
+  Zero_Page, 2, 5,
+  Zero_Page_X, 2, 6,
+  Absolute, 3, 6,
+  Absolute_X, 3, 7,
+  BCC,
+  Relative, 2, 2,
+  BCS,
+  Relative, 2, 2,
+  BEQ,
+  Relative, 2, 2,
+  BIT,
+  Zero_page, 2, 3,
+  Absolute, 3, 4,
+  BMI,
+  Relative, 2, 2,
+  BNE,
+  Relative, 2, 2,
+  BPL,
+  Relative, 2, 2,
+  BRK,
+  Implied, 1, 7,
+  BVC,
+  Relative, 2, 2,
+  BVS,
+  Relative, 2, 2,
+)
+
+
+proc len(asm_call: ASMCall): int = 
+  return info_table[asm_call.op][asm_call.mode].len
+
+
+proc time(asm_call: ASM_Call): int =
+  return info_table[asm_call.op][asm_call.mode].time
+
+
+proc op(name: OPCODE, param: string): ASMCall = 
+  return ASMCall(op: name, str: $name, param: param)
+
+
 proc nonempty(lines: seq[string], index = 0): bool =
   for i in countup(index, lines.len - 1):
     if lines[i].len != 0:
@@ -43,10 +186,32 @@ proc nonempty(lines: seq[string], index = 0): bool =
 proc read_string(scanner: Scanner, src: string) =
   scanner.src = src
   scanner.lines = splitLines(src)
-  echo scanner.lines
-  scanner.columns = scanner.lines[0].splitWhitespace
+  if scanner.lines.len != 0:
+    scanner.columns = scanner.lines[0].splitWhitespace
+  else:
+    scanner.columns = @[]
   scanner.line = 0
   scanner.column = 0
+
+
+proc skip_to_next_line(scanner: Scanner) =
+  scanner.line += 1
+  scanner.column = 0
+  scanner.columns = scanner.lines[scanner.line].splitWhitespace
+
+proc skip_empty_lines(scanner: Scanner) =
+  while scanner.lines[scanner.line].len == 0:
+    scanner.skip_to_next_line
+
+
+proc advance(scanner: Scanner) =
+  scanner.column += 1
+  if scanner.column >= scanner.columns.len:
+    scanner.column = 0
+    scanner.line += 1
+    scanner.columns = scanner.lines[scanner.line].splitWhitespace
+  while scanner.lines[scanner.line].len == 0:
+    scanner.advance 
 
 
 proc has_next(scanner: Scanner): bool = 
@@ -54,14 +219,15 @@ proc has_next(scanner: Scanner): bool =
 
 
 proc next(scanner: Scanner): string = 
-  if scanner.column >= scanner.columns.len:
-    scanner.column = 0
-    scanner.line += 1
-    scanner.columns = scanner.lines[scanner.line].splitWhitespace
   var token = scanner.columns[scanner.column]
-  scanner.column += 1
+  scanner.advance
   return token
 
+proc upto_next_line(scanner: Scanner): seq[string] =  
+  var line_tokens = scanner.columns[scanner.column .. (scanner.columns.len - 1)]
+  scanner.skip_to_next_line()
+  scanner.skip_empty_lines()
+  return line_tokens
 
 proc newSequenceNode(): SequenceNode =
   var node = SequenceNode()
@@ -89,8 +255,8 @@ proc add(node: DefineWordNode, other: ASTNode) =
   node.definition.add(other)
 
 
-proc add(node: ASMNode, asm_call: string) = 
-  node.asm_calls.add(asm_call)
+proc add(node: ASMNode, asm_action: ASMAction) = 
+  node.asm_calls.add(asm_action)
 
 
 proc isInteger(str: string): bool =
@@ -101,14 +267,23 @@ proc isInteger(str: string): bool =
   return true
 
 
-proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
-  while parser.scanner.has_next:
-    var token = parser.scanner.next
-    if token == "]":
-      return
-    else:
-      asm_node.add(token)
 
+proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
+  var tokens: seq[string] = parser.scanner.upto_next_line()
+  var end_block = false
+  while not(end_block):
+    for token in tokens:
+      if token == "]":
+        end_block = true
+      elif tokens.len == 1:
+        if tokens[0].contains(":"):
+          asm_node.add(ASMLabel(label_name: tokens[0]))
+        else:
+          asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0]))
+      elif tokens.len == 2:
+        asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0]))
+    if not(end_block):
+      tokens = parser.scanner.upto_next_line()
 
 proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
   while parser.scanner.has_next:
@@ -128,6 +303,16 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       node.word_name = token
       def_node.add(node)
 
+proc parse_comment(parser: Parser) =
+  echo "parse_comment"
+  while parser.scanner.has_next:
+    var token = parser.scanner.next
+    echo token
+    if token.contains(")"):
+      echo "finish_parse_comment"
+      return
+    elif token.contains("("):
+      parser.parse_comment
 
 proc parse_string(parser: Parser, src: string) = 
   parser.scanner.read_string(src)
@@ -144,6 +329,8 @@ proc parse_string(parser: Parser, src: string) =
       var asm_node = newASMNode()
       parser.parse_asm_block(asm_node)
       root.add(asm_node)
+    elif token == "(":
+      parser.parse_comment()
     elif token.isInteger:
       var node = PushNumberNode()
       node.number = token.parseInt
@@ -152,6 +339,10 @@ proc parse_string(parser: Parser, src: string) =
       var node = CallWordNode(word_name: token)
       root.add(node)
   parser.root = root
+
+proc parse_file(parser: Parser, name: string) =
+  var src: string = readFile(name)
+  parser.parse_string(src)
 
 
 proc newParser(): Parser = 
@@ -188,8 +379,7 @@ method print(node: SequenceNode) =
 
 
 method print(node: ASMNode) =
-  for call in node.asm_calls:
-    echo call
+  echo node
 
 
 method print(node: PushNumberNode) =
@@ -244,11 +434,8 @@ proc num_to_hex(number: int) =
     var val = n / 16
     var rem = n mod 16
     hex = rem.digit_to_hex & hex
-    echo val
-    echo rem
     n = int(val)
   hex = "$" & hex
-  echo hex
 
 proc pad_to_even(hex: var string) = 
   var str: string = "" & hex[2 .. hex.len]
@@ -266,24 +453,16 @@ var test_src = """
 9 10 11
 """ 
 var parser = newParser()
-parser.parse_string(test_src)
+parser.parse_file("test_files/core.fth")
+#parser.parse_string(test_src)
+parser.root.print
+#parser.root.group_word_defs_last()
 #parser.root.print
-parser.root.group_word_defs_last()
-#parser.root.print
-var asm_calls: seq[ASMCall] = @[]
-parser.root.emit(asm_calls)
+#var asm_calls: seq[ASMCall] = @[]
+#parser.root.emit(asm_calls)
 
-var output_str: string = ""
-for c in asm_calls:
-  output_str = output_str & c.str
+#var output_str: string = ""
+#for c in asm_calls:
+#  output_str = output_str & c.str
 
-echo output_str
-
-
-
-
-
-
-
-
-    
+#echo output_str
