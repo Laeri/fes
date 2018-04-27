@@ -1,4 +1,4 @@
-import strutils, patty, sequtils, tables, typetraits, macros, os
+import strutils, patty, sequtils, tables, typetraits, macros, os, streams, osproc
 type
   ASTNode = ref object of RootObj
 
@@ -653,6 +653,49 @@ proc aasm_to_string(asm_actions: seq[ASMAction]): string =
       result &= cast[ASMLabel](asm_code).label_name & "\n"
   return result
 
+proc generate_nes_str(asm_code: seq[ASMAction]): string =
+  var num_16k_prg_banks = 1
+  var num_8k_chr_banks = 0
+  var VRM_mirroring = 1
+  var nes_mapper = 0
+  
+  var program_start = "$8000"
+
+  var result = "; INES header setup\n\n"
+  result &= "  .inesprg " & $num_16k_prg_banks & "\n"
+  result &= "  .ineschr " & $num_8k_chr_banks & "\n"
+  result &= "  .inesmir " & $VRM_mirroring & "\n"
+  result &= "  .inesmap " & $nes_mapper & "\n"
+  result &= "\n"
+  result &= "  .org " & program_start & "\n"
+  result &= "  .bank 0\n\n"
+  result &= aasm_to_string(asm_code)
+  result &= "\n"
+  result &= """
+  .bank 1
+  .org $FFFA
+  .dw 0
+  .dw Start
+  .dw 0
+  """
+  return result
+
+proc generate_and_store(asm_code: seq[ASMAction], file_name: string) =
+  var fs = newFileStream(file_name, fmWrite)
+  var nes_str = generate_nes_str(asm_code)
+  fs.write(nes_str)
+  fs.close
+
+proc generate_and_assemble(asm_code: seq[ASMAction], asm_file_name: string) =
+  generate_and_store(asm_code, asm_file_name)
+  var nes_name = asm_file_name.replace(r"\..*$", ".nes")
+  echo asm_file_name
+  echo nes_name
+  var exit_code = execCmd "nesasm " & asm_file_name
+  var (output, exitCoe2) = execCmdEx "nesasm " & asm_file_name
+  #var exit_code3 = execCmd "fceux " & nes_name
+  #var (output2, exitCoe4) = execCmdEx "fceux " & nes_name
+
 
 var parser = newParser()
 parser.parse_file("test_files/core.fth")
@@ -661,4 +704,12 @@ parser.root.add_start_label()
 var asm_calls: seq[ASMAction] = @[]
 parser.root.emit(asm_calls)
 var asm_str = aasm_to_string(asm_calls)
-echo asm_str
+#generate_and_store(asm_calls, "TEST.asm")
+generate_and_assemble(asm_calls, "TEST.asm")
+
+
+
+
+
+
+

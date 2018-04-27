@@ -22,11 +22,12 @@ inx
 
 : swap
 [
-ldy $02FF,X
-inx
 lda $02FF,X
-sty $02FF,X
+inx
+ldy $02FF,X
+sta $02FF,X
 dex
+tya
 sta $02FF,X
 ]
 ;
@@ -45,7 +46,8 @@ dex
 pla
 sta $02FF,X
 dex
-sty $02FF,X
+tya
+sta $02FF,X
 ]
 ;
 
@@ -64,7 +66,7 @@ sta $02FF,X
 [
 lda $02FF,X
 inx
-ora
+ora $02FF,X
 sta $02FF,X
 ]
 ;
@@ -74,7 +76,7 @@ sta $02FF,X
 [
 lda $02FF,X
 inx
-eor
+eor $02FF,X
 sta $02FF,X
 ]
 ;
@@ -106,7 +108,7 @@ SEC
 inx
 lda $02FF,X
 dex
-sbc
+sbc $02FF,X
 inx
 sta $02FF,X
 ]
