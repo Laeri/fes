@@ -314,6 +314,14 @@ info_table.setup(
   Implied, 1, 2
 )
 
+var nes_transl_table: Table[string, string] =
+  {
+    "+": "add",
+    "-": "sub",
+    "*": "mul",
+    "/": "div",
+    "!": "store"
+  }.toTable
 
 proc len(asm_call: ASMCall): int = 
   return info_table[asm_call.op][asm_call.mode].len
@@ -437,6 +445,12 @@ proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
     if not(end_block):
       tokens = parser.scanner.upto_next_line()
 
+proc translate_name(name: string): string =
+  if nes_transl_table.contains(name):
+    return nes_transl_table[name]
+  else:
+    return name
+
 proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
   while parser.scanner.has_next:
     var token = parser.scanner.next
@@ -471,7 +485,7 @@ proc parse_string(parser: Parser, src: string) =
     if token == ":":
       var def_node = newDefineWordNode()
       token = parser.scanner.next
-      def_node.word_name = token
+      def_node.word_name = token.translate_name
       parser.parse_word_definition(def_node)
       root.add(def_node)
     elif token == "[":
