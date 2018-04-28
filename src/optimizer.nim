@@ -11,10 +11,10 @@ type
     descr: string
     r_from: seq[ASMMatcher]
     r_to: seq[ASMMatcher]
+  PPMatchData = ref object of RootObj
     matched: bool
     index_from: int
     index_to: int
-    symbols: TableRef[string, string]
   NESPPOptimizer* = ref object of RootObj
     rules: seq[NESPPRule]
   ASMMatcher = ref object of RootObj
@@ -112,7 +112,6 @@ proc newNESPPRule(): NESPPRule =
   result = NESPPRule()
   result.r_from = @[]
   result.r_to = @[]
-  result.symbols = newTable[string, string]()
 
 proc newNESPPOptimizer*(): NESPPOptimizer =
   return NESPPOptimizer()
@@ -200,41 +199,86 @@ method match_type(call: ASMCall, other: ASMCall): bool =
   return call.op == other.op
 
 
-proc match(rule: NESPPRule, asm_code: seq[ASMAction]): bool =
+method reset(matcher: ASMSymbol) =
+  discard
+method reset(matcher: MatchAndBindSymbol) =
+  if matcher.is_bound:
+    matcher.bound = nil
+method reset(symbol: MatchAnySymbol) =
+  discard
+method reset(symbol: ConcreteSymbol) =
+  discard
+method reset(matcher: ASMMatcher){.base.} =
+  discard
+method reset(matcher: ASMLabelMatcher) =
+  matcher.label_symbol.reset 
+method reset(matcher: ASMCallMatcher) =
+  if matcher.with_arg:
+    matcher.symbol.reset
+
+proc reset(rule: NESPPRule) = 
+  for matcher in rule.r_from:
+    matcher.reset
+
+proc match(rule: NESPPRule, asm_code: seq[ASMAction]): PPMatchData =
   var window = rule.r_from.len
   var current: ASMAction
   var r_index = 0
   var r_asm: ASMMatcher = rule.r_from[r_index]
-  var symbols = rule.symbols
-  symbols.clear
-  for asm_index in countup(0, asm_code.len - 1):
-    current = asm_code[asm_index]
-    echo $r_asm
-    if r_asm.match(current):
-        echo "a match with: " & $current.repr
+  var index_from = 0
+  for start_index in countup(0, asm_code.len - 1):
+    rule.reset()
+    for asm_index in countup(start_index, asm_code.len - 1):
+      current = asm_code[asm_index]
+      if r_asm.match(current):
+        #echo "a match with: " & $current.repr
         r_index += 1
         if r_index == rule.r_from.len:
-          return true
+          return PPMatchData(matched: true, index_from: index_from, index_to: asm_index)
         r_asm = rule.r_from[r_index]
-    else:
-      echo "no match with: " & $current.repr
-      return false
+      else:
+         #echo "no match with: " & $current.repr
+        return PPMatchData(matched: false)
 
+method emit(matcher: ASMMatcher): ASMAction =
+  discard
+method emit(symbol: ASMSymbol): string =
+  return ""
+method emit(symbol: MatchAndBindSymbol): string =
+  return symbol.bound
+method emit(symbol: ConcreteSymbol): string =
+  return symbol.literal_value
+method emit(matcher: ASMLabelMatcher): ASMAction =
+  result = ASMLabel(label_name: matcher.label_symbol.emit)
+method emit(matcher: ASMCallMatcher): ASMAction =
+  if matcher.with_arg:
+    return ASMCall(op: matcher.op, param: matcher.symbol.emit)
+  else:
+    return ASMCall(op: matcher.op)
 
-proc apply(rule: NESPPrule, asm_code: var seq[ASMAction]) =
-  echo "apply"
+proc apply(rule: NESPPrule, asm_code: var seq[ASMAction], match_data: PPMatchData) =
+  var head = asm_code[0 .. (match_data.index_from - 1)]
+  var tail = asm_code[(match_data.index_to + 1) .. (asm_code.len - 1)]
+  var generated: seq[ASMAction] = @[]
+  for matcher in rule.r_to:
+    generated.add(matcher.emit)
+  asm_code = head & generated & tail
 
 method optimize*(optimizer: NESPPOptimizer, rule_file_name: string, asm_code: var seq[ASMAction]) = 
   var parser = newNESPParser()
   var rules_src: string = readFile(rule_file_name)
   var rules = parser.parse_rules(rules_src)
   var any_matched = true
-  while any_matched:
+  let MAX_RUNS = 100
+  var runs = 0
+  while any_matched and (runs < MAX_RUNS):
     any_matched = false
     for rule in rules:
       var match = rule.match(asm_code)
-      echo match
-      if match:
+      if match.matched:
         any_matched = true
-        rule.apply(asm_code)
+        rule.apply(asm_code, match)
+    runs += 1
+  if (runs == MAX_RUNS):
+    echo "max runs reached in pp optimization"
       
