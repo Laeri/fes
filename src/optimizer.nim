@@ -243,7 +243,7 @@ proc match(rule: NESPPRule, asm_code: seq[ASMAction]): PPMatchData =
 method emit(matcher: ASMMatcher): ASMAction =
   discard
 method emit(symbol: ASMSymbol): string =
-  return ""
+  return
 method emit(symbol: MatchAndBindSymbol): string =
   return symbol.bound
 method emit(symbol: ConcreteSymbol): string =
@@ -251,8 +251,9 @@ method emit(symbol: ConcreteSymbol): string =
 method emit(matcher: ASMLabelMatcher): ASMAction =
   result = ASMLabel(label_name: matcher.label_symbol.emit)
 method emit(matcher: ASMCallMatcher): ASMAction =
+  echo matcher.repr
   if matcher.with_arg:
-    return ASMCall(op: matcher.op, param: matcher.symbol.emit)
+    return ASMCall(op: matcher.op, param: matcher.symbol.emit, with_arg: true)
   else:
     return ASMCall(op: matcher.op)
 
