@@ -32,7 +32,7 @@ type
   ConcreteSymbol = ref object of ASMSymbol
     literal_value: string
 
-method `$`(rule: NESPPRule): string =
+method `$`(rule: NESPPRule): string {.base.}=
   result = "NESPPRule:\n"
   result &= "  from:\n"
   for act in rule.r_from:
@@ -47,7 +47,7 @@ proc bind_symbol(symbol: MatchAndBindSymbol, token: string) =
 proc is_bound(symbol: MatchAndBindSymbol): bool =
   return symbol.bound != nil
 
-method `$`(matcher: ASMSymbol): string =
+method `$`(matcher: ASMSymbol): string {.base.} =
   return "ASMSymbol" 
 method `$`(matcher: MatchAnySymbol): string =
   return "ASMMatchAnySymbol: _*"
@@ -58,7 +58,7 @@ method `$`(matcher: MatchAndBindSymbol): string =
     return "MatchAndBindSymbol: unbound"
 method `$`(matcher: ConcreteSymbol): string =
   return "ConcreteSymbol: " & matcher.literal_value 
-method `$`(matcher: ASMMatcher): string = 
+method `$`(matcher: ASMMatcher): string {.base.} = 
   return "ASMMatcher"
 method `$`(matcher: ASMCallMatcher): string =
   if matcher.with_arg:
@@ -69,7 +69,7 @@ method `$`(matcher: ASMLabelMatcher): string =
   return "ASMLabelMatcher: " & $matcher.label_symbol 
 
 
-method match(symbol: ASMSymbol, token: string): bool =
+method match(symbol: ASMSymbol, token: string): bool {.base.} =
   echo "this should never be called"
 
 method match(symbol: MatchAnySymbol, token: string): bool =
@@ -85,7 +85,7 @@ method match(symbol: MatchAndBindSymbol, token: string): bool =
 method match(symbol: ConcreteSymbol, token: string): bool =
   return symbol.literal_value == token
 
-method match(matcher: ASMMatcher, asm_code: ASMAction): bool = 
+method match(matcher: ASMMatcher, asm_code: ASMAction): bool {.base.} = 
   echo "this should never be called"
   return false
 
@@ -189,7 +189,7 @@ proc parse_rules(parser: NESPParser, src: string): seq[NESPPRule] =
         echo "tokens between definition: ", token
   return rules
 
-method match_type(act: ASMAction, other: ASMAction): bool =
+method match_type(act: ASMAction, other: ASMAction): bool {.base.} =
   return false
 
 method match_type(label: ASMLabel, other: ASMLabel): bool =
@@ -199,7 +199,7 @@ method match_type(call: ASMCall, other: ASMCall): bool =
   return call.op == other.op
 
 
-method reset(matcher: ASMSymbol) =
+method reset(matcher: ASMSymbol) {.base.} =
   discard
 method reset(matcher: MatchAndBindSymbol) =
   if matcher.is_bound:
@@ -240,9 +240,9 @@ proc match(rule: NESPPRule, asm_code: seq[ASMAction]): PPMatchData =
          #echo "no match with: " & $current.repr
         return PPMatchData(matched: false)
 
-method emit(matcher: ASMMatcher): ASMAction =
+method emit(matcher: ASMMatcher): ASMAction {.base.} =
   discard
-method emit(symbol: ASMSymbol): string =
+method emit(symbol: ASMSymbol): string {.base.} =
   return
 method emit(symbol: MatchAndBindSymbol): string =
   return symbol.bound
@@ -265,10 +265,7 @@ proc apply(rule: NESPPrule, asm_code: var seq[ASMAction], match_data: PPMatchDat
     generated.add(matcher.emit)
   asm_code = head & generated & tail
 
-method optimize*(optimizer: NESPPOptimizer, rule_file_name: string, asm_code: var seq[ASMAction]) = 
-  var parser = newNESPParser()
-  var rules_src: string = readFile(rule_file_name)
-  var rules = parser.parse_rules(rules_src)
+proc optimize*(optimizer: NESPPOptimizer, rules: seq[NESPPRule], asm_code: var seq[ASMAction]) =
   var any_matched = true
   let MAX_RUNS = 100
   var runs = 0
@@ -282,4 +279,15 @@ method optimize*(optimizer: NESPPOptimizer, rule_file_name: string, asm_code: va
     runs += 1
   if (runs == MAX_RUNS):
     echo "max runs reached in pp optimization"
-      
+
+proc optimize*(optimizer: NESPPOptimizer, rule_file_name: string, asm_code: var seq[ASMAction]) = 
+  var parser = newNESPParser()
+  var rules_src: string = readFile(rule_file_name)
+  var rules = parser.parse_rules(rules_src)
+  optimizer.optimize(rules, asm_code)
+
+
+proc optimize_rule_str*(optimizer: NESPPOptimizer, rule_str: string, asm_code: var seq[ASMAction]) = 
+  var parser = newNESPParser()
+  var rules = parser.parse_rules(rule_str)
+  optimizer.optimize(rules, asm_code)

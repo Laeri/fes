@@ -263,8 +263,15 @@ var nes_transl_table: Table[string, string] =
     "!": "store"
   }.toTable
 
-proc len(asm_call: ASMCall): int = 
+method len*(asm_action: ASMAction): int {.base.} =
+  echo "ASMAction len should not be called"
+  return 0
+
+method len*(asm_call: ASMCall): int = 
   return info_table[asm_call.op][asm_call.mode].len
+
+method len*(asm_label: ASMLabel): int =
+  return 0
 
 
 proc time(asm_call: ASM_Call): int =
@@ -499,7 +506,7 @@ proc add_start_label*(root: SequenceNode) =
   root.sequence = tmp_seq & root.sequence
 
 
-method string_rep(node: ASTNode, prefix = ""): string =
+method string_rep(node: ASTNode, prefix = ""): string {.base.} =
   echo "error: node with no print function!!!"
   return prefix & $node[]
 
@@ -509,7 +516,7 @@ method string_rep(node: SequenceNode, prefix = ""): string =
     str &= child.string_rep(prefix & "  ") & "\n"
   return str
 
-method string_rep(action: ASMAction, prefix = ""): string =
+method string_rep(action: ASMAction, prefix = ""): string {.base.} =
   echo "UNSPECIFIED ASM ACTION"
   return "!!!!!"
 
@@ -544,7 +551,6 @@ method string_rep(node: CallWordNode, prefix = ""): string =
 
 proc digit_to_hex(number: int): string =
   var hex = @["A", "B", "C", "D", "E", "F"]
-  var result = ""
   if number < 10:
     result = number.intToStr
   else:
@@ -571,7 +577,7 @@ proc pad_to_even(hex: var string): string =
   return hex
 
 
-method emit*(node: ASTNode, asm_code: var seq[ASMAction]) =
+method emit*(node: ASTNode, asm_code: var seq[ASMAction]) {.base.} =
   echo "error, node without code to emit"
   discard
 
@@ -599,7 +605,7 @@ method emit*(node: ASMNode, asm_code: var seq[ASMAction]) =
     
 
 proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
-  var result = ""
+  result = ""
   for asm_code in asm_actions:
     if asm_code of ASMCall:
       var call = cast[ASMCall](asm_code)
@@ -620,7 +626,7 @@ proc generate_nes_str(asm_code: seq[ASMAction]): string =
   
   var program_start = "$8000"
 
-  var result = "; INES header setup\n\n"
+  result = "; INES header setup\n\n"
   result &= "  .inesprg " & $num_16k_prg_banks & "\n"
   result &= "  .ineschr " & $num_8k_chr_banks & "\n"
   result &= "  .inesmir " & $VRM_mirroring & "\n"
@@ -655,17 +661,6 @@ proc generate_and_assemble(asm_code: seq[ASMAction], asm_file_name: string) =
   #var exit_code3 = execCmd "fceux " & nes_name
   #var (output2, exitCoe4) = execCmdEx "fceux " & nes_name
 
-#[
-var parser = newParser()
-parser.parse_file("test_files/core.fth")
-parser.root.group_word_defs_last()
-parser.root.add_start_label()
-var asm_calls: seq[ASMAction] = @[]
-parser.root.emit(asm_calls)
-var asm_str = aasm_to_string(asm_calls)
-#generate_and_store(asm_calls, "TEST.asm")
-generate_and_assemble(asm_calls, "TEST.asm")
-]#
 
 
 
