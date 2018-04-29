@@ -3,9 +3,7 @@
  X is the stack pointer and points always to last element in the stack
 )
 
-1
-2
-3
+
 : dup
 [
 lda $02FF,X

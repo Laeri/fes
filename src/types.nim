@@ -4,8 +4,10 @@ type
     out_asm_folder*: string
     out_passes_folder*: string
     optimize*: bool
-    file_name*: string
+    file_path*: string
     run*: bool
+    load_core_words*: bool
+    silent*: bool
   ASTNode* = ref object of RootObj
 
   PushNumberNode* = ref object of ASTNode

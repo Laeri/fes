@@ -70,6 +70,7 @@ method `$`(matcher: ASMLabelMatcher): string =
 
 
 method match(symbol: ASMSymbol, token: string): bool {.base.} =
+  echo "Symbol"
   echo "this should never be called"
 
 method match(symbol: MatchAnySymbol, token: string): bool =
@@ -85,13 +86,14 @@ method match(symbol: MatchAndBindSymbol, token: string): bool =
 method match(symbol: ConcreteSymbol, token: string): bool =
   return symbol.literal_value == token
 
-method match(matcher: ASMMatcher, asm_code: ASMAction): bool {.base.} = 
-  echo "this should never be called"
+method match(matcher: ASMMatcher, asm_code: ASMAction): bool {.base.} =
   return false
 
 method match(matcher: ASMLabelMatcher, asm_code: ASMLabel): bool =
   return matcher.label_symbol.match(asm_code.label_name)
   
+method match(matcher: ASMCallMatcher, asm_code: ASMAction): bool =
+  return false
 method match(matcher: ASMCallMatcher, asm_code: ASMCall): bool =
   if matcher.op != asm_code.op:
     return false
@@ -225,6 +227,7 @@ proc match(rule: NESPPRule, asm_code: seq[ASMAction]): PPMatchData =
   var current: ASMAction
   var r_index = 0
   var r_asm: ASMMatcher = rule.r_from[r_index]
+  #echo rule.r_from
   var index_from = 0
   for start_index in countup(0, asm_code.len - 1):
     rule.reset()
