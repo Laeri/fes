@@ -1,9 +1,14 @@
 import 
   strutils, patty, sequtils, tables, typetraits, macros, os, streams, osproc, types, optimizer, scanner
 
+proc newParser*(): Parser = 
+  var parser = Parser()
+  parser.scanner = Scanner()
+  return parser
+
 proc newFESCompiler*(): FESCompiler =
   result = FESCompiler()
-  result.parser = Parser()
+  result.parser = newParser()
 
 proc isOPCODE(str: string): bool =
   try:
@@ -409,14 +414,9 @@ proc parse_string*(parser: Parser, src: string) =
   parser.root = root
 
 proc parse_file(parser: Parser, name: string) =
+  echo name
   var src: string = readFile(name)
   parser.parse_string(src)
-
-
-proc newParser*(): Parser = 
-  var parser = Parser()
-  parser.scanner = Scanner()
-  return parser
 
 
 proc is_def(node: ASTNode): bool =
@@ -604,7 +604,8 @@ proc do_passes(compiler: FESCompiler) =
 
 proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
   var pp_optimizer = newNESPPOptimizer()
-  pp_optimizer.optimize("optimizaton_files/peephole_6502.txt", asm_code)
+  #pp_optimizer.optimize("src/optimizaton_files/peephole_6502.txt", asm_code)
+
 
 proc compile*(compiler: FESCompiler) =
   compiler.parser.parse_file(compiler.file_name)

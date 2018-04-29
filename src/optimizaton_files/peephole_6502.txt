@@ -1,12 +1,121 @@
-Name: Optimize_JMP_Before_RTS
+Name: JSR_RTS
 ID: 1
 Descr:
-If we JSR to another subroutine las in a given subroutine we 
+If we JSR to another subroutine last in a given subroutine we 
 can jump directly
-----------------
-JSR $1
-RTS
-================
-JMP $1
 ---------------
-TEST
+JSR _1_
+RTS
+===============
+JMP _1_
+---------------
+
+Name: DEX_INX
+ID: 2
+Descr:
+None
+---------------
+DEX
+INX
+===============
+---------------
+
+Name: INX_DEX
+ID: 3
+Descr:
+None
+---------------
+INX
+DEX
+===============
+---------------
+
+Name: DEY_INY
+ID: 4
+Descr:
+None
+---------------
+DEY
+INY
+===============
+---------------
+
+Name: INY_DEY
+ID: 5
+Descr:
+None
+---------------
+INY
+DEY
+===============
+---------------
+
+Name: INC_DEC
+ID: 6
+Descr:
+None
+---------------
+INC _1
+DEC _1
+===============
+---------------
+
+Name: DEC_INC
+ID: 7
+Descr:
+None
+---------------
+DEC _1
+INC _1
+===============
+---------------
+
+Name: Remove_NOP
+ID: 8
+Descr:
+None
+---------------
+NOP
+===============
+---------------
+
+Name: PHA_PLA
+ID: 9
+Descr:
+None
+---------------
+PHA
+PLA
+===============
+---------------
+
+Name: PLA_PHA
+ID: 10
+Descr:
+None
+---------------
+PLA
+PHA
+===============
+---------------
+
+Name: PHP_PLP
+ID: 11
+Descr:
+None
+---------------
+PHP
+PLP
+===============
+---------------
+
+Name: PLP_PHP
+ID: 12
+Descr:
+None
+---------------
+PLP
+PHP
+===============
+---------------
+
