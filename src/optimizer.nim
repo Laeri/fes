@@ -1,5 +1,5 @@
 import
-  types, compiler, strutils, typetraits, tables
+  types, strutils, typetraits, tables, scanner
 
 
 type

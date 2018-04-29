@@ -1,4 +1,11 @@
 type
+  FESCompiler* = ref object of RootObj
+    parser*: Parser
+    out_asm_folder*: string
+    out_passes_folder*: string
+    optimize*: bool
+    file_name*: string
+
   ASTNode* = ref object of RootObj
 
   PushNumberNode* = ref object of ASTNode
@@ -13,6 +20,7 @@ type
   
   CallWordNode* = ref object of ASTNode
     word_name*: string
+    word_def*: DefineWordNode
 
   ASMNode* = ref object of ASTNode
     asm_calls*: seq[ASMAction]
