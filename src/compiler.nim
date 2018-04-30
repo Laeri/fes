@@ -1,5 +1,9 @@
 import 
-  strutils, sequtils, tables, typetraits, macros, os, streams, osproc, types, optimizer, scanner
+  strutils, sequtils, tables, typetraits, macros, os,
+  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast
+
+
+
 
 proc newParser*(): Parser = 
   var parser = Parser()
@@ -262,14 +266,7 @@ info_table.setup(
   Implied, 1, 2
 )
 
-var nes_transl_table: Table[string, string] =
-  {
-    "+": "add",
-    "-": "sub",
-    "*": "mul",
-    "/": "div",
-    "!": "store"
-  }.toTable
+
 
 method len*(asm_action: ASMAction): int {.base.} =
   echo "ASMAction len should not be called"
@@ -290,138 +287,6 @@ proc op(name: OPCODE, param: string): ASMCall =
   return ASMCall(op: name, str: $name, param: param)
 
 
-
-proc newSequenceNode(): SequenceNode =
-  var node = SequenceNode()
-  node.sequence = @[]
-  return node
-
-
-proc newASMNode(): ASMNode =
-  var node = ASMNode()
-  node.asm_calls = @[]
-  return node
-
-
-proc newDefineWordNode(): DefineWordNode =
-  var node = DefineWordNode()
-  node.definition = newSequenceNode()
-  return node
-
-
-proc add(node: SequenceNode, other: ASTNode) = 
-  node.sequence.add(other)
-
-
-proc add(node: DefineWordNode, other: ASTNode) =
-  node.definition.add(other)
-
-
-proc add(node: ASMNode, asm_action: ASMAction) = 
-  node.asm_calls.add(asm_action)
-
-
-proc isInteger(str: string): bool =
-  try:
-    let f = parseInt str
-  except ValueError:
-     return false
-  return true
-
-proc parse_asm_line*(tokens: seq[string]): ASMAction =
-  if tokens.len == 1:
-      if tokens[0].contains(":"):
-        return ASMLabel(label_name: tokens[0])
-      else:
-        return ASMCall(op: parseEnum[OPCODE] tokens[0], with_arg: false)
-  elif tokens.len == 2:
-    var arg_string = tokens[1]
-    return ASMCall(op: parseEnum[OPCODE] tokens[0], param: arg_string, with_arg: true)
-
-proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
-  var tokens: seq[string] = parser.scanner.upto_next_line()
-  var end_block = false
-  while not(end_block):
-    if tokens[0] == "]":
-      end_block = true
-    elif tokens.len == 1:
-      if tokens[0].contains(":"):
-        asm_node.add(ASMLabel(label_name: tokens[0]))
-      else:
-        asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0], with_arg: false))
-    elif tokens.len == 2:
-      var arg_string = tokens[1]
-      asm_node.add(ASMCall(op: parseEnum[OPCODE] tokens[0], param: arg_string, with_arg: true))
-    if not(end_block):
-      tokens = parser.scanner.upto_next_line()
-
-proc translate_name(name: string): string =
-  if nes_transl_table.contains(name):
-    return nes_transl_table[name]
-  else:
-    return name
-
-proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
-  while parser.scanner.has_next:
-    var token = parser.scanner.next
-    if token == ";":
-      return
-    elif token == "[":
-      var node = newASMNode()
-      def_node.add(node)
-      parser.parse_asm_block(node)
-    elif token.isInteger:
-      var node = PushNumberNode()
-      node.number = token.parseInt
-      def_node.add(node)
-    else:
-      var node = CallWordNode()
-      node.word_name = token
-      def_node.add(node)
-
-proc parse_comment(parser: Parser) =
-  while parser.scanner.has_next:
-    var token = parser.scanner.next
-    if token.contains(")"):
-      return
-    elif token.contains("("):
-      parser.parse_comment
-
-proc parse_string*(parser: Parser, src: string) = 
-  parser.scanner.read_string(src)
-  var root = newSequenceNode()
-  while parser.scanner.has_next:
-    var token = parser.scanner.next
-    if token == ":":
-      var def_node = newDefineWordNode()
-      token = parser.scanner.next
-      def_node.word_name = token.translate_name
-      parser.parse_word_definition(def_node)
-      root.add(def_node)
-    elif token == "[":
-      var asm_node = newASMNode()
-      parser.parse_asm_block(asm_node)
-      root.add(asm_node)
-    elif token.contains("("):
-      parser.parse_comment()
-    elif token.isInteger:
-      var node = PushNumberNode()
-      node.number = token.parseInt
-      root.add(node)
-    else:
-      var node = CallWordNode(word_name: token)
-      root.add(node)
-  parser.root = root
-
-proc parse_files(parser: Parser, files: varargs[string]) =
-  var src: string = ""
-  for file in files:
-    src &= readFile(file)
-  parser.parse_string(src)
-
-
-proc is_def(node: ASTNode): bool =
-  return (node of DefineWordNode)
 
 
 proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
@@ -445,6 +310,54 @@ proc add_start_label*(root: SequenceNode) =
   tmp_seq.add(asm_node)
   root.sequence = tmp_seq & root.sequence
 
+
+
+
+type
+  ASTVisitor = ref object of RootObj
+
+method first_visit(visitor: ASTVisitor, node: ASTNode) {.base.} =
+  return
+
+method visit(visitor: ASTVisitor, node: ASTNode) {.base.} =
+  return
+
+method last_visit(visitor: ASTVisitor, node: ASTNode) {.base.} =
+  return
+
+method accept(node: ASTNode, visitor: ASTVisitor) {.base.} =
+  visitor.visit(node)
+
+type
+  CollectVisitor = ref object of ASTVisitor
+    pred: proc(node: ASTNode): bool
+    defs: seq[DefineWordNode]
+
+method visit(collect_visitor: CollectVisitor, node: ASTNode)  =
+  return
+
+method visit(collect_visitor: CollectVisitor, node: DefineWordNode) =
+  collect_visitor.defs.add(node)
+  return
+
+method visit(collect_visitor: CollectVisitor, node: SequenceNode)  =
+  for n in node.sequence:
+    n.accept(collect_visitor)
+  
+
+proc collect_defs(node: ASTNode): seq[DefineWordNode] =
+  echo "visit def node"
+  var defs: seq[DefineWordNode] = @[]
+  var visitor = CollectVisitor(pred: is_def, defs: defs)
+  return defs
+
+proc check_multiple_defs(node: ASTNode) =
+  var defs = collect_defs(node)
+  for current in defs:
+    var name = current.word_name
+    if ((filter(defs, proc(def: DefineWordNode): bool = def.word_name == name)).len > 1):
+      echo "TASDIFJASIDFJASDFJ"    
+    
 
 method string_rep(node: ASTNode, prefix = ""): string {.base.} =
   echo "error: node with no print function!!!"
@@ -612,6 +525,7 @@ proc generate_and_assemble(compiler: FESCompiler, asm_code: seq[ASMAction], file
 proc do_passes(compiler: FESCompiler) =
   group_word_defs_last(compiler.parser.root)
   compiler.parser.root.add_start_label()
+  check_multiple_defs(compiler.parser.root)
 
 proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
   var pp_optimizer = newNESPPOptimizer()
