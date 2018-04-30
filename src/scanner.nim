@@ -3,13 +3,6 @@ import
 
 
 
-proc nonempty(lines: seq[string], index = 0): bool =
-  for i in countup(index, lines.len - 1):
-    if lines[i].len != 0:
-      return true
-  return false
-
-
 proc read_string*(scanner: Scanner, src: string) =
   scanner.src = src
   scanner.lines = splitLines(src)
@@ -20,9 +13,33 @@ proc read_string*(scanner: Scanner, src: string) =
   scanner.line = 0
   scanner.column = 0
 
-proc has_next*(scanner: Scanner): bool = 
-  return (scanner.column < scanner.columns.len - 1) or (nonempty(scanner.lines, scanner.line + 1))
+proc nonempty(lines: seq[string], index = 0): bool =
+  for i in countup(index, lines.len - 1):
+    if lines[i].splitWhitespace.len != 0:
+      return true
+  return false
 
+proc advance*(scanner: Scanner) =
+  scanner.column += 1
+  if scanner.column >= scanner.columns.len:
+    scanner.column = 0
+    scanner.line += 1
+    if scanner.line < scanner.lines.len:
+      scanner.columns = scanner.lines[scanner.line].splitWhitespace
+  if scanner.line < scanner.lines.len:
+    while scanner.lines[scanner.line].len == 0:
+      scanner.advance 
+
+proc has_next*(scanner: Scanner): bool = 
+  return (scanner.line < scanner.lines.len) and ((scanner.column < scanner.columns.len) or (nonempty(scanner.lines, scanner.line + 1)))
+
+proc peek*(scanner: Scanner): string = 
+  return scanner.columns[scanner.column]
+
+proc next*(scanner: Scanner): string =
+  var token = scanner.columns[scanner.column]
+  scanner.advance
+  return token
 
 proc skip_to_next_line*(scanner: Scanner) =
   scanner.line += 1
@@ -40,27 +57,15 @@ proc backtrack*(scanner: Scanner, times = 1) =
   while back > 0:
     if scanner.column > 0:
       scanner.column -= 1
-      back -= 1
     else:
-      scanner.column = 0
       scanner.line -= 1
       scanner.columns = scanner.lines[scanner.line].splitWhitespace
+      while(scanner.columns.len == 0):
+        scanner.line -= 1
+        scanner.columns = scanner.lines[scanner.line].splitWhitespace
+      scanner.column = scanner.columns.len - 1
+    back -= 1
 
-proc advance*(scanner: Scanner) =
-  scanner.column += 1
-  if scanner.column >= scanner.columns.len:
-    scanner.column = 0
-    scanner.line += 1
-    scanner.columns = scanner.lines[scanner.line].splitWhitespace
-  while scanner.lines[scanner.line].len == 0:
-    scanner.advance 
-
-
-
-proc next*(scanner: Scanner): string = 
-  var token = scanner.columns[scanner.column]
-  scanner.advance
-  return token
 
 proc upto_next_line*(scanner: Scanner): seq[string] =  
   var line_tokens = scanner.columns[scanner.column .. (scanner.columns.len - 1)]
