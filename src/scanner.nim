@@ -19,6 +19,7 @@ proc nonempty(lines: seq[string], index = 0): bool =
       return true
   return false
 
+
 proc advance*(scanner: Scanner) =
   scanner.column += 1
   if scanner.column >= scanner.columns.len:
@@ -26,20 +27,13 @@ proc advance*(scanner: Scanner) =
     scanner.line += 1
     if scanner.line < scanner.lines.len:
       scanner.columns = scanner.lines[scanner.line].splitWhitespace
-  if scanner.line < scanner.lines.len:
-    while scanner.lines[scanner.line].len == 0:
-      scanner.advance 
+      if(scanner.columns.len == 0):
+        scanner.advance
 
 proc has_next*(scanner: Scanner): bool = 
-  return (scanner.line < scanner.lines.len) and ((scanner.column < scanner.columns.len) or (nonempty(scanner.lines, scanner.line + 1)))
-
-proc peek*(scanner: Scanner): string = 
-  return scanner.columns[scanner.column]
-
-proc next*(scanner: Scanner): string =
-  var token = scanner.columns[scanner.column]
-  scanner.advance
-  return token
+  if (scanner.line >= scanner.lines.len):
+    return false
+  return ((scanner.column < scanner.columns.len) or (nonempty(scanner.lines, scanner.line + 1)))
 
 proc skip_to_next_line*(scanner: Scanner) =
   scanner.line += 1
@@ -51,6 +45,15 @@ proc skip_empty_lines*(scanner: Scanner) =
   if scanner.has_next:
     while scanner.lines[scanner.line].len == 0:
       scanner.skip_to_next_line
+
+proc peek*(scanner: Scanner): string = 
+  return scanner.columns[scanner.column]
+
+proc next*(scanner: Scanner): string =
+  var token = scanner.columns[scanner.column]
+  scanner.advance
+  return token
+
 
 proc backtrack*(scanner: Scanner, times = 1) =
   var back = times

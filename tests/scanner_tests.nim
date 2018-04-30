@@ -30,6 +30,17 @@ suite "Scanner Suite":
       var token = scanner.next
       check(token == str_seq[i])
       i += 1
+  
+  test "has_next should handle trailing newline":
+    scanner.read_string("A\n")
+    while scanner.has_next:
+      echo scanner.next
+
+  test "has_next should return false for trailing newline":
+    scanner.read_string("A\n")
+    check(scanner.has_next == true)
+    discard scanner.next
+    check(scanner.has_next == false)
 
   test "has_next should return false for empty string":
     scanner.read_string("")
