@@ -1,14 +1,7 @@
 import 
   strutils, sequtils, tables, typetraits, macros, os,
-  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast
+  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast, sets
 
-
-
-
-proc newParser*(): Parser = 
-  var parser = Parser()
-  parser.scanner = Scanner()
-  return parser
 
 proc newFESCompiler*(): FESCompiler =
   result = FESCompiler()
@@ -316,13 +309,8 @@ proc add_start_label*(root: SequenceNode) =
 type
   ASTVisitor = ref object of RootObj
 
-method first_visit(visitor: ASTVisitor, node: ASTNode) {.base.} =
-  return
 
 method visit(visitor: ASTVisitor, node: ASTNode) {.base.} =
-  return
-
-method last_visit(visitor: ASTVisitor, node: ASTNode) {.base.} =
   return
 
 method accept(node: ASTNode, visitor: ASTVisitor) {.base.} =
@@ -332,6 +320,10 @@ type
   CollectVisitor = ref object of ASTVisitor
     pred: proc(node: ASTNode): bool
     defs: seq[DefineWordNode]
+
+proc newCollectVisitor(pred: proc(node:ASTNode): bool = nil): CollectVisitor =
+  result = CollectVisitor(pred: pred)
+  result.defs = @[]
 
 method visit(collect_visitor: CollectVisitor, node: ASTNode)  =
   return
@@ -346,61 +338,26 @@ method visit(collect_visitor: CollectVisitor, node: SequenceNode)  =
   
 
 proc collect_defs(node: ASTNode): seq[DefineWordNode] =
-  echo "visit def node"
-  var defs: seq[DefineWordNode] = @[]
-  var visitor = CollectVisitor(pred: is_def, defs: defs)
-  return defs
+  var visitor: CollectVisitor = newCollectVisitor(is_def)
+  node.accept(visitor)
+  return visitor.defs
+
+proc count[T](t_seq: seq[T], t_el: T): int =
+  result = 0
+  for seq_el in t_seq:
+    if seq_el == t_el:
+      inc(result)
 
 proc check_multiple_defs(node: ASTNode) =
-  var defs = collect_defs(node)
-  for current in defs:
-    var name = current.word_name
-    if ((filter(defs, proc(def: DefineWordNode): bool = def.word_name == name)).len > 1):
-      echo "TASDIFJASIDFJASDFJ"    
-    
-
-method string_rep(node: ASTNode, prefix = ""): string {.base.} =
-  echo "error: node with no print function!!!"
-  return prefix & $node[]
-
-method string_rep(node: SequenceNode, prefix = ""): string =
-  var str: string = prefix & "SequenceNode:\n" 
-  for child in node.sequence:
-    str &= child.string_rep(prefix & "  ") & "\n"
-  return str
-
-method string_rep(action: ASMAction, prefix = ""): string {.base.} =
-  echo "UNSPECIFIED ASM ACTION"
-  return "!!!!!"
-
-method string_rep(call: ASMCall, prefix = ""): string =
-  var arg = "  "
-  if (call.with_arg):
-    arg &= call.param
-  result = prefix & "ASMCall: " & $call.op & arg
-  return result
-
-method string_rep(label: ASMLabel, prefix = ""): string =
-  result = prefix & "ASMLabel: " & label.label_name
-  return result
-
-method string_rep(node: ASMNode, prefix = ""): string =
-  var str: string = prefix & "ASMNode:\n"
-  for action in node.asm_calls:
-    str &= prefix & action.string_rep(prefix & "  ") & "\n"
-  return str
-
-method string_rep(node: PushNumberNode, prefix = ""): string =
-  return prefix & "PushNumberNode: " & $node.number
-
-method string_rep(node: DefineWordNode, prefix = ""): string =
-  var define_str = prefix & "DefineWordNode: " & node.word_name & "\n"
-  define_str &= node.definition.string_rep(prefix & "  ")
-  return define_str
-
-method string_rep(node: CallWordNode, prefix = ""): string =
-  return prefix & "CallWordNode: " & node.word_name
-
+  var defs = collect_defs(cast[SequenceNode](node))
+  var names: seq[string] = @[]
+  for def in defs:
+    names.add(def.word_name)
+  var names_set = names.toSet
+  if names.len != names_set.len:
+    for set_name in names_set:
+      if names.count(set_name) > 1:
+        report(errWordAlreadyDefined, set_name)
 
 proc digit_to_hex(number: int): string =
   var hex = @["A", "B", "C", "D", "E", "F"]
@@ -524,6 +481,7 @@ proc generate_and_assemble(compiler: FESCompiler, asm_code: seq[ASMAction], file
 
 proc do_passes(compiler: FESCompiler) =
   group_word_defs_last(compiler.parser.root)
+  #echo compiler.parser.root.string_rep
   compiler.parser.root.add_start_label()
   check_multiple_defs(compiler.parser.root)
 

@@ -1,6 +1,11 @@
 import
   types, scanner, strutils, ast, tables, msgs
 
+proc newParser*(): Parser = 
+  var parser = Parser()
+  parser.scanner = Scanner()
+  return parser
+
 var nes_transl_table: Table[string, string] =
   {
     "+": "add",
@@ -53,7 +58,6 @@ proc translate_name(name: string): string =
 proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
   while parser.scanner.has_next:
     var token = parser.scanner.next
-    echo "parse_word " & token
     if token == ";":
       return
     elif token == "[":
@@ -65,13 +69,11 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       node.number = token.parseInt
       def_node.add(node)
     elif token == ":":
-      echo "DEF"
       report(errWordDefInsideOtherWord, def_node.word_name)
     else:
       var node = CallWordNode()
       node.word_name = token
       def_node.add(node)
-  echo "No more tokens"
   report(errMissingWordEnding, def_node.word_name)
 
 proc parse_comment(parser: Parser) =
@@ -94,7 +96,6 @@ proc parse_string*(parser: Parser, src: string) =
  
   while parser.scanner.has_next:
     var token = parser.scanner.next
-    echo "parse_string: " & token
     if token == ":":
       var def_node = newDefineWordNode()
       token = parser.scanner.next

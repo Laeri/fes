@@ -35,3 +35,47 @@ method add*(node: ASMNode, asm_action: ASMAction) =
 
 proc is_def*(node: ASTNode): bool =
   return (node of DefineWordNode)
+
+
+method string_rep*(node: ASTNode, prefix = ""): string {.base.} =
+  echo "error: node with no print function!!!"
+  return prefix & $node[]
+
+method string_rep*(node: SequenceNode, prefix = ""): string =
+  var str: string = prefix & "SequenceNode:\n" 
+  for child in node.sequence:
+    str &= child.string_rep(prefix & "  ") & "\n"
+  return str
+
+method string_rep*(action: ASMAction, prefix = ""): string {.base.} =
+  echo "UNSPECIFIED ASM ACTION"
+  return "!!!!!"
+
+method string_rep*(call: ASMCall, prefix = ""): string =
+  var arg = "  "
+  if (call.with_arg):
+    arg &= call.param
+  result = prefix & "ASMCall: " & $call.op & arg
+  return result
+
+method string_rep*(label: ASMLabel, prefix = ""): string =
+  result = prefix & "ASMLabel: " & label.label_name
+  return result
+
+method string_rep*(node: ASMNode, prefix = ""): string =
+  var str: string = prefix & "ASMNode:\n"
+  for action in node.asm_calls:
+    str &= prefix & action.string_rep(prefix & "  ") & "\n"
+  return str
+
+method string_rep*(node: PushNumberNode, prefix = ""): string =
+  return prefix & "PushNumberNode: " & $node.number
+
+method string_rep*(node: DefineWordNode, prefix = ""): string =
+  var define_str = prefix & "DefineWordNode: " & node.word_name & "\n"
+  define_str &= node.definition.string_rep(prefix & "  ")
+  return define_str
+
+method string_rep*(node: CallWordNode, prefix = ""): string =
+  return prefix & "CallWordNode: " & node.word_name
+

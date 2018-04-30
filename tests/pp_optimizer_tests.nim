@@ -9,7 +9,8 @@ template do_rule_test(): untyped =
   parser.root.emit(asm_result)
   check(asm_result.aasm_to_string == asm_calls.aasm_to_string)
 
-suite "description for this stuff":
+
+suite "JSR_RTS":
 
   setup:
     var parser = newParser()
@@ -19,15 +20,16 @@ suite "description for this stuff":
     var rule_src: string
     var result_src: string
     var asm_result: seq[ASMAction] = @[]
+
   teardown:
     discard
   
   test "JSR_RTS":
     asm_src = """
-    [
-      JSR Loop
-      RTS
-    ]
+      [
+        JSR Loop
+        RTS
+      ]
     """
     rule_src = """
      Name: JSR_RTS
@@ -47,6 +49,7 @@ suite "description for this stuff":
     JMP Loop
     ]
     """
+
     do_rule_test
 
 
