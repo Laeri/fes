@@ -43,13 +43,21 @@ proc has_next*(scanner: Scanner): bool =
   return (scanner.column < scanner.columns.len)
 
 proc set_accurate_count(scanner: Scanner) =
-  discard
-  if scanner.has_next:
-    var split_by_token = scanner.lines[scanner.line].split(scanner.columns[scanner.column])
-    if split_by_token.len == 0:
-      scanner.column_accurate = 0
-    else:
-      scanner.column_accurate = split_by_token[0].len
+  if not(scanner.has_next):
+    return
+  var char_count = -1
+  var word_count = 0
+  var in_space = false
+  for ch in scanner.lines[scanner.line]:
+    char_count += 1
+    if (ch in Whitespace):
+      in_space = true
+    elif in_space:
+      word_count += 1
+      in_space = false
+    if word_count == scanner.column:
+      scanner.column_accurate = char_count
+      return
 
 proc advance*(scanner: Scanner) =
   scanner.column += 1

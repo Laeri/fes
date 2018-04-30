@@ -104,12 +104,21 @@ suite "Scanner Suite":
     check(scanner.column_position == 10)
     discard scanner.next
 
+  test "get position of several equal tokens in a line":
+    scanner.read_string("A A A A")
+    discard scanner.next()
+    check(scanner.column_position == 2)
+    discard scanner.next()
+    check(scanner.column_position == 4)
+    discard scanner.next()
+    check(scanner.column_position == 6)
+    
   test "get line number":
     scanner.read_string("A\n  \nBC")
     check(scanner.line_position == 0)
     discard scanner.next
     check(scanner.line_position == 2)
-    
+
 
  
   
