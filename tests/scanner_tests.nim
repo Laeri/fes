@@ -30,11 +30,6 @@ suite "Scanner Suite":
       var token = scanner.next
       check(token.str_val == str_seq[i])
       i += 1
-  
-  test "has_next should handle trailing newline":
-    scanner.read_string("A\n")
-    discard scanner.next()
-    check(not(scanner.has_next))
 
   test "has_next should return false for trailing newline":
     scanner.read_string("A\n")
@@ -94,4 +89,27 @@ suite "Scanner Suite":
     scanner.backtrack(1)
     check(scanner.next().str_val == "A")
 
+  test "get position of a single token":
+    scanner.read_string("A")
+    check(scanner.column_position == 0)
+
+  test "get position of several tokens in a line":
+    scanner.read_string("A B  CDEF G")
+    check(scanner.column_position == 0)
+    discard scanner.next
+    check(scanner.column_position == 2)
+    discard scanner.next
+    check(scanner.column_position == 5)
+    discard scanner.next
+    check(scanner.column_position == 10)
+    discard scanner.next
+
+  test "get line number":
+    scanner.read_string("A\n  \nBC")
+    check(scanner.line_position == 0)
+    discard scanner.next
+    check(scanner.line_position == 2)
+    
+
+ 
   
