@@ -148,7 +148,7 @@ proc parse_asm_line_to_matcher(tokens: seq[string], symbol_table: TableRef[strin
 proc parse_rules(parser: NESPParser, src: string): seq[NESPPRule] =
   var scanner = parser.scanner
   scanner.read_string(src)
-  var token: string
+  var token: Token
   var rules: seq[NESPPRule] = @[]
   var rule = newNESPPRule()
   var in_second_part = false
@@ -175,11 +175,11 @@ proc parse_rules(parser: NESPParser, src: string): seq[NESPPRule] =
          rule.r_from.add(matcher)
     else:
       token = scanner.next
-      if token == "Name:":
-        rule.name = scanner.next
-      elif token == "ID:":
-        rule.id = scanner.next.parseInt
-      elif token == "Descr:":
+      if token.str_val == "Name:":
+        rule.name = scanner.next.str_val
+      elif token.str_val == "ID:":
+        rule.id = scanner.next.str_val.parseInt
+      elif token.str_val == "Descr:":
         in_description = true
       elif in_description:
         while in_description:
@@ -188,7 +188,7 @@ proc parse_rules(parser: NESPParser, src: string): seq[NESPPRule] =
             in_description = false
             in_rule_def = true
       else:
-        echo "tokens between definition: ", token
+        echo "tokens between definition: ", token.str_val
   return rules
 
 method match_type(act: ASMAction, other: ASMAction): bool {.base.} =

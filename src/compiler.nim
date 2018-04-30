@@ -396,7 +396,7 @@ method emit*(node: SequenceNode, asm_code: var seq[ASMAction]) =
     node.emit(asm_code)
 
 method emit*(node: CallWordNode, asm_code: var seq[ASMAction]) =
-  asm_code.add(ASMCall(op: JSR, param: node.word_name & "\n"))
+  asm_code.add(ASMCall(op: JSR, param: node.word_name & "\n", with_arg: true))
 
 method emit*(node: DefineWordNode, asm_code: var seq[ASMAction]) =
   asm_code.add(ASMLabel(label_name: (node.word_name & ":")))

@@ -2,6 +2,10 @@ import
   strutils, os, tables, terminal
 
 type
+  LineInfo = tuple[line: int, column: int, line_str: string, file_name: string]
+  CError* = ref object of RootObj
+    msg_kind: MsgKind
+    line_info: LineInfo
   MsgKind* = enum
     BEGIN_ERRORS
     errWordAlreadyDefined = "word \'$1\' already exists"
@@ -20,7 +24,7 @@ type
     BEGIN_RESULTS
     END_RESULTS
 
- 
+
 const
   min_err = BEGIN_ERRORS
   max_err = END_ERRORS

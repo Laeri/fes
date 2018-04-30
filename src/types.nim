@@ -1,3 +1,6 @@
+import
+  msgs
+
 type
   FESCompiler* = ref object of RootObj
     parser*: Parser
@@ -65,6 +68,7 @@ type
     columns*: seq[string]
     line*: int
     column*: int
+    column_accurate*: int
 
   Parser* = ref object of RootObj
     root*: SequenceNode

@@ -1,7 +1,34 @@
 import
   types, strutils
 
+type
+  TokenKind = enum
+    BEGIN_WORD
+    END_WORD
+    IF
+    ELSE
+    THEN
+    BEGIN_ASM
+    END_ASM
+    OTHER
+    NUMBER
+    
+  Token* = ref object of RootObj
+    kind*: TokenKind
+    line*: int
+    column*: int
+    line_str*: string
+    str_val*: string
+    
+proc newToken(): Token =
+  result = Token()
 
+proc isInteger*(str: string): bool =
+  try:
+    let f = parseInt str
+  except ValueError:
+     return false
+  return true
 
 proc read_string*(scanner: Scanner, src: string) =
   scanner.src = src
@@ -12,6 +39,7 @@ proc read_string*(scanner: Scanner, src: string) =
     scanner.columns = @[]
   scanner.line = 0
   scanner.column = 0
+  scanner.column_accurate = 0
 
 proc nonempty(lines: seq[string], index = 0): bool =
   for i in countup(index, lines.len - 1):
@@ -46,11 +74,49 @@ proc skip_empty_lines*(scanner: Scanner) =
     while scanner.lines[scanner.line].len == 0:
       scanner.skip_to_next_line
 
-proc peek*(scanner: Scanner): string = 
-  return scanner.columns[scanner.column]
+proc current_token(scanner: Scanner) : Token = 
+  var token = newToken()
+  token.column = scanner.column
+  token.line = scanner.line
+  token.str_val = scanner.columns[scanner.column]
+  var kind: TokenKind
+  case token.str_val:
+  of ":":
+    kind = BEGIN_WORD
+  of ";":
+    kind = END_WORD
+  of "[":
+    kind = BEGIN_ASM
+  of "]":
+    kind = END_ASM
+  of "if":
+    kind = IF
+  of "IF":
+    kind = IF
+  of "else":
+    kind = ELSE
+  of "ELSE":
+    kind = ELSE
+  of "then":
+    kind = THEN
+  of "THEN":
+    kind = THEN
 
-proc next*(scanner: Scanner): string =
-  var token = scanner.columns[scanner.column]
+  if token.str_val.isInteger():
+    kind = NUMBER
+  else:
+    kind = OTHER
+
+  token.kind = kind
+  return token
+
+proc peek*(scanner: Scanner): Token = 
+  return scanner.current_token
+
+
+
+proc next*(scanner: Scanner): Token =
+  var token = scanner.currentToken()
   scanner.advance
   return token
 

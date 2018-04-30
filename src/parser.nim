@@ -15,22 +15,17 @@ var nes_transl_table: Table[string, string] =
     "!": "store"
   }.toTable
 
-proc isInteger(str: string): bool =
-  try:
-    let f = parseInt str
-  except ValueError:
-     return false
-  return true
 
-proc parse_asm_line*(tokens: seq[string]): ASMAction =
+
+proc parse_asm_line*(tokens: seq[Token]): ASMAction =
   if tokens.len == 1:
-      if tokens[0].contains(":"):
-        return ASMLabel(label_name: tokens[0])
+      if tokens[0].str_val.contains(":"):
+        return ASMLabel(label_name: tokens[0].str_val)
       else:
-        return ASMCall(op: parseEnum[OPCODE] tokens[0], with_arg: false)
+        return ASMCall(op: parseEnum[OPCODE] tokens[0].str_val, with_arg: false)
   elif tokens.len == 2:
-    var arg_string = tokens[1]
-    return ASMCall(op: parseEnum[OPCODE] tokens[0], param: arg_string, with_arg: true)
+    var arg_string = tokens[1].str_val
+    return ASMCall(op: parseEnum[OPCODE] tokens[0].str_val, param: arg_string, with_arg: true)
 
 proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
   var tokens: seq[string] = parser.scanner.upto_next_line()
@@ -58,30 +53,30 @@ proc translate_name(name: string): string =
 proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
   while parser.scanner.has_next:
     var token = parser.scanner.next
-    if token == ";":
+    if token.str_val == ";":
       return
-    elif token == "[":
+    elif token.str_val == "[":
       var node = newASMNode()
       def_node.add(node)
       parser.parse_asm_block(node)
-    elif token.isInteger:
+    elif token.str_val.isInteger:
       var node = PushNumberNode()
-      node.number = token.parseInt
+      node.number = token.str_val.parseInt
       def_node.add(node)
-    elif token == ":":
+    elif token.str_val == ":":
       report(errWordDefInsideOtherWord, def_node.word_name)
     else:
       var node = CallWordNode()
-      node.word_name = token
+      node.word_name = token.str_val
       def_node.add(node)
   report(errMissingWordEnding, def_node.word_name)
 
 proc parse_comment(parser: Parser) =
   while parser.scanner.has_next:
     var token = parser.scanner.next
-    if token.contains(")"):
+    if token.str_val.contains(")"):
       return
-    elif token.contains("("):
+    elif token.str_val.contains("("):
       parser.parse_comment
 
 proc is_valid_name*(name: string): bool = 
@@ -96,28 +91,29 @@ proc parse_string*(parser: Parser, src: string) =
  
   while parser.scanner.has_next:
     var token = parser.scanner.next
-    if token == ":":
+    if token.str_val == ":":
       var def_node = newDefineWordNode()
       token = parser.scanner.next
-      if not(is_valid_name(token)):
-        report(errInvalidDefinitionWordName, token)
-      def_node.word_name = token.translate_name
+      echo token.str_val
+      if not(is_valid_name(token.str_val)):
+        report(errInvalidDefinitionWordName, token.str_val)
+      def_node.word_name = token.str_val.translate_name
       parser.parse_word_definition(def_node)
       root.add(def_node)
-    elif token == "[":
+    elif token.str_val == "[":
       var asm_node = newASMNode()
       parser.parse_asm_block(asm_node)
       root.add(asm_node)
-    elif token.contains("("):
+    elif token.str_val.contains("("):
       parser.parse_comment()
-    elif token.isInteger:
+    elif token.str_val.isInteger:
       var node = PushNumberNode()
-      node.number = token.parseInt
+      node.number = token.str_val.parseInt
       root.add(node)
     else:
-      if not(is_valid_name(token)):
-        report(errInvalidCallWordName, token)
-      var node = CallWordNode(word_name: token)
+      if not(is_valid_name(token.str_val)):
+        report(errInvalidCallWordName, token.str_val)
+      var node = CallWordNode(word_name: token.str_val)
       root.add(node)
   parser.root = root
 

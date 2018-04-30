@@ -28,13 +28,13 @@ suite "Scanner Suite":
     var i = 0
     while (scanner.has_next):
       var token = scanner.next
-      check(token == str_seq[i])
+      check(token.str_val == str_seq[i])
       i += 1
   
   test "has_next should handle trailing newline":
     scanner.read_string("A\n")
-    while scanner.has_next:
-      echo scanner.next
+    discard scanner.next()
+    check(not(scanner.has_next))
 
   test "has_next should return false for trailing newline":
     scanner.read_string("A\n")
@@ -66,32 +66,32 @@ suite "Scanner Suite":
 
   test "peek should not advance scanner":
     scanner.read_string("A")
-    check(scanner.peek == "A")
-    check(scanner.peek == "A")
+    check(scanner.peek.str_val == "A")
+    check(scanner.peek.str_val == "A")
     check(scanner.has_next == true)
 
   test "backtrack by one inside column":
     scanner.read_string("A B")
     discard scanner.next()
     scanner.backtrack(1)
-    check(scanner.next() == "A")
+    check(scanner.next().str_val == "A")
  
   test "backtrack over newlines":
     scanner.read_string("A\nB")
     discard scanner.next()
     scanner.backtrack(1)
-    check(scanner.next() == "A")
+    check(scanner.next().str_val == "A")
 
   test "backtrack over several newlines":
     scanner.read_string("A\n\n\n\nB")
     discard scanner.next()
     scanner.backtrack(1)
-    check(scanner.next() == "A")
+    check(scanner.next().str_val == "A")
 
   test "backtrack over several newlines and whitespace":
     scanner.read_string("A\n    \n     \n    B")
     discard scanner.next()
     scanner.backtrack(1)
-    check(scanner.next() == "A")
+    check(scanner.next().str_val == "A")
 
   
