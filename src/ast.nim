@@ -20,7 +20,7 @@ proc newDefineWordNode*(): DefineWordNode =
   return node
 
 
-method add*(node: ASTNode, other: ASTNode) =
+method add*(node: ASTNode, other: ASTNode) {.base.} =
   echo "base add in ASTNode should not be called"
 
 method add*(node: SequenceNode, other: ASTNode) = 
@@ -29,7 +29,7 @@ method add*(node: SequenceNode, other: ASTNode) =
 method add*(node: DefineWordNode, other: ASTNode) =
   node.definition.add(other)
 
-method add*(node: ASMNode, asm_action: ASMAction) = 
+method add*(node: ASMNode, asm_action: ASMAction) {.base.} = 
   node.asm_calls.add(asm_action)
 
 

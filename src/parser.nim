@@ -1,10 +1,13 @@
 import
-  types, scanner, strutils, ast, tables, msgs
+  types, scanner, strutils, ast, tables, msgs, sequtils
 
 proc newParser*(): Parser = 
-  var parser = Parser()
-  parser.scanner = Scanner()
-  return parser
+  result = Parser()
+  result.scanner = Scanner()
+
+proc newParser*(handler: ErrorHandler): Parser = 
+  result = newParser()
+  result.error_handler = handler
 
 var nes_transl_table: Table[string, string] =
   {
@@ -15,6 +18,12 @@ var nes_transl_table: Table[string, string] =
     "!": "store"
   }.toTable
 
+
+proc report(parser: Parser, msg: MsgKind, msg_args: varargs[string]) =
+  var args: seq[string] = @[]
+  for ar in msg_args:
+    args.add(ar)
+  parser.error_handler.handle(msg, args)
 
 
 proc parse_asm_line*(tokens: seq[Token]): ASMAction =
@@ -64,12 +73,12 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       node.number = token.str_val.parseInt
       def_node.add(node)
     elif token.str_val == ":":
-      report(errWordDefInsideOtherWord, def_node.word_name)
+      parser.report(errWordDefInsideOtherWord, def_node.word_name)
     else:
       var node = CallWordNode()
       node.word_name = token.str_val
       def_node.add(node)
-  report(errMissingWordEnding, def_node.word_name)
+  parser.report(errMissingWordEnding, def_node.word_name)
 
 proc parse_comment(parser: Parser) =
   while parser.scanner.has_next:
@@ -96,7 +105,7 @@ proc parse_string*(parser: Parser, src: string) =
       token = parser.scanner.next
       echo token.str_val
       if not(is_valid_name(token.str_val)):
-        report(errInvalidDefinitionWordName, token.str_val)
+        parser.report(errInvalidDefinitionWordName, token.str_val)
       def_node.word_name = token.str_val.translate_name
       parser.parse_word_definition(def_node)
       root.add(def_node)
@@ -112,7 +121,7 @@ proc parse_string*(parser: Parser, src: string) =
       root.add(node)
     else:
       if not(is_valid_name(token.str_val)):
-        report(errInvalidCallWordName, token.str_val)
+        parser.report(errInvalidCallWordName, token.str_val)
       var node = CallWordNode(word_name: token.str_val)
       root.add(node)
   parser.root = root

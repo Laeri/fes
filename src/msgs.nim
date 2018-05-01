@@ -1,28 +1,5 @@
 import
-  strutils, os, tables, terminal
-
-type
-  LineInfo = tuple[line: int, column: int, line_str: string, file_name: string]
-  CError* = ref object of RootObj
-    msg_kind: MsgKind
-    line_info: LineInfo
-  MsgKind* = enum
-    BEGIN_ERRORS
-    errWordAlreadyDefined = "word \'$1\' already exists"
-    errMissingWordEnding = "word \'$1\' has no definition ending \";\""
-    errWordDefInsideOtherWord = "word \'$1\' has another definition inside it"
-    errInvalidDefinitionWordName = "wordname \'$1\' in definition is not a valid name"
-    errInvalidCallWordName = "wordname \'$1\' for a call not a valid name"
-    END_ERRORS
-
-    BEGIN_WARNINGS
-    END_WARNINGS
-
-    BEGIN_HINTS
-    END_HINTS
-
-    BEGIN_RESULTS
-    END_RESULTS
+  strutils, os, tables, terminal, types
 
 
 const
@@ -45,7 +22,38 @@ const
   ResultTitle = "Result: "
   ResultColor = fgGreen
 
+proc newErrorInfo*(msg: MsgKind, msg_args: seq[string], line_info: LineInfo): ErrorInfo = 
+  result = ErrorInfo()
+  result.msg = msg
+  result.msg_args = msg_args
+  result.line_info = line_info
 
+proc newErrorHandler*(): ErrorHandler =
+  result = ErrorHandler()
+  result.errors = @[]
+
+proc has_errors*(handler: ErrorHandler): bool =
+  return handler.errors.len > 0
+
+proc report(error_info: ErrorInfo)
+
+proc has_error_type*(handler: ErrorHandler, msg_kind: MsgKind): bool =
+  for comp_err in handler.errors:
+    if comp_err.msg == msg_kind:
+      return true
+  return false
+
+
+proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string]) =
+  var error_info =  ErrorInfo(msg: msg, msg_args: msg_args)
+  report(error_info)
+  handler.errors.add(error_info)
+
+proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string], line_info: LineInfo) =
+  var error_info = newErrorInfo(msg, msg_args, line_info)
+  report(error_info)
+  handler.errors.add(error_info)
+  
 
 proc printError(msg_k: MsgKind, params: varargs[string]) =
   var msg = $msg_k % params
@@ -92,5 +100,8 @@ proc printMessage*(msg_k: MsgKind, params: varargs[string]) =
   elif msg_k in min_res..max_res:
     printResult(msg_k, params)
 
-proc report*(msg: MsgKind, args: varargs[string]) =
+proc report(error_info: ErrorInfo) =
+  printMessage(error_info.msg, error_info.msg_args)
+
+proc report(msg: MsgKind, args: varargs[string]) =
   printMessage(msg, args)

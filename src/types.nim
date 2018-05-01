@@ -1,9 +1,10 @@
 import
-  msgs
+  terminal
 
 type
   FESCompiler* = ref object of RootObj
     parser*: Parser
+    error_handler*: ErrorHandler
     out_asm_folder*: string
     out_passes_folder*: string
     optimize*: bool
@@ -73,3 +74,33 @@ type
   Parser* = ref object of RootObj
     root*: SequenceNode
     scanner*: Scanner
+    error_handler*: ErrorHandler
+
+  LineInfo* = tuple[line: int, column: int, line_str: string, file_name: string]
+
+  ErrorInfo* = ref object of RootObj
+    msg*: MsgKind
+    msg_args*: seq[string]
+    line_info*: LineInfo
+  ErrorHandler* = ref object of RootObj
+    errors*: seq[ErrorInfo]
+  MsgKind* = enum
+    BEGIN_ERRORS
+    errWordAlreadyDefined = "word \'$1\' already exists"
+    errMissingWordEnding = "word \'$1\' has no definition ending \";\""
+    errWordDefInsideOtherWord = "word \'$1\' has another definition inside it"
+    errInvalidDefinitionWordName = "wordname \'$1\' in definition is not a valid name"
+    errInvalidCallWordName = "wordname \'$1\' for a call not a valid name"
+    END_ERRORS
+
+    BEGIN_WARNINGS
+    END_WARNINGS
+
+    BEGIN_HINTS
+    END_HINTS
+
+    BEGIN_RESULTS
+    END_RESULTS
+
+
+

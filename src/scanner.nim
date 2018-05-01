@@ -83,12 +83,6 @@ proc read_string*(scanner: Scanner, src: string) =
   scanner.column_accurate = 0
   scanner.advance
 
-proc nonempty(lines: seq[string], index = 0): bool =
-  for i in countup(index, lines.len - 1):
-    if lines[i].splitWhitespace.len != 0:
-      return true
-  return false
-
 
 proc skip_to_next_line*(scanner: Scanner) =
   scanner.line += 1

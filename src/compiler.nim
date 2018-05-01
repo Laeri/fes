@@ -5,7 +5,15 @@ import
 
 proc newFESCompiler*(): FESCompiler =
   result = FESCompiler()
-  result.parser = newParser()
+  result.error_handler = newErrorHandler()
+  result.parser = newParser(result.error_handler)
+
+
+proc report(compiler: FESCompiler, msg: MsgKind, msg_args: varargs[string]) =
+  var args: seq[string] = @[]
+  for ar in msg_args:
+    args.add(ar)
+  compiler.error_handler.handle(msg, args)
 
 proc isOPCODE(str: string): bool =
   try:
@@ -348,7 +356,7 @@ proc count[T](t_seq: seq[T], t_el: T): int =
     if seq_el == t_el:
       inc(result)
 
-proc check_multiple_defs(node: ASTNode) =
+proc check_multiple_defs(compiler: FESCompiler, node: ASTNode) =
   var defs = collect_defs(cast[SequenceNode](node))
   var names: seq[string] = @[]
   for def in defs:
@@ -357,7 +365,7 @@ proc check_multiple_defs(node: ASTNode) =
   if names.len != names_set.len:
     for set_name in names_set:
       if names.count(set_name) > 1:
-        report(errWordAlreadyDefined, set_name)
+        compiler.report(errWordAlreadyDefined, set_name)
 
 proc digit_to_hex(number: int): string =
   var hex = @["A", "B", "C", "D", "E", "F"]
@@ -483,7 +491,7 @@ proc do_passes(compiler: FESCompiler) =
   group_word_defs_last(compiler.parser.root)
   #echo compiler.parser.root.string_rep
   compiler.parser.root.add_start_label()
-  check_multiple_defs(compiler.parser.root)
+  compiler.check_multiple_defs(compiler.parser.root)
 
 proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
   var pp_optimizer = newNESPPOptimizer()
