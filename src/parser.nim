@@ -33,23 +33,24 @@ proc report(parser: Parser, msg: MsgKind, msg_args: varargs[string]) =
     args.add(ar)
   parser.error_handler.handle(msg, args)
 
-
-proc parse_asm_line*(tokens: seq[Token]): ASMAction =
-  if tokens.len == 1:
-      if tokens[0].str_val.contains(":"):
-        return ASMLabel(label_name: tokens[0].str_val)
-      else:
-        return ASMCall(op: parseEnum[OPCODE] tokens[0].str_val)
-  elif tokens.len == 2:
-    var arg_string = tokens[1].str_val
-    return ASMCall(op: parseEnum[OPCODE] tokens[0].str_val, param: arg_string)
-
 proc create_asm_call(parser: Parser, op: string, param: string = nil): ASMCall =
   if not(op.is_OPCODE):
     parser.report(errInvalidASMInstruction, op)
     return ASMCall(op: INVALID_OPCODE, param: param)
   else:
     return ASMCall(op: parseEnum[OPCODE](op), param: param)
+
+proc parse_asm_line*(parser: Parser, tokens: seq[Token]): ASMAction =
+  var str_val = tokens[0].str_val
+  if tokens.len == 1:
+      if str_val[str_val.len - 1] == ':':
+        return ASMLabel(label_name: tokens[0].str_val)
+      else:
+        return parser.create_asm_call(str_val)
+  elif tokens.len == 2:
+    var arg_string = tokens[1].str_val
+    return parser.create_asm_call(str_val, arg_string)
+
 
 proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
   var tokens: seq[string] = parser.scanner.upto_next_line()
