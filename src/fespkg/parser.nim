@@ -128,8 +128,6 @@ proc parse_comment(parser: Parser) =
 proc is_empty(node: DefineWordNode): bool = 
   return node.definition.len == 0
 
-
-
 proc parse_string*(parser: Parser, src: string) = 
   parser.scanner.read_string(src)
   var root = newSequenceNode()
@@ -167,6 +165,12 @@ proc parse_string*(parser: Parser, src: string) =
       var node = CallWordNode(word_name: token.str_val)
       root.add(node)
   parser.root = root
+
+proc parse_sources*(parser: Parser, sources: varargs[string]) =
+  var src = ""
+  for to_parse in sources:
+    src &= to_parse & "\n"
+  parser.parse_string(src)
 
 proc parse_files*(parser: Parser, files: varargs[string]) =
   var src: string = ""

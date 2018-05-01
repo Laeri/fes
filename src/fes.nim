@@ -1,5 +1,5 @@
 import
-  docopt, strutils, os, types, compiler
+  docopt, strutils, os, fespkg/types, fespkg/compiler
 
 let version = "0.0.1"
 let name = "fes"

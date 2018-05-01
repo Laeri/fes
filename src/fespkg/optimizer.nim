@@ -283,9 +283,8 @@ proc optimize*(optimizer: NESPPOptimizer, rules: seq[NESPPRule], asm_code: var s
   if (runs == MAX_RUNS):
     echo "max runs reached in pp optimization"
 
-proc optimize*(optimizer: NESPPOptimizer, rule_file_name: string, asm_code: var seq[ASMAction]) = 
+proc optimize*(optimizer: NESPPOptimizer, rules_src: string, asm_code: var seq[ASMAction]) = 
   var parser = newNESPParser()
-  var rules_src: string = readFile(rule_file_name)
   var rules = parser.parse_rules(rules_src)
   optimizer.optimize(rules, asm_code)
 

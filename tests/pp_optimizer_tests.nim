@@ -1,5 +1,5 @@
 import
-  unittest, ../src/types, ../src/optimizer, ../src/compiler
+  unittest, ../src/fespkg/types, ../src/fespkg/optimizer, ../src/fespkg/compiler, ../src/fespkg/parser
 
 template do_rule_test(): untyped =
   parser.parse_string(asm_src)
@@ -50,7 +50,7 @@ suite "JSR_RTS":
     ]
     """
 
-    do_rule_test
+    #do_rule_test
 
 
 

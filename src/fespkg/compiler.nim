@@ -480,17 +480,23 @@ proc do_passes(compiler: FESCompiler) =
   compiler.parser.root.add_start_label()
   compiler.check_multiple_defs(compiler.parser.root)
 
+
+
+const core = readFile("src/core/core.fth")
+const ppopt_src = readFile("src/ppopt/peephole_6502.txt")
+  
+
 proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
   var pp_optimizer = newNESPPOptimizer()
-  pp_optimizer.optimize("src/optimizaton_files/peephole_6502.txt", asm_code)
+  pp_optimizer.optimize(ppopt_src, asm_code)
 
 
 proc compile*(compiler: FESCompiler) =
-  var core_path = "core/core.fth"
+  var src = readFile(compiler.file_path)
   if compiler.load_core_words:
-    compiler.parser.parse_files(core_path, compiler.file_path)
+    compiler.parser.parse_sources(core, src)
   else:
-    compiler.parser.parse_files(compiler.file_path)
+    compiler.parser.parse_sources(src)
 
   compiler.do_passes()
   var asm_calls: seq[ASMAction] = @[]
