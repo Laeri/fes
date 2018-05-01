@@ -15,19 +15,6 @@ proc report(compiler: FESCompiler, msg: MsgKind, msg_args: varargs[string]) =
     args.add(ar)
   compiler.error_handler.handle(msg, args)
 
-proc isOPCODE(str: string): bool =
-  try:
-    discard parseEnum[OPCODE] str
-  except ValueError:
-     return false
-  return true
-
-proc isOP_MODE(str: string): bool =
-  try:
-    discard parseEnum[OP_MODE] str
-  except ValueError:
-     return false
-  return true
 
 proc newASMInfo(op_mode: OP_MODE, op_length: int, op_time: int): ASMInfo =
   return ASMInfo(mode: op_mode, len: op_length, time: op_time)
@@ -404,17 +391,17 @@ method emit*(node: SequenceNode, asm_code: var seq[ASMAction]) =
     node.emit(asm_code)
 
 method emit*(node: CallWordNode, asm_code: var seq[ASMAction]) =
-  asm_code.add(ASMCall(op: JSR, param: node.word_name & "\n", with_arg: true))
+  asm_code.add(ASMCall(op: JSR, param: node.word_name & "\n"))
 
 method emit*(node: DefineWordNode, asm_code: var seq[ASMAction]) =
   asm_code.add(ASMLabel(label_name: (node.word_name & ":")))
   node.definition.emit(asm_code)
-  asm_code.add(ASMCall(op: RTS, param: "", with_arg:true))
+  asm_code.add(ASMCall(op: RTS))
 
 method emit*(node: PushNumberNode, asm_code: var seq[ASMAction]) =
   var param = node.number.num_to_hex
   param = param.pad_to_even
-  var call = ASMCall(op: LDA, param: param, with_arg: true)
+  var call = ASMCall(op: LDA, param: param)
   asm_code.add(call)
 
 method emit*(node: ASMNode, asm_code: var seq[ASMAction]) =

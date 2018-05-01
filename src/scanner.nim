@@ -83,12 +83,12 @@ proc read_string*(scanner: Scanner, src: string) =
   scanner.column_accurate = 0
   scanner.advance
 
-
 proc skip_to_next_line*(scanner: Scanner) =
   scanner.line += 1
   scanner.column = 0
-  scanner.columns = scanner.lines[scanner.line].splitWhitespace
-  scanner.column_accurate = 0
+  if scanner.has_next:
+    scanner.columns = scanner.lines[scanner.line].splitWhitespace
+    scanner.column_accurate = 0
 
 
 proc skip_empty_lines*(scanner: Scanner) =

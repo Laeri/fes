@@ -31,6 +31,10 @@ proc newErrorInfo*(msg: MsgKind, msg_args: seq[string], line_info: LineInfo): Er
 proc newErrorHandler*(): ErrorHandler =
   result = ErrorHandler()
   result.errors = @[]
+  result.silent = false
+
+proc set_silent*(handler: ErrorHandler) = 
+  handler.silent = true
 
 proc has_errors*(handler: ErrorHandler): bool =
   return handler.errors.len > 0
@@ -46,12 +50,14 @@ proc has_error_type*(handler: ErrorHandler, msg_kind: MsgKind): bool =
 
 proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string]) =
   var error_info =  ErrorInfo(msg: msg, msg_args: msg_args)
-  report(error_info)
+  if not(handler.silent):
+    report(error_info)
   handler.errors.add(error_info)
 
 proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string], line_info: LineInfo) =
   var error_info = newErrorInfo(msg, msg_args, line_info)
-  report(error_info)
+  if not(handler.silent):
+    report(error_info)
   handler.errors.add(error_info)
   
 

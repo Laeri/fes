@@ -140,10 +140,10 @@ proc parse_asm_line_to_matcher(tokens: seq[string], symbol_table: TableRef[strin
       if tokens[0].contains(":"):
         return ASMLabelMatcher(label_symbol: parse_matcher_symbol(tokens[0], symbol_table))
       else:
-        return ASMCallMatcher(op: parseEnum[OPCODE] tokens[0], with_arg: false)
+        return ASMCallMatcher(op: parseEnum[OPCODE] tokens[0])
   elif tokens.len == 2:
     var arg_string = tokens[1]
-    return ASMCallMatcher(op: parseEnum[OPCODE] tokens[0], symbol: parse_matcher_symbol(arg_string, symbol_table), with_arg: true)
+    return ASMCallMatcher(op: parseEnum[OPCODE] tokens[0], symbol: parse_matcher_symbol(arg_string, symbol_table))
 
 proc parse_rules(parser: NESPParser, src: string): seq[NESPPRule] =
   var scanner = parser.scanner
@@ -256,7 +256,7 @@ method emit(matcher: ASMLabelMatcher): ASMAction =
 method emit(matcher: ASMCallMatcher): ASMAction =
   echo matcher.repr
   if matcher.with_arg:
-    return ASMCall(op: matcher.op, param: matcher.symbol.emit, with_arg: true)
+    return ASMCall(op: matcher.op, param: matcher.symbol.emit)
   else:
     return ASMCall(op: matcher.op)
 
