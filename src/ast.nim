@@ -19,6 +19,8 @@ proc newDefineWordNode*(): DefineWordNode =
   node.definition = newSequenceNode()
   return node
 
+proc len*(node: SequenceNode): int =
+  return node.sequence.len
 
 method add*(node: ASTNode, other: ASTNode) {.base.} =
   echo "base add in ASTNode should not be called"

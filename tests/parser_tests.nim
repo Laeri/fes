@@ -72,4 +72,9 @@ suite "Parser Suite":
     src = ":name [ ] ;"
     parser.parse_string(src)
     check(handler.has_error_type(warnMissingASMBody) == true)
+  
+  test "warnMissingWordDefBody: word definition body is empty and should be reported":
+    src = ": name ;"
+    parser.parse_string(src)
+    check(handler.has_error_type(warnMissingWordDefBody) == true)
     

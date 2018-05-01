@@ -125,6 +125,8 @@ proc parse_comment(parser: Parser) =
       parser.parse_comment
 
 
+proc is_empty(node: DefineWordNode): bool = 
+  return node.definition.len == 0
 
 
 
@@ -145,6 +147,8 @@ proc parse_string*(parser: Parser, src: string) =
         def_node.word_name = token.str_val.translate_name
       parser.parse_word_definition(def_node)
       root.add(def_node)
+      if def_node.is_empty:
+        parser.report(warnMissingWordDefBody, def_node.word_name)
     elif token.str_val == "[":
       var asm_node = newASMNode()
       parser.parse_asm_block(asm_node)
