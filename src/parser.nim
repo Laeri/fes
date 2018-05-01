@@ -87,6 +87,9 @@ proc translate_name(name: string): string =
   else:
     return name
 
+proc is_empty(node: ASMNode): bool = 
+  return node.asm_calls.len == 0
+
 proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
   while parser.scanner.has_next:
     var token = parser.scanner.next
@@ -96,6 +99,8 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       var node = newASMNode()
       def_node.add(node)
       parser.parse_asm_block(node)
+      if node.is_empty:
+        parser.report(warnMissingASMBody)
     elif token.str_val.isInteger:
       var node = PushNumberNode()
       node.number = token.str_val.parseInt
@@ -130,13 +135,11 @@ proc parse_string*(parser: Parser, src: string) =
   while parser.scanner.has_next:
     var token = parser.scanner.next
     if token.str_val == ":":
-      echo "DEF"
       var def_node = newDefineWordNode()
       if not(parser.scanner.has_next()):
         parser.report(errMissingWordDefName)
       else:
         token = parser.scanner.next
-        echo token.str_val
         if not(is_valid_name(token.str_val)):
           parser.report(errInvalidDefinitionWordName, token.str_val)
         def_node.word_name = token.str_val.translate_name
@@ -146,6 +149,8 @@ proc parse_string*(parser: Parser, src: string) =
       var asm_node = newASMNode()
       parser.parse_asm_block(asm_node)
       root.add(asm_node)
+      if asm_node.is_empty:
+        parser.report(warnMissingASMBody)
     elif token.str_val.contains("("):
       parser.parse_comment()
     elif token.str_val.isInteger:

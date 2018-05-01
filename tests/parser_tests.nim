@@ -64,4 +64,12 @@ suite "Parser Suite":
     src = "[ NNN ]"
     parser.parse_string(src)
     check(handler.has_error_type(errInvalidASMInstruction) == true)
+
+  test "warnMissingASMBody: asm body inside \'[]\' is empty and should be reported":
+    src = "[ ]"
+    parser.parse_string(src)
+    check(handler.has_error_type(warnMissingASMBody) == true)
+    src = ":name [ ] ;"
+    parser.parse_string(src)
+    check(handler.has_error_type(warnMissingASMBody) == true)
     

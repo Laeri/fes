@@ -99,6 +99,7 @@ type
 
     BEGIN_WARNINGS
     warnMissingWordDefBody = "word definition \'$1\' has no body" 
+    warnMissingASMBody = "asm block has no body"
     END_WARNINGS
 
     BEGIN_HINTS
