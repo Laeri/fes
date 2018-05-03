@@ -2,6 +2,9 @@ import
   types
 
 
+proc newIfElseNode*(): IfElseNode =
+  result = IfElseNode()
+
 proc newSequenceNode*(): SequenceNode =
   var node = SequenceNode()
   node.sequence = @[]

@@ -14,6 +14,10 @@ type
     silent*: bool
   ASTNode* = ref object of RootObj
 
+  IfElseNode* = ref object of ASTNode
+    then_block*: ASTNode
+    else_block*: ASTnode
+
   PushNumberNode* = ref object of ASTNode
     number*: int
 
@@ -95,11 +99,14 @@ type
     errMissingASMEnding = "asm block has no ending"
     errTooManyASMOperands = "asm statement \'$\' has too many operands: \'$\'"
     errInvalidASMInstruction = "asm instruction \'$1\' is not valid"
+    errMissingIfElseEnding = "\'if\' statement has no corresponding \'then\' to close it"
     END_ERRORS
 
     BEGIN_WARNINGS
     warnMissingWordDefBody = "word definition \'$1\' has no body" 
     warnMissingASMBody = "asm block has no body"
+    warnMissingThenBody = "\'if\' statement has no \'then\' body"
+    warnMissingElseBody = "\'if\' statement has no \'else\' body"
     END_WARNINGS
 
     BEGIN_HINTS

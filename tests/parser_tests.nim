@@ -77,4 +77,28 @@ suite "Parser Suite":
     src = ": name ;"
     parser.parse_string(src)
     check(handler.has_error_type(warnMissingWordDefBody) == true)
+
+  test "warnMissingThenBody: if else block without \'then\' body should be reported":
+    src = "if then"
+    parser.parse_string(src)
+    check(handler.has_error_type(warnMissingThenBody) == true)
+
+  test "warnMissingElseBody: if else block without \'else\' body should be reported":
+    src = "if 1 else then"
+    parser.parse_string(src)
+    check(handler.has_error_type(warnMissingElseBody) == true)
+    
+  test "errMissingIfElseEnding: if else block has no closing \'then\'":
+    src = "if"
+    parser.parse_string(src)
+    check(handler.has_error_type(errMissingIfElseEnding) == true)
+    src = "if else"
+    parser.parse_string(src)
+    check(handler.has_error_type(errMissingIfElseEnding) == true)
+
+  
+
+
+
+
     

@@ -125,13 +125,19 @@ proc parse_comment(parser: Parser) =
       parser.parse_comment
 
 
-proc is_empty(node: DefineWordNode): bool = 
+method is_empty(node: ASTNode): bool {.base.}=
+  return true
+
+method is_empty(node: DefineWordNode): bool = 
   return node.definition.len == 0
 
-proc parse_string*(parser: Parser, src: string) = 
-  parser.scanner.read_string(src)
+method is_empty(node: SequenceNode): bool =
+  return node.sequence.len == 0
+
+proc parse_ifelse*(parser: Parser): IfElseNode
+
+proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()
- 
   while parser.scanner.has_next:
     var token = parser.scanner.next
     if token.str_val == ":":
@@ -153,6 +159,13 @@ proc parse_string*(parser: Parser, src: string) =
       root.add(asm_node)
       if asm_node.is_empty:
         parser.report(warnMissingASMBody)
+    elif token.str_val == "if":
+      var ifelse_node = parser.parse_ifelse()
+      root.add(ifelse_node)
+    elif token.str_val == "then":
+      return root
+    elif token.str_val == "else":
+      return root
     elif token.str_val.contains("("):
       parser.parse_comment()
     elif token.str_val.isInteger:
@@ -164,6 +177,36 @@ proc parse_string*(parser: Parser, src: string) =
         parser.report(errInvalidCallWordName, token.str_val)
       var node = CallWordNode(word_name: token.str_val)
       root.add(node)
+  return root
+
+proc parse_ifelse*(parser: Parser): IfElseNode =
+  var ifelse_node = newIfElseNode()
+  var then_block = parser.parse_sequence()
+  ifelse_node.then_block = then_block
+  if then_block.is_empty:
+    parser.report(warnMissingThenBody)
+  parser.scanner.backtrack(1)
+  var last_token = parser.scanner.next
+  if last_token.str_val == "then":
+    return ifelse_node
+  elif last_token.str_val == "else":
+    var else_block = parser.parse_sequence()
+    ifelse_node.else_block = else_block
+    if else_block.is_empty:
+      parser.report(warnMissingElseBody)
+    parser.scanner.backtrack(1)
+    last_token = parser.scanner.next
+    if last_token.str_val == "then":
+      return ifelse_node
+    else:
+      parser.report(errMissingIfElseEnding)
+  else:
+    parser.report(errMissingIfElseEnding)
+  return ifelse_node
+
+proc parse_string*(parser: Parser, src: string) = 
+  parser.scanner.read_string(src)
+  var root = parse_sequence(parser)
   parser.root = root
 
 proc parse_sources*(parser: Parser, sources: varargs[string]) =
