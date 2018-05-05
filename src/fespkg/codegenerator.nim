@@ -5,6 +5,8 @@ proc newCodeGenerator*(): CodeGenerator =
   result = CodeGenerator()
   result.code = @[]
 
+proc newASMCall*(op: OPCODE, param: string = nil): ASMCall =
+  result = ASMCall(op: op, param: param)
 
 proc digit_to_hex(number: int): string =
   var hex = @["A", "B", "C", "D", "E", "F"]
@@ -34,6 +36,12 @@ proc pad_to_even(hex: var string): string =
     hex = "0x0" & str
   return hex
     
+method `==`*(c1: ASMAction, c2: ASMAction): bool {.base.} =
+  return false
+
+method `==`*(c1, c2: ASMCall): bool =
+  return (c1.op == c2.op) and (c1.param == c2.param)
+
 
 method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
   echo "error, node without code to emit"
@@ -44,7 +52,7 @@ method emit*(generator: CodeGenerator, node: SequenceNode) =
     generator.emit(node)
 
 method emit*(generator: CodeGenerator, node: CallWordNode) =
-  generator.code.add(ASMCall(op: JSR, param: node.word_name & "\n"))
+  generator.code.add(ASMCall(op: JSR, param: node.word_name))
 
 method emit*(generator: CodeGenerator, node: DefineWordNode) =
   generator.code.add(ASMLabel(label_name: (node.word_name & ":")))
@@ -54,8 +62,8 @@ method emit*(generator: CodeGenerator, node: DefineWordNode) =
 method emit*(generator: CodeGenerator, node: PushNumberNode) =
   var param = node.number.num_to_hex
   param = param.pad_to_even
-  var call = ASMCall(op: LDA, param: param)
-  generator.code.add(call)
+  generator.code.add(ASMCall(op: LDA, param: param))
+  generator.code.add(ASMCall(op: STA, param: "$02FF,X"))
 
 method emit*(generator: CodeGenerator, node: ASMNode) =
   for call in node.asm_calls:
@@ -64,3 +72,5 @@ method emit*(generator: CodeGenerator, node: ASMNode) =
 method emit*(generator: CodeGenerator, node: IfElseNode) =
   var then_block = node.then_block
   var else_block = node.else_block
+  generator.code.add(ASMLabel(label_name: "begin_if" & $generator.current_ifelse & ":"))
+  

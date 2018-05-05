@@ -22,4 +22,9 @@ task run, "Run a file in the src/fespkg folder and generate binaries in bin/":
 task tests, "Run all tests in tests/ folder":
   exec "nim c -r -o=bin/runtests tests/runtests"
 
-
+task test, "Run specified test in tests/ folder":
+  if paramCount() < 2:
+    quit(QuitFailure)
+  else:
+    var src_name = paramStr(2)
+    exec "nim c -r -o=bin/" & src_name & " -r tests/" & src_name 
