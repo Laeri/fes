@@ -27,15 +27,13 @@ proc num_to_hex(number: int): string =
     var rem = n mod 16
     hex = rem.digit_to_hex & hex
     n = int(val)
-  hex = "$" & hex
-  return hex
+  if (hex.len mod 2) == 1:
+    hex = "0" & hex
+  return "$" & hex
 
-proc pad_to_even(hex: var string): string = 
-  var str: string = "" & hex[2 .. hex.len]
-  if ((str.len - 1) mod 2) == 1:
-    hex = "0x0" & str
-  return hex
-    
+proc num_to_im_hex(number: int): string =
+  return "#" & num_to_hex(number)
+
 method `==`*(c1: ASMAction, c2: ASMAction): bool {.base.} =
   return false
 
@@ -60,8 +58,7 @@ method emit*(generator: CodeGenerator, node: DefineWordNode) =
   generator.code.add(ASMCall(op: RTS))
 
 method emit*(generator: CodeGenerator, node: PushNumberNode) =
-  var param = node.number.num_to_hex
-  param = param.pad_to_even
+  var param = node.number.num_to_im_hex
   generator.code.add(ASMCall(op: LDA, param: param))
   generator.code.add(ASMCall(op: STA, param: "$02FF,X"))
 
