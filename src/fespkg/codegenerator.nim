@@ -59,8 +59,9 @@ method emit*(generator: CodeGenerator, node: DefineWordNode) =
 
 method emit*(generator: CodeGenerator, node: PushNumberNode) =
   var param = node.number.num_to_im_hex
-  generator.code.add(ASMCall(op: LDA, param: param))
+  generator.code.add(ASMCall(op: DEX))
   generator.code.add(ASMCall(op: STA, param: "$02FF,X"))
+  generator.code.add(ASMCall(op: LDA, param: param))
 
 method emit*(generator: CodeGenerator, node: ASMNode) =
   for call in node.asm_calls:
