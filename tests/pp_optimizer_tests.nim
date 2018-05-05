@@ -1,5 +1,5 @@
 import
-  unittest, ../src/fespkg/types, ../src/fespkg/optimizer, ../src/fespkg/compiler, ../src/fespkg/parser
+  unittest, types, optimizer, compiler, parser
 
 template do_rule_test(): untyped =
   parser.parse_string(asm_src)

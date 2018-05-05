@@ -4,6 +4,7 @@ import
 type
   FESCompiler* = ref object of RootObj
     parser*: Parser
+    generator*: CodeGenerator
     error_handler*: ErrorHandler
     out_asm_folder*: string
     out_passes_folder*: string
@@ -12,6 +13,11 @@ type
     run*: bool
     load_core_words*: bool
     silent*: bool
+
+  CodeGenerator* = ref object of RootObj
+    current_ifelse*: int
+    code*: seq[ASMAction]
+
   ASTNode* = ref object of RootObj
 
   IfElseNode* = ref object of ASTNode

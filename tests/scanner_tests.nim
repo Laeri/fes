@@ -1,5 +1,5 @@
 import
-  ../src/fespkg/scanner, unittest, strutils, sequtils, ../src/fespkg/types, random, sets
+  random, sets, unittest, strutils, sequtils, scanner, types
 
 proc to_string(char_set: set[char]): string =
   var char_seq = toSeq(char_set.items)

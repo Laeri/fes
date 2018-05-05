@@ -1,5 +1,5 @@
 import
-  unittest, ../src/fespkg/types, ../src/fespkg/parser, ../src/fespkg/msgs, typeinfo
+  unittest, types, parser, msgs
 
 suite "Parser Suite":
 

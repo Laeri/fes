@@ -1,12 +1,13 @@
 import 
   strutils, sequtils, tables, typetraits, macros, os,
-  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast, sets
+  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast, sets, codegenerator
 
 
 proc newFESCompiler*(): FESCompiler =
   result = FESCompiler()
   result.error_handler = newErrorHandler()
   result.parser = newParser(result.error_handler)
+  result.generator = newCodeGenerator()
 
 
 proc report(compiler: FESCompiler, msg: MsgKind, msg_args: varargs[string]) =
@@ -354,60 +355,6 @@ proc check_multiple_defs(compiler: FESCompiler, node: ASTNode) =
       if names.count(set_name) > 1:
         compiler.report(errWordAlreadyDefined, set_name)
 
-proc digit_to_hex(number: int): string =
-  var hex = @["A", "B", "C", "D", "E", "F"]
-  if number < 10:
-    result = number.intToStr
-  else:
-    result = hex[number - 10]
-  return result
-
-proc num_to_hex(number: int): string =
-  var hex: string = ""
-  var n = number
-  if n == 0:
-    hex = "0"
-  while (n / 16 > 0):
-    var val = n / 16
-    var rem = n mod 16
-    hex = rem.digit_to_hex & hex
-    n = int(val)
-  hex = "$" & hex
-  return hex
-
-proc pad_to_even(hex: var string): string = 
-  var str: string = "" & hex[2 .. hex.len]
-  if ((str.len - 1) mod 2) == 1:
-    hex = "0x0" & str
-  return hex
-
-
-method emit*(node: ASTNode, asm_code: var seq[ASMAction]) {.base.} =
-  echo "error, node without code to emit"
-  discard
-
-method emit*(node: SequenceNode, asm_code: var seq[ASMAction]) = 
-  for node in node.sequence:
-    node.emit(asm_code)
-
-method emit*(node: CallWordNode, asm_code: var seq[ASMAction]) =
-  asm_code.add(ASMCall(op: JSR, param: node.word_name & "\n"))
-
-method emit*(node: DefineWordNode, asm_code: var seq[ASMAction]) =
-  asm_code.add(ASMLabel(label_name: (node.word_name & ":")))
-  node.definition.emit(asm_code)
-  asm_code.add(ASMCall(op: RTS))
-
-method emit*(node: PushNumberNode, asm_code: var seq[ASMAction]) =
-  var param = node.number.num_to_hex
-  param = param.pad_to_even
-  var call = ASMCall(op: LDA, param: param)
-  asm_code.add(call)
-
-method emit*(node: ASMNode, asm_code: var seq[ASMAction]) =
-  for call in node.asm_calls:
-    asm_code.add(call)
-    
 
 proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
   result = ""
@@ -499,8 +446,8 @@ proc compile*(compiler: FESCompiler) =
     compiler.parser.parse_sources(src)
 
   compiler.do_passes()
-  var asm_calls: seq[ASMAction] = @[]
-  compiler.parser.root.emit(asm_calls)
+  compiler.generator.emit(compiler.parser.root)
+  var asm_calls = compiler.generator.code
   if compiler.optimize:
     compiler.pp_optimize(asm_calls)
   var asm_str = aasm_to_string(asm_calls)
