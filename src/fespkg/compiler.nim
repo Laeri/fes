@@ -356,19 +356,6 @@ proc check_multiple_defs(compiler: FESCompiler, node: ASTNode) =
         compiler.report(errWordAlreadyDefined, set_name)
 
 
-proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
-  result = ""
-  for asm_code in asm_actions:
-    if asm_code of ASMCall:
-      var call = cast[ASMCall](asm_code)
-      var arg = ""
-      if call.with_arg:
-        arg = " " & call.param
-      result &= "  " & $call.op & arg & "\n"
-    elif asm_code of ASMLabel:
-      var label = cast[ASMLabel](asm_code)
-      result &= cast[ASMLabel](asm_code).label_name & "\n"
-  return result
 
 proc generate_nes_str(asm_code: seq[ASMAction]): string =
   var num_16k_prg_banks = 1

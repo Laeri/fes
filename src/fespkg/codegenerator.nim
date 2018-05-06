@@ -16,6 +16,9 @@ proc digit_to_hex(number: int): string =
     result = hex[number - 10]
   return result
 
+proc next_ifelse(generator: CodeGenerator) =
+  generator.current_ifelse += 1
+
 
 proc num_to_hex(number: int): string =
   var hex: string = ""
@@ -67,8 +70,60 @@ method emit*(generator: CodeGenerator, node: ASMNode) =
   for call in node.asm_calls:
     generator.code.add(call)
 
+proc begin_if_label_name(generator: CodeGenerator): string =
+  return "begin_if" & $generator.current_ifelse
+
+proc begin_then_label_name(generator: CodeGenerator): string =
+  return "begin_then" & $generator.current_ifelse
+
+proc begin_else_label_name(generator: CodeGenerator): string =
+  return "begin_else" & $generator.current_ifelse
+
+proc end_if_label_name(generator: CodeGenerator): string =
+  return "end_if" & $generator.current_ifelse
+
+
+
+proc begin_if_label(generator: CodeGenerator): ASMLabel =
+  return ASMLabel(label_name: generator.begin_if_label_name() & ":")
+
+proc begin_then_label(generator: CodeGenerator): ASMLabel =
+  return ASMLabel(label_name: generator.begin_then_label_name() & ":")
+
+proc begin_else_label(generator: CodeGenerator): ASMLabel =
+  return ASMLabel(label_name: generator.begin_else_label_name() & ":")
+
+proc end_if_label(generator: CodeGenerator): ASMLabel =
+  return ASMLabel(label_name: generator.end_if_label_name() & ":")
+
 method emit*(generator: CodeGenerator, node: IfElseNode) =
+  generator.next_ifelse()
   var then_block = node.then_block
   var else_block = node.else_block
-  generator.code.add(ASMLabel(label_name: "begin_if" & $generator.current_ifelse & ":"))
+  generator.code.add(generator.begin_if_label())
+  generator.code.add(ASMCall(op: CLC))
+  generator.code.add(ASMCall(op: ASL))
+  generator.code.add(ASMCall(op: BCC, param: generator.begin_else_label_name()))
+  generator.code.add(generator.begin_then_label())
+  generator.emit(then_block)
+  generator.code.add(ASMCall(op: JMP, param: generator.end_if_label_name()))
+  generator.code.add(generator.begin_else_label())
+  generator.emit(else_block)
+  generator.code.add(generator.end_if_label())
+
+
+proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
+  result = ""
+  for asm_code in asm_actions:
+    if asm_code of ASMCall:
+      var call = cast[ASMCall](asm_code)
+      var arg = ""
+      if call.with_arg:
+        arg = " " & call.param
+      result &= "  " & $call.op & arg & "\n"
+    elif asm_code of ASMLabel:
+      var label = cast[ASMLabel](asm_code)
+      result &= cast[ASMLabel](asm_code).label_name & "\n"
+  return result
+  
   

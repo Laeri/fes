@@ -117,17 +117,7 @@ swap
 -
 ;
 
-: mul
-[
-  ldy $02FF,X
-mul8_multiply:
-  sta $0000
-  tya
-  beq mul8_early_return
-  dey
-  sty $0001
-  lda #0
-.repeat 8, i
+
 
 
 

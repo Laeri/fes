@@ -4,6 +4,7 @@ import
 proc newParser*(): Parser = 
   result = Parser()
   result.scanner = Scanner()
+  result.error_handler = newErrorHandler()
 
 proc newParser*(handler: ErrorHandler): Parser = 
   result = newParser()
@@ -188,6 +189,7 @@ proc parse_ifelse*(parser: Parser): IfElseNode =
   parser.scanner.backtrack(1)
   var last_token = parser.scanner.next
   if last_token.str_val == "then":
+    ifelse_node.else_block = newSequenceNode()
     return ifelse_node
   elif last_token.str_val == "else":
     var else_block = parser.parse_sequence()
