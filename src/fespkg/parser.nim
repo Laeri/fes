@@ -16,7 +16,13 @@ var nes_transl_table: Table[string, string] =
     "-": "sub",
     "*": "mul",
     "/": "div",
-    "!": "store"
+    "!": "store",
+    "<": "smaller",
+    ">": "greater",
+    "<=": "smaller_or_equal",
+    ">=": "greater_or_equal",
+    "=": "equal",
+    "!=": "not_equal"
   }.toTable
 
 const

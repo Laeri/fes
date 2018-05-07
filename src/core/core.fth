@@ -5,15 +5,19 @@ tos is accumulator
 )
 
 : true
+[
 dex
 sta $02FF,X
 lda #$FF
+]
 ;
 
 : false
+[
 dex
 sta $02FF,X
 lda #$00
+]
 ;
 
 : dup
@@ -99,7 +103,10 @@ inx
 
 : -
 [
-SEC
+sec
+ldy $02FF,X
+sta $02FF,X
+tya
 sbc $02FF,X
 inx
 ]
@@ -117,6 +124,58 @@ swap
 -
 ;
 
+: =
+[
+cmp $02FF,X
+inx
+bne equal_false:
+lda #$FF
+jmp equal_done
+equal_false:
+lda #$00
+equal_done:
+]
+;
+
+: <
+swap
+[
+cmp $02FF,X
+inx
+bpl smaller_false:
+lda #$FF
+jmp smaller_done
+smaller_false:
+lda #$00
+smaller_done:
+]
+;
+
+: >
+swap
+[
+cmp $02FF,X
+inx
+
+greater_false:
+greater_true:
+greater_done:
+]
+;
+
+: >=
+< not
+;
+
+: <=
+> not
+;
+
+
+( not equal)
+: !=
+= not
+;
 
 
 
