@@ -433,7 +433,7 @@ proc compile*(compiler: FESCompiler) =
     compiler.parser.parse_sources(src)
 
   compiler.do_passes()
-  compiler.generator.emit(compiler.parser.root)
+  compiler.generator.gen(compiler.parser.root)
   var asm_calls = compiler.generator.code
   if compiler.optimize:
     compiler.pp_optimize(asm_calls)

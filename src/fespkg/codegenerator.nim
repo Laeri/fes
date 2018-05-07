@@ -65,7 +65,7 @@ method emit*(generator: CodeGenerator, node: DefineWordNode) =
 method emit*(generator: CodeGenerator, node: PushNumberNode) =
   var param = node.number.num_to_im_hex
   generator.code.add(ASMCall(op: DEX))
-  generator.code.add(ASMCall(op: STA, param: "$02FF,X"))
+  generator.code.add(ASMCall(op: STA, param: "$0200,X"))
   generator.code.add(ASMCall(op: LDA, param: param))
 
 method emit*(generator: CodeGenerator, node: ASMNode) =
@@ -137,6 +137,11 @@ method emit*(generator: CodeGenerator, node: WhileNode) =
   generator.code.add(generator.then_while_label())
   generator.emit(then_block)
   generator.code.add(generator.end_while_label())
+
+proc gen*(generator: CodeGenerator, node: ASTNode) =
+  generator.code.add(ASMCall(op: LDA, param: "#$FF")) # set X to #$FF in order to set stack start address to $02FF
+  generator.code.add(ASMCall(op: TAX))
+  generator.emit(node)
 
 proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
   result = ""

@@ -1,5 +1,6 @@
 ( hardware stack (used as the return stack), goes from $0100-$01FF
  custom data stack: $0200-$02FF but backwards!!! (top down)
+( base address is $0200, but X is set to #$FF which makes the stack start at $02FF )
  X is the stack pointer and points always to second element of the stack
 tos is accumulator
 )
@@ -7,7 +8,7 @@ tos is accumulator
 : true
 [
 dex
-sta $02FF,X
+sta $0200,X
 lda #$FF
 ]
 ;
@@ -15,7 +16,7 @@ lda #$FF
 : false
 [
 dex
-sta $02FF,X
+sta $0200,X
 lda #$00
 ]
 ;
@@ -23,21 +24,21 @@ lda #$00
 : dup
 [
 dex
-sta $02FF,X
+sta $0200,X
 ]
 ;
 
 : drop
 [
-lda $02FF,X
+lda $0200,X
 inx
 ]
 ;
 
 : swap
 [
-ldy $02FF,X
-sta $02FF,X
+ldy $0200,X
+sta $0200,X
 tya
 ]
 ;
@@ -45,12 +46,12 @@ tya
 (x1 x2 x3 -- x2 x3 x1)
 : rot
 [
-ldy $02FF,X
-sta $02FF,X
+ldy $0200,X
+sta $0200,X
 inx
 tya
-ldy $02FF,X
-sta $02FF,X
+ldy $0200,X
+sta $0200,X
 dex
 tya
 ]
@@ -59,7 +60,7 @@ tya
 (x1 x2 -- x3)
 : and
 [
-and $02FF,X
+and $0200,X
 inx
 ]
 ;
@@ -67,7 +68,7 @@ inx
 (x1 x2 -- x3)
 : or
 [
-ora $02FF,X
+ora $0200,X
 inx
 ]
 ;
@@ -75,7 +76,7 @@ inx
 (x1 x2 -- x3)
 : xor
 [
-eor $02FF,X
+eor $0200,X
 inx
 ]
 ;
@@ -85,10 +86,10 @@ inx
 : !
 [
 tay
-lda $02FF,X
+lda $0200,X
 sta $00,Y
 inx
-lda $02FF,X
+lda $0200,X
 inx
 ]
 ;
@@ -96,7 +97,7 @@ inx
 : +
 [
 CLC
-adc $02FF,X
+adc $0200,X
 inx
 ]
 ;
@@ -104,10 +105,10 @@ inx
 : -
 [
 sec
-ldy $02FF,X
-sta $02FF,X
+ldy $0200,X
+sta $0200,X
 tya
-sbc $02FF,X
+sbc $0200,X
 inx
 ]
 ;
@@ -126,7 +127,7 @@ swap
 
 : =
 [
-cmp $02FF,X
+cmp $0200,X
 inx
 bne equal_false:
 lda #$FF
@@ -140,7 +141,7 @@ equal_done:
 : <
 swap
 [
-cmp $02FF,X
+cmp $0200,X
 inx
 bpl smaller_false:
 lda #$FF
