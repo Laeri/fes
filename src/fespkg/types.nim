@@ -16,9 +16,14 @@ type
 
   CodeGenerator* = ref object of RootObj
     current_ifelse*: int
+    current_while*: int
     code*: seq[ASMAction]
 
   ASTNode* = ref object of RootObj
+
+  WhileNode* = ref object of ASTNode
+    condition_block*: ASTNode
+    then_block*: ASTNode
 
   IfElseNode* = ref object of ASTNode
     then_block*: ASTNode
@@ -113,6 +118,8 @@ type
     warnMissingASMBody = "asm block has no body"
     warnMissingThenBody = "\'if\' statement has no \'then\' body"
     warnMissingElseBody = "\'if\' statement has no \'else\' body"
+    warnMissingWhileConditionBody = "\'while\' statement has no condition body"
+    warnMissingWhileThenBody = "\'while\' statement has no then body"
     END_WARNINGS
 
     BEGIN_HINTS

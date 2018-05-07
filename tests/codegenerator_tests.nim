@@ -42,3 +42,5 @@ suite "CodeGenerator Suite":
     check(generator.code[5] == newASMCall(STA, "$02FF,X"))
     check(generator.code[6] == newASMCall(LDA, "#$02"))
     check(generator.code[7] == newASMCall(JSR, "name2"))
+
+   

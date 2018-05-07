@@ -19,6 +19,8 @@ proc digit_to_hex(number: int): string =
 proc next_ifelse(generator: CodeGenerator) =
   generator.current_ifelse += 1
 
+proc next_while(generator: CodeGenerator) =
+  generator.current_while += 1
 
 proc num_to_hex(number: int): string =
   var hex: string = ""
@@ -111,6 +113,30 @@ method emit*(generator: CodeGenerator, node: IfElseNode) =
   generator.emit(else_block)
   generator.code.add(generator.end_if_label())
 
+proc begin_while_name(generator: CodeGenerator): string =
+  return "begin_while" & $generator.current_while
+proc end_while_name(generator: CodeGenerator): string =
+  return "end_while" & $generator.current_while
+proc then_while_name(generator: CodeGenerator): string =
+  return "begin_then_while" & $generator.current_while
+proc begin_while_label(generator: CodeGenerator): ASMLabel =
+  return ASMLabel(label_name: generator.begin_while_name & ":")
+proc end_while_label(generator: CodeGenerator): ASMLabel =
+  return ASMLabel(label_name: generator.end_while_name & ":")
+proc then_while_label(generator: CodeGenerator): ASMLabel =
+  return ASMLabel(label_name: generator.then_while_name & ":")
+
+method emit*(generator: CodeGenerator, node: WhileNode) =
+  generator.next_while()
+  var condition_block = node.condition_block
+  var then_block = node.then_block
+  generator.code.add(generator.begin_while_label())
+  generator.emit(condition_block)
+  generator.code.add(ASMCall(op: ASL))
+  generator.code.add(ASMCall(op: BCC, param: generator.end_while_name()))
+  generator.code.add(generator.then_while_label())
+  generator.emit(then_block)
+  generator.code.add(generator.end_while_label())
 
 proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
   result = ""

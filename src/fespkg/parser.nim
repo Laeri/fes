@@ -89,6 +89,7 @@ proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
 
 
 proc translate_name(name: string): string =
+  echo "NAME: " & name
   if nes_transl_table.contains(name):
     return nes_transl_table[name]
   else:
@@ -142,6 +143,7 @@ method is_empty(node: SequenceNode): bool =
   return node.sequence.len == 0
 
 proc parse_ifelse*(parser: Parser): IfElseNode
+proc parse_while*(parser: Parser): WhileNode
 
 proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()
@@ -169,9 +171,18 @@ proc parse_sequence(parser: Parser): SequenceNode =
     elif token.str_val == "if":
       var ifelse_node = parser.parse_ifelse()
       root.add(ifelse_node)
+    elif token.str_val == "begin":
+      var while_node = parser.parse_while()
+      root.add(while_node)
     elif token.str_val == "then":
       return root
+    elif token.str_val == "end":
+      return root
     elif token.str_val == "else":
+      return root
+    elif token.str_val == "while":
+      return root
+    elif token.str_val == "repeat":
       return root
     elif token.str_val.contains("("):
       parser.parse_comment()
@@ -182,9 +193,18 @@ proc parse_sequence(parser: Parser): SequenceNode =
     else:
       if not(is_valid_name(token.str_val)):
         parser.report(errInvalidCallWordName, token.str_val)
-      var node = CallWordNode(word_name: token.str_val)
+      var node = CallWordNode(word_name: token.str_val.translate_name)
       root.add(node)
   return root
+
+proc parse_while*(parser: Parser): WhileNode =
+  result = WhileNode()
+  result.condition_block = parser.parse_sequence()
+  if result.condition_block.is_empty:
+    parser.report(warnMissingWhileConditionBody)
+  result.then_block = parser.parse_sequence()
+  if result.then_block.is_empty:
+    parser.report(warnMissingWhileThenBody)  
 
 proc parse_ifelse*(parser: Parser): IfElseNode =
   var ifelse_node = newIfElseNode()

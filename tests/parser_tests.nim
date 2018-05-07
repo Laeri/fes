@@ -96,6 +96,16 @@ suite "Parser Suite":
     parser.parse_string(src)
     check(handler.has_error_type(errMissingIfElseEnding) == true)
 
+  test "warnMissingWhileConditionBody: while statement has no condition":
+    src = "begin while repeat"
+    parser.parse_string(src)
+    check(handler.has_error_type(warnMissingWhileConditionBody) == true)
+
+  test "warnMissingWhileThenBody: while statement has no body":
+    src = "begin while repeat"
+    parser.parse_string(src)
+    check(handler.has_error_type(warnMissingWhileThenBody) == true)
+
   
 
 
