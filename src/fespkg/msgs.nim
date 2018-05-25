@@ -136,7 +136,9 @@ proc prettyPrintError(handler: ErrorHandler, error: FError) =
   range_at_start.clamp(0, handler.scanner.lines.len - 1)
   range_at_end.clamp(0, handler.scanner.lines.len - 1)
   remove_overlap(range_at_start, range_at_end)
-  var msg = $error.msg % error.msg_args
+  var msg = $error.msg
+  if error.msg_args.len > 0:
+    msg = msg % error.msg_args
   setForeGroundColor(HintColor)
   echo "==========================================="
   setForeGroundColor(ErrorColor)

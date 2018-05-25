@@ -105,6 +105,7 @@ proc current_src_file*(scanner: Scanner): string =
 
 proc read_string*(scanner: Scanner, src: string) =
   scanner.src = src
+  echo src
   scanner.lines = splitLines(src)
   if scanner.lines.len != 0:
     scanner.columns = scanner.lines[0].splitWhitespace
