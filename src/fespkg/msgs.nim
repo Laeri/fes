@@ -1,5 +1,5 @@
 import
-  strutils, os, tables, terminal, types, sequtils, typeinfo
+  strutils, os, tables, terminal, types, sequtils, typeinfo, scanner
 
 
 const
@@ -22,11 +22,14 @@ const
   ResultTitle = "Result: "
   ResultColor = fgGreen
 
-proc newErrorInfo*(msg: MsgKind, msg_args: seq[string], line_info: LineInfo): ErrorInfo = 
-  result = ErrorInfo()
+proc newFError*(msg: MsgKind, msg_args: seq[string]): FError = 
+  result = FError()
+  result.indications = @[]
   result.msg = msg
   result.msg_args = msg_args
-  result.line_info = line_info
+
+proc newErrorIndication*(line: int, column_range: ColumnRange, msg:string = "", args: seq[string]  = @[]): ErrorIndication =
+  result = ErrorIndication(line: line, column_range: column_range, msg: msg, args: args)
 
 proc newErrorHandler*(): ErrorHandler =
   result = ErrorHandler()
@@ -36,10 +39,14 @@ proc newErrorHandler*(): ErrorHandler =
 proc set_silent*(handler: ErrorHandler) = 
   handler.silent = true
 
+proc set_silent*(handler: ErrorHandler, silent: bool) =
+  handler.silent = silent
+
 proc has_errors*(handler: ErrorHandler): bool =
   return handler.errors.len > 0
 
-proc report(error_info: ErrorInfo)
+proc report(handler: ErrorHandler, error: FError)
+proc printMessage*(msg_k: MsgKind, params: varargs[string])
 
 proc has_error_type*(handler: ErrorHandler, msg_kind: MsgKind): bool =
   for comp_err in handler.errors:
@@ -47,17 +54,21 @@ proc has_error_type*(handler: ErrorHandler, msg_kind: MsgKind): bool =
       return true
   return false
 
+proc handle*(handler: ErrorHandler, error: FError) =
+  if not(handler.silent):
+    handler.report(error)
+  handler.errors.add(error)
 
 proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string]) =
-  var error_info =  ErrorInfo(msg: msg, msg_args: msg_args)
+  var error = newFError(msg, msg_args)
   if not(handler.silent):
-    report(error_info)
-  handler.errors.add(error_info)
+      printMessage(msg, msg_args)
+  handler.errors.add(error)
 
 proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string], line_info: LineInfo) =
-  var error_info = newErrorInfo(msg, msg_args, line_info)
+  var error_info = newFError(msg, msg_args)
   if not(handler.silent):
-    report(error_info)
+    printMessage(msg, msg_args)
   handler.errors.add(error_info)
   
 
@@ -75,31 +86,44 @@ proc low(slice: Slice): int =
 proc high(slice: Slice): int =
   result = slice.b
 
-proc print_error_indicator(range: ColumnRange) =
+proc print_error_indicator(handler: ErrorHandler, ind: ErrorIndication) =
+  var range = ind.column_range
   range.clamp_min(0)
   var line: seq[char] = @[]
   if range.low != 0:
-    for i in 0..range.low:
+    for i in 0..(range.low - 1):
       stdout.write(" ")
   stdout.setForeGroundColor(ErrorColor)
-  for i in range.low..(range.high - 1):
+  for i in range.low..(range.high):
     stdout.write("^")
   stdout.write("\n")
   stdout.resetAttributes
 
-print_error_indicator((0..5).to_ColumnRange)
+proc repeat_str(str: string, num: int): string =
+  result = ""
+  for i in 0..(num - 1):
+    result &= str
 
-proc prettyPrintError(msg_k: MsgKind, params: varargs[string], line_info: LineInfo) =
+proc prettyPrintError(handler: ErrorHandler, error: FError) =
   var range_at_start = LineRange(low: -1, high: 3)
   var range_at_end = LineRange(low: -1, high: 3)
-  var msg = $msg_k % params
+  var msg = $error.msg % error.msg_args
+  setForeGroundColor(HintColor)
+  echo "==========================================="
   setForeGroundColor(ErrorColor)
   stdout.write(ErrorTitle)
   stdout.resetAttributes
   stdout.writeln(msg)
   stdout.flushFile
-  echo "file name: " & line_info.file_name & ": " & $line_info.line & ": " & $line_info.column
-  
+  echo "  " & error.file_name & ":" & $error.start_line & ":" & $error.start_column
+  var line_ind = $error.start_column & "| "
+  echo line_ind & line_str_at(handler.scanner, 0)
+  var indent = repeat_str(" ", line_ind.len)
+  stdout.write(indent)
+  handler.print_error_indicator(error.indications[0])
+  setForeGroundColor(HintColor)
+  echo "==========================================="
+  stdout.resetAttributes
 
 proc printError(msg_k: MsgKind, params: varargs[string]) =
   var msg = $msg_k % params
@@ -146,8 +170,5 @@ proc printMessage*(msg_k: MsgKind, params: varargs[string]) =
   elif msg_k in min_res..max_res:
     printResult(msg_k, params)
 
-proc report(error_info: ErrorInfo) =
-  printMessage(error_info.msg, error_info.msg_args)
-
-proc report(msg: MsgKind, args: varargs[string]) =
-  printMessage(msg, args)
+proc report(handler: ErrorHandler, error: FError) =
+  handler.prettyPrintError(error)

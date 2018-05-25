@@ -22,6 +22,9 @@ type
     variables*: TableRef[string, VariableNode]
 
   ASTNode* = ref object of RootObj
+    file_name*: string
+    line_range*: LineRange
+    column_range*: ColumnRange
 
   VariableNode* = ref object of ASTNode
     name*: string
@@ -84,6 +87,9 @@ type
     time*: int
    
   Scanner* = ref object of RootObj
+    src_index*: int
+    sources*: TableRef[string, string]
+    src_name*: string
     src*: string
     lines*: seq[string]
     columns*: seq[string]
@@ -108,13 +114,26 @@ type
   ColumnRange* = ref object of CustomRange
   LineRange* = ref object of CustomRange
 
-  ErrorInfo* = ref object of RootObj
+  ErrorIndication* = ref object of RootObj
+    line*: int
+    column_range*: ColumnRange
+    msg*: string
+    args*: seq[string]
+
+  FError* = ref object of RootObj
+    file_name*: string
+    start_line*: int
+    start_column*: int
     msg*: MsgKind
     msg_args*: seq[string]
-    line_info*: LineInfo
+    line_range*: LineRange
+    indications*: seq[ErrorIndication]
+
   ErrorHandler* = ref object of RootObj
-    errors*: seq[ErrorInfo]
+    errors*: seq[FError]
     silent*: bool
+    scanner*: Scanner
+
   MsgKind* = enum
     BEGIN_ERRORS
     errWordAlreadyDefined = "word \'$1\' already exists"
@@ -152,6 +171,8 @@ proc to_LineRange*(slice: HSlice): LineRange =
 proc to_ColumnRange*(slice: HSlice): ColumnRange =
   return ColumnRange(low: slice.a, high: slice.b)
 
+proc `$`*(r: CustomRange): string =
+  result = "(" & $r.low & ".." & $r.high & ")"
 
 proc clamp*(custom_range: CustomRange, min: int, max: int) =
   if custom_range.low < min:
@@ -164,7 +185,7 @@ proc clamp_min*(custom_range: CustomRange, min: int) =
 proc clamp_max*(custom_range: CustomRange, max: int) =
   custom_range.clamp(low(int), max)
 
-proc shift_to(custom_range: CustomRange, middle: int) =
+proc shift_to*(custom_range: CustomRange, middle: int) =
   custom_range.low += middle
   custom_range.high += middle
 

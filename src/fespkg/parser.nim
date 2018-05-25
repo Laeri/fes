@@ -3,12 +3,14 @@ import
 
 proc newParser*(): Parser = 
   result = Parser()
-  result.scanner = Scanner()
+  result.scanner = newScanner()
   result.error_handler = newErrorHandler()
+  result.error_handler.scanner = result.scanner
 
 proc newParser*(handler: ErrorHandler): Parser = 
   result = newParser()
   result.error_handler = handler
+  handler.scanner = result.scanner
 
 var nes_transl_table: Table[string, string] =
   {
@@ -33,6 +35,18 @@ proc is_valid_name*(name: string): bool =
     return false
   else:
     return true
+
+proc gen_error(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[string]): FError =
+  result = newFError(msg, @[])
+  result.file_name = node.file_name
+  result.start_line = node.line_range.low
+  result.start_column = node.column_range.low
+  result.line_range = node.line_range
+  echo $result[]
+  result.indications.add(newErrorIndication(node.line_range.low, node.column_range))
+
+proc report(parser: Parser, error: FError) =
+  parser.error_handler.handle(error)
 
 proc report(parser: Parser, msg: MsgKind, msg_args: varargs[string]) =
   var args: seq[string] = @[]
@@ -149,6 +163,7 @@ method is_empty(node: SequenceNode): bool =
 proc parse_ifelse*(parser: Parser): IfElseNode
 proc parse_while*(parser: Parser): WhileNode
 
+
 proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()
   while parser.scanner.has_next:
@@ -213,8 +228,30 @@ proc parse_while*(parser: Parser): WhileNode =
   if result.then_block.is_empty:
     parser.report(warnMissingWhileThenBody)  
 
+proc set_begin_info(parser: Parser, node: ASTNode) =
+  node.file_name = "Change"
+  node.line_range = LineRange()
+  parser.scanner.backtrack(1)
+  echo "#" & $parser.scanner.peek.str_val & "#"
+  echo parser.scanner.current_line_str
+  node.line_range.low = parser.scanner.current_line_pos
+  node.column_range = parser.scanner.current_word_range
+  echo $node.column_range
+  parser.scanner.advance()
+
+proc set_end_info(parser: Parser, node: ASTNode) =
+  parser.scanner.backtrack(1)
+  node.line_range.high = parser.scanner.current_line_pos
+  parser.scanner.advance
+
+proc set_info(parser: Parser, node: ASTNode) =
+  parser.set_begin_info(node)
+  parser.set_end_info(node)
+
+
 proc parse_ifelse*(parser: Parser): IfElseNode =
   var ifelse_node = newIfElseNode()
+  parser.set_begin_info(ifelse_node)
   var then_block = parser.parse_sequence()
   ifelse_node.then_block = then_block
   if then_block.is_empty:
@@ -234,9 +271,11 @@ proc parse_ifelse*(parser: Parser): IfElseNode =
     if last_token.str_val == "then":
       return ifelse_node
     else:
-      parser.report(errMissingIfElseEnding)
+      parser.report(parser.gen_error(ifelse_node, errMissingIfElseEnding))
   else:
-    parser.report(errMissingIfElseEnding)
+    parser.set_end_info(ifelse_node)
+    parser.report(parser.gen_error(ifelse_node, errMissingIfElseEnding))
+  parser.set_end_info(ifelse_node)
   return ifelse_node
 
 proc parse_string*(parser: Parser, src: string) = 

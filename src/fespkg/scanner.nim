@@ -30,6 +30,9 @@ proc newToken(): Token =
 proc current_line_str*(scanner: Scanner): string =
   result = scanner.lines[scanner.line]
 
+proc line_str_at*(scanner: Scanner, pos: int): string =
+  result = scanner.lines[pos]
+
 proc token_str_vals*(tokens: seq[Token]): seq[string] =
   result = @[]
   for token in tokens:

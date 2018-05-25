@@ -88,10 +88,14 @@ suite "Parser Suite":
     parser.parse_string(src)
     check(handler.has_error_type(warnMissingElseBody) == true)
     
-  test "errMissingIfElseEnding: if else block has no closing \'then\'":
+  test "errMissingIfElseEnding: if block has no closing \'then\'":
     src = "if"
+    handler.set_silent(false)
     parser.parse_string(src)
     check(handler.has_error_type(errMissingIfElseEnding) == true)
+    handler.set_silent(true)
+
+  test "errMissingIfElseEnding: if else block has no closing \'then\'": 
     src = "if else"
     parser.parse_string(src)
     check(handler.has_error_type(errMissingIfElseEnding) == true)
@@ -109,7 +113,6 @@ suite "Parser Suite":
   test "parse constant":
     src = "variable date"
     parser.parse_string(src)
-    echo parser.root.repr
 
   
 
