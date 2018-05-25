@@ -42,7 +42,6 @@ proc gen_error(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[st
   result.start_line = node.line_range.low
   result.start_column = node.column_range.low
   result.line_range = node.line_range
-  echo $result[]
   result.indications.add(newErrorIndication(node.line_range.low, node.column_range))
 
 proc report(parser: Parser, error: FError) =
@@ -232,11 +231,8 @@ proc set_begin_info(parser: Parser, node: ASTNode) =
   node.file_name = "Change"
   node.line_range = LineRange()
   parser.scanner.backtrack(1)
-  echo "#" & $parser.scanner.peek.str_val & "#"
-  echo parser.scanner.current_line_str
   node.line_range.low = parser.scanner.current_line_pos
   node.column_range = parser.scanner.current_word_range
-  echo $node.column_range
   parser.scanner.advance()
 
 proc set_end_info(parser: Parser, node: ASTNode) =

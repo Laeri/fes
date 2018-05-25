@@ -104,9 +104,16 @@ proc repeat_str(str: string, num: int): string =
   for i in 0..(num - 1):
     result &= str
 
+proc line_indent(num: int): string =
+  return $num & "| "
+
 proc prettyPrintError(handler: ErrorHandler, error: FError) =
   var range_at_start = LineRange(low: -1, high: 3)
   var range_at_end = LineRange(low: -1, high: 3)
+  range_at_start.shift_to(error.start_line)
+  range_at_end.shift_to(error.line_range.high)
+  range_at_start.clamp(0, handler.scanner.lines.len - 1)
+  range_at_end.clamp(0, handler.scanner.lines.len - 1)
   var msg = $error.msg % error.msg_args
   setForeGroundColor(HintColor)
   echo "==========================================="
@@ -116,11 +123,18 @@ proc prettyPrintError(handler: ErrorHandler, error: FError) =
   stdout.writeln(msg)
   stdout.flushFile
   echo "  " & error.file_name & ":" & $error.start_line & ":" & $error.start_column
-  var line_ind = $error.start_column & "| "
-  echo line_ind & line_str_at(handler.scanner, 0)
-  var indent = repeat_str(" ", line_ind.len)
-  stdout.write(indent)
-  handler.print_error_indicator(error.indications[0])
+  var line_pos = range_at_start.low
+  var min_indent = "  "
+  while line_pos <= range_at_start.high:
+    var line_ind = min_indent & line_indent(line_pos + 1)
+    var indent = repeat_str(" ", line_ind.len)
+    if line_pos == error.start_line:
+      echo line_ind & handler.scanner.line_str_at(0)
+      stdout.write(indent)
+      handler.print_error_indicator(error.indications[0])
+    else:
+      echo line_ind & handler.scanner.line_str_at(line_pos)
+    line_pos += 1
   setForeGroundColor(HintColor)
   echo "==========================================="
   stdout.resetAttributes

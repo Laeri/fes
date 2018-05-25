@@ -89,7 +89,9 @@ suite "Parser Suite":
     check(handler.has_error_type(warnMissingElseBody) == true)
     
   test "errMissingIfElseEnding: if block has no closing \'then\'":
-    src = "if"
+    src = """if
+dup drop
+swap rot"""
     handler.set_silent(false)
     parser.parse_string(src)
     check(handler.has_error_type(errMissingIfElseEnding) == true)
