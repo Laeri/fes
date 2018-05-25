@@ -55,6 +55,19 @@ method string_rep*(node: SequenceNode, prefix = ""): string =
     str &= child.string_rep(prefix & "  ") & "\n"
   return str
 
+method string_rep*(node: WhileNode, prefix = ""): string =
+  var str: string = prefix & "WhileNode:\n" 
+  return str
+
+method string_rep*(node: IfElseNode, prefix = ""): string =
+  var str: string = prefix & "IfElseNode:\n"
+  return str
+
+method string_rep*(node: VariableNode, prefix = ""): string =
+  var str: string = prefix & "VariableNode:\n"
+  return str
+
+
 method string_rep*(action: ASMAction, prefix = ""): string {.base.} =
   echo "UNSPECIFIED ASM ACTION"
   return "!!!!!"

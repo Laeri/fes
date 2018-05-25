@@ -59,6 +59,11 @@ proc set_info(parser: Parser, node: ASTNode) =
   parser.set_begin_info(node)
   parser.set_end_info(node)
 
+proc varargs_to_seq[T](args: varargs[T]): seq[T] =
+  result =  @[]
+  for arg in args:
+    result.add(arg)
+
 proc gen_error(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[string]): FError =
   result = newFError(msg, @[])
   result.file_name = node.file_name
@@ -66,15 +71,13 @@ proc gen_error(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[st
   result.start_column = node.column_range.low
   result.line_range = node.line_range
   result.indications.add(newErrorIndication(node.line_range.low, node.column_range))
+  result.msg_args = msg_args.varargs_to_seq
+  result.msg = msg
 
 proc report(parser: Parser, error: FError) =
   parser.error_handler.handle(error)
 
-proc report(parser: Parser, msg: MsgKind, msg_args: varargs[string]) =
-  var args: seq[string] = @[]
-  for ar in msg_args:
-    args.add(ar)
-  parser.error_handler.handle(msg, args)
+
 
 proc report(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[string]) =
   parser.set_end_info(node)
@@ -82,7 +85,9 @@ proc report(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[strin
 
 proc create_asm_call(parser: Parser, op: string, param: string = nil): ASMCall =
   if not(op.is_OPCODE):
-    parser.report(errInvalidASMInstruction, op)
+    var debug_node = ASTNode()
+    parser.set_begin_info(debug_node)
+    parser.report(debug_node, errInvalidASMInstruction, op)
     return ASMCall(op: INVALID_OPCODE, param: param)
   else:
     return ASMCall(op: parseEnum[OPCODE](op), param: param)
@@ -114,12 +119,12 @@ proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
       end_block = true
       tokens.delete(tokens.len - 1)
       if tokens.len >= 3:
-        parser.report(asm_node, errTooManyASMOperands, tokens.token_str_vals)
+        parser.report(asm_node, errTooManyASMOperands)
       elif tokens.len > 0:
         asm_node.add(parser.parse_asm_line(tokens))
     else:
       if tokens.len >= 3:
-        parser.report(asm_node, errTooManyASMOperands, tokens.token_str_vals)
+        parser.report(asm_node, errTooManyASMOperands)
       asm_node.add(parser.parse_asm_line(tokens))
     if not(end_block):
       if parser.scanner.has_next:
@@ -163,6 +168,7 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
         parser.report(node, errInvalidCallWordName, token.str_val)
       else:
         def_node.add(node)
+  parser.set_end_info(def_node)
   parser.report(def_node, errMissingWordEnding, def_node.word_name)
 
 proc parse_comment(parser: Parser) =
@@ -199,11 +205,14 @@ proc parse_sequence(parser: Parser): SequenceNode =
     var token = parser.scanner.next
     if token.str_val == ":":
       var def_node = newDefineWordNode()
-      parser.set_begin_info(def_node)
       if not(parser.scanner.has_next()):
+        parser.set_begin_info(def_node)
         parser.report(def_node, errMissingWordDefName)
+        return
       else:
         token = parser.scanner.next
+        parser.set_begin_info(def_node)
+        def_node.word_name = token.str_val
         if not(is_valid_name(token.str_val)):
           parser.report(def_node, errInvalidDefinitionWordName, token.str_val)
         def_node.word_name = token.str_val.translate_name
@@ -220,7 +229,6 @@ proc parse_sequence(parser: Parser): SequenceNode =
         parser.report(asm_node, warnMissingASMBody)
     elif token.str_val == "if":
       var ifelse_node = parser.parse_ifelse()
-      parser.set_begin_info(ifelse_node)
       root.add(ifelse_node)
     elif token.str_val == "begin":
       var while_node = parser.parse_while()
@@ -273,6 +281,7 @@ proc parse_ifelse*(parser: Parser): IfElseNode =
   parser.set_begin_info(ifelse_node)
   var then_block = parser.parse_sequence()
   ifelse_node.then_block = then_block
+  parser.set_begin_info(then_block)
   if then_block.is_empty:
     parser.report(then_block, warnMissingThenBody)
   parser.scanner.backtrack(1)
@@ -293,7 +302,6 @@ proc parse_ifelse*(parser: Parser): IfElseNode =
     else:
       parser.report(ifelse_node, errMissingIfElseEnding)
   else:
-    parser.set_end_info(ifelse_node)
     parser.report(ifelse_node, errMissingIfElseEnding)
   parser.set_end_info(ifelse_node)
   return ifelse_node

@@ -150,12 +150,14 @@ proc prettyPrintError(handler: ErrorHandler, error: FError) =
   for line_pos in range_at_start.to_s():
     pprint_line(handler, error, line_pos)
   #echo ""
-  echo "  \u00B7\u00B7\u00B7"
+  if range_at_start.high > 0:
+    echo "  \u00B7\u00B7\u00B7"
   #echo ""
   for line_pos in range_at_end.to_s:
     pprint_line(handler, error, line_pos)
   setForeGroundColor(HintColor)
   echo "==========================================="
+  echo ""
   stdout.resetAttributes
 
 proc printError(msg_k: MsgKind, params: varargs[string]) =
