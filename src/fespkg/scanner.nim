@@ -20,8 +20,15 @@ type
     line_str*: string
     str_val*: string
     
+
+proc newScanner*(): Scanner =
+  result = Scanner()
+
 proc newToken(): Token =
   result = Token()
+
+proc current_line_str*(scanner: Scanner): string =
+  result = scanner.lines[scanner.line]
 
 proc token_str_vals*(tokens: seq[Token]): seq[string] =
   result = @[]
@@ -51,8 +58,10 @@ proc set_accurate_count(scanner: Scanner) =
   if not(scanner.has_next):
     return
   var char_count = -1
-  var word_count = 0
-  var in_space = false
+  var word_count = -1
+  var in_space = scanner.current_line_str[0] in Whitespace
+  if not(in_space):
+    word_count += 1
   for ch in scanner.lines[scanner.line]:
     char_count += 1
     if (ch in Whitespace):
@@ -64,6 +73,7 @@ proc set_accurate_count(scanner: Scanner) =
       scanner.column_accurate = char_count
       return
 
+
 proc advance*(scanner: Scanner) =
   scanner.column += 1
   if scanner.column >= scanner.columns.len:
@@ -74,6 +84,20 @@ proc advance*(scanner: Scanner) =
       if(scanner.columns.len == 0):
         scanner.advance
   scanner.set_accurate_count()
+
+proc current_word_range*(scanner: Scanner): ColumnRange =
+  var from_pos = scanner.column_accurate
+  var to_pos = from_pos + scanner.columns[scanner.column].len - 1
+  return ColumnRange(low: from_pos, high: to_pos)
+
+proc current_line_pos*(scanner: Scanner): int =
+  return scanner.line
+
+proc current_column_pos*(scanner: Scanner): int =
+  return scanner.column_accurate
+
+proc current_src_file*(scanner: Scanner): string = 
+  return scanner.src_name
 
 
 proc read_string*(scanner: Scanner, src: string) =
@@ -179,3 +203,4 @@ proc upto_next_line*(scanner: Scanner): seq[Token] =
   for token_str in line_tokens:
     tokens.add(scanner.parse_to_token(token_str))
   return tokens
+

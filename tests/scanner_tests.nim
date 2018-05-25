@@ -119,6 +119,23 @@ suite "Scanner Suite":
     discard scanner.next
     check(scanner.line_position == 2)
 
-
- 
+  test "accurate column position of string at start":
+    scanner.read_string("if")
+    check(scanner.column_position == 0)
   
+  test "accurate column position of string after whitespace":
+    scanner.read_string(" if")
+    check(scanner.column_position == 1)
+    scanner.read_string("  if")
+    check(scanner.column_position == 2)
+
+  test "current word range of \'if\'":
+    scanner.read_string("if")
+    check(scanner.current_word_range.low == 0)
+    check(scanner.current_word_range.high == 1)
+
+  test "current word range of \'  if\'":
+    scanner.read_string("  if")
+    check(scanner.current_word_range.low == 2)
+    check(scanner.current_word_range.high == 3)
+    
