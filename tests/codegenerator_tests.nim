@@ -25,7 +25,7 @@ suite "CodeGenerator Suite":
     generator.emit(node)
     check(generator.code.len == 3)
     check(generator.code[0] == newASMCall(DEX))
-    check(generator.code[1] == newASMCall(STA, "$02FF,X"))
+    check(generator.code[1] == newASMCall(STA, "$0200,X"))
     check(generator.code[2] == newASMCall(LDA, "#$01"))
 
 
@@ -35,12 +35,34 @@ suite "CodeGenerator Suite":
     generator.emit(parser.root)
     check(generator.code.len == 8)
     check(generator.code[0] == newASMCall(DEX))
-    check(generator.code[1] == newASMCall(STA, "$02FF,X"))
+    check(generator.code[1] == newASMCall(STA, "$0200,X"))
     check(generator.code[2] == newASMCall(LDA, "#$01"))
     check(generator.code[3] == newASMCall(JSR, "name1"))
     check(generator.code[4] == newASMCall(DEX))
-    check(generator.code[5] == newASMCall(STA, "$02FF,X"))
+    check(generator.code[5] == newASMCall(STA, "$0200,X"))
     check(generator.code[6] == newASMCall(LDA, "#$02"))
     check(generator.code[7] == newASMCall(JSR, "name2"))
 
-   
+  test "asm call without argument in block should be generated":
+    src = "[ inx ]"
+    parser.parse_string(src)
+    generator.emit(parser.root)
+    var code_str = generator.code_as_string
+    check(code_str == "  INX\n")
+
+  test "asm call without args in block should be generated":
+    src = "[ jmp label_name ]"
+    parser.parse_string(src)
+    generator.emit(parser.root)
+    var code_str = generator.code_as_string
+    check(code_str == "  JMP label_name\n")
+
+  test "asm label in block should be generated":
+    src = "[ label_name: ]"
+    parser.parse_string(src)
+    generator.emit(parser.root)
+    var code_str = generator.code_as_string
+    check(code_str == "label_name:\n")
+
+
+

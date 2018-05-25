@@ -1,5 +1,5 @@
 import
-  terminal, strutils
+  terminal, strutils, tables
 
 type
   FESCompiler* = ref object of RootObj
@@ -18,8 +18,14 @@ type
     current_ifelse*: int
     current_while*: int
     code*: seq[ASMAction]
+    current_address*: int
+    variables*: TableRef[string, VariableNode]
 
   ASTNode* = ref object of RootObj
+
+  VariableNode* = ref object of ASTNode
+    name*: string
+    address*: int
 
   WhileNode* = ref object of ASTNode
     condition_block*: ASTNode

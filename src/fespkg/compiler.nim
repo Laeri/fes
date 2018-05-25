@@ -288,9 +288,15 @@ proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected
       rejected.add(el)
   return (selected, rejected)
 
+
 proc group_word_defs_last*(root: SequenceNode) = 
   var partition = root.sequence.partition(is_def)
   root.sequence = partition.rejected & partition.selected
+
+
+proc group_vars_first*(root: SequenceNode) =
+  var partition = root.sequence.partition(is_var)
+  root.sequence = partition.selected  & partition.rejected
 
 proc add_start_label*(root: SequenceNode) =
   var asm_node = newASMNode()

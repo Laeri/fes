@@ -129,7 +129,7 @@ swap
 [
 cmp $0200,X
 inx
-bne equal_false:
+bne equal_false
 lda #$FF
 jmp equal_done
 equal_false:
@@ -143,7 +143,7 @@ swap
 [
 cmp $0200,X
 inx
-bpl smaller_false:
+bpl smaller_false
 lda #$FF
 jmp smaller_done
 smaller_false:
@@ -157,7 +157,6 @@ swap
 [
 cmp $02FF,X
 inx
-
 greater_false:
 greater_true:
 greater_done:

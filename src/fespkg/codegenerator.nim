@@ -1,9 +1,13 @@
 import
-  types, strutils
+  types, strutils, tables
 
 proc newCodeGenerator*(): CodeGenerator =
   result = CodeGenerator()
   result.code = @[]
+  result.current_ifelse = 0
+  result.current_while = 0
+  result.current_address = 0
+  result.variables = newTable[string, VariableNode]()
 
 proc newASMCall*(op: OPCODE, param: string = nil): ASMCall =
   result = ASMCall(op: op, param: param)
@@ -21,6 +25,9 @@ proc next_ifelse(generator: CodeGenerator) =
 
 proc next_while(generator: CodeGenerator) =
   generator.current_while += 1
+
+proc next_address(generator: CodeGenerator) =
+  generator.current_address += 1
 
 proc num_to_hex(number: int): string =
   var hex: string = ""
@@ -49,6 +56,16 @@ method `==`*(c1, c2: ASMCall): bool =
 method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
   echo "error, node without code to emit"
   discard
+
+# it is assumed that variable definitions are grouped first
+method emit*(generator: CodeGenerator, node: VariableNode) =
+  node.address = generator.current_address
+  generator.next_address
+  var param = node.address.num_to_im_hex
+  generator.code.add(ASMCall(op: DEX))
+  generator.code.add(ASMCall(op: STA, param: "$0200,X"))
+  generator.code.add(ASMCall(op: LDA, param: param))
+  generator.variables[node.name] = node
 
 method emit*(generator: CodeGenerator, node: SequenceNode) = 
   for node in node.sequence:
@@ -97,6 +114,7 @@ proc begin_else_label(generator: CodeGenerator): ASMLabel =
 
 proc end_if_label(generator: CodeGenerator): ASMLabel =
   return ASMLabel(label_name: generator.end_if_label_name() & ":")
+
 
 method emit*(generator: CodeGenerator, node: IfElseNode) =
   generator.next_ifelse()
@@ -156,5 +174,9 @@ proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
       var label = cast[ASMLabel](asm_code)
       result &= cast[ASMLabel](asm_code).label_name & "\n"
   return result
+
+
+proc code_as_string*(generator: CodeGenerator): string =
+  return aasm_to_string(generator.code)
   
   

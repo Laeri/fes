@@ -58,19 +58,27 @@ proc parse_asm_line*(parser: Parser, tokens: seq[Token]): ASMAction =
     var arg_string = tokens[1].str_val
     return parser.create_asm_call(str_val, arg_string)
 
-
+proc is_label(str: string): bool =
+  return (str[str.len - 1] == ':')
+ 
 proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
   var tokens: seq[string] = parser.scanner.upto_next_line()
   var end_block = false
   while not(end_block):
+    echo $tokens
     if tokens.len == 1:
       if tokens[0] == "]":
         return
+      elif is_label(tokens[0]):
+        asm_node.add(ASMLabel(label_name: tokens[0]))
       else:
         asm_node.add(parser.create_asm_call(tokens[0]))
     elif tokens.len == 2:
       if tokens[1] == "]":
-        asm_node.add(parser.create_asm_call(tokens[0]))
+        if is_label(tokens[0]):
+          asm_node.add(ASMLabel(label_name: tokens[0]))
+        else:
+          asm_node.add(parser.create_asm_call(tokens[0]))
         return
     elif tokens.len == 3:
       if tokens[2] == "]":
@@ -117,7 +125,7 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       parser.report(errNestedWordDef, def_node.word_name)
     else:
       var node = CallWordNode()
-      node.word_name = token.str_val
+      node.word_name = token.str_val.translate_name
       if not(node.word_name.is_valid_name):
         parser.report(errInvalidCallWordName, token.str_val)
       else:
@@ -132,6 +140,11 @@ proc parse_comment(parser: Parser) =
     elif token.str_val.contains("("):
       parser.parse_comment
 
+
+proc parse_variable(parser: Parser): VariableNode =
+  result = VariableNode()
+  result.name = parser.scanner.next.str_val
+  return result
 
 method is_empty(node: ASTNode): bool {.base.}=
   return true
@@ -174,6 +187,9 @@ proc parse_sequence(parser: Parser): SequenceNode =
     elif token.str_val == "begin":
       var while_node = parser.parse_while()
       root.add(while_node)
+    elif token.str_val == "variable":
+      var var_node = parser.parse_variable()
+      root.add(var_node)
     elif token.str_val == "then":
       return root
     elif token.str_val == "end":

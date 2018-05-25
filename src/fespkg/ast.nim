@@ -41,6 +41,9 @@ method add*(node: ASMNode, asm_action: ASMAction) {.base.} =
 proc is_def*(node: ASTNode): bool =
   return (node of DefineWordNode)
 
+proc is_var*(node: ASTNode): bool =
+  return (node of VariableNode)
+
 
 method string_rep*(node: ASTNode, prefix = ""): string {.base.} =
   echo "error: node with no print function!!!"

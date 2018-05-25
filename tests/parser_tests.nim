@@ -106,6 +106,11 @@ suite "Parser Suite":
     parser.parse_string(src)
     check(handler.has_error_type(warnMissingWhileThenBody) == true)
 
+  test "parse constant":
+    src = "variable date"
+    parser.parse_string(src)
+    echo parser.root.repr
+
   
 
 
