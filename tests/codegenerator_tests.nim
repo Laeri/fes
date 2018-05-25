@@ -50,6 +50,13 @@ suite "CodeGenerator Suite":
     var code_str = generator.code_as_string
     check(code_str == "  INX\n")
 
+  test "asm call with two parameters (indirect address mode) in block should be generated":
+    src = "[ sta $0200,X ]"
+    parser.parse_string(src)
+    generator.emit(parser.root)
+    var code_str = generator.code_as_string
+    check(code_str == "  STA $0200,X\n")
+
   test "asm call without args in block should be generated":
     src = "[ jmp label_name ]"
     parser.parse_string(src)
@@ -63,6 +70,16 @@ suite "CodeGenerator Suite":
     generator.emit(parser.root)
     var code_str = generator.code_as_string
     check(code_str == "label_name:\n")
+
+  test "asm block should be generated independent if \'[\' and  \']\' are on a new line or not":
+    src = """[
+INX
+]"""
+    parser.parse_string(src)
+    generator.emit(parser.root)
+    var code_str = generator.code_as_string
+    check(code_str == "  INX\n")
+  
 
 
 

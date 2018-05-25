@@ -160,15 +160,15 @@ proc parse_rules(parser: NESPParser, src: string): seq[NESPPRule] =
     if in_rule_def:
       var line = scanner.up_to_next_line()
       var matcher: ASMMatcher
-      if line[0].contains("-"):
+      if line[0].str_val.contains("-"):
         rules.add(rule)
         in_rule_def = false
         in_second_part = false
         rule = newNESPPRule()
-      elif line[0].contains("="):
+      elif line[0].str_val.contains("="):
         in_second_part = true
       else:
-       matcher = parse_asm_line_to_matcher(line, symbol_table)
+       matcher = parse_asm_line_to_matcher(line.token_str_vals, symbol_table)
        if in_second_part:
          rule.r_to.add(matcher)
        else:
@@ -184,7 +184,7 @@ proc parse_rules(parser: NESPParser, src: string): seq[NESPPRule] =
       elif in_description:
         while in_description:
           var line = scanner.up_to_next_line()
-          if line[0].contains("-"):
+          if line[0].str_val.contains("-"):
             in_description = false
             in_rule_def = true
       else:

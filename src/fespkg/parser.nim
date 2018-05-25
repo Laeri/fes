@@ -47,6 +47,9 @@ proc create_asm_call(parser: Parser, op: string, param: string = nil): ASMCall =
   else:
     return ASMCall(op: parseEnum[OPCODE](op), param: param)
 
+proc create_asm_label(parser: Parser, label_name: string): ASMLabel =
+  return ASMLabel(label_name: label_name)
+
 proc parse_asm_line*(parser: Parser, tokens: seq[Token]): ASMAction =
   var str_val = tokens[0].str_val
   if tokens.len == 1:
@@ -58,46 +61,34 @@ proc parse_asm_line*(parser: Parser, tokens: seq[Token]): ASMAction =
     var arg_string = tokens[1].str_val
     return parser.create_asm_call(str_val, arg_string)
 
+
 proc is_label(str: string): bool =
   return (str[str.len - 1] == ':')
- 
+
+
 proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
-  var tokens: seq[string] = parser.scanner.upto_next_line()
+  var tokens: seq[Token] = parser.scanner.upto_next_line()
   var end_block = false
   while not(end_block):
-    echo $tokens
-    if tokens.len == 1:
-      if tokens[0] == "]":
-        return
-      elif is_label(tokens[0]):
-        asm_node.add(ASMLabel(label_name: tokens[0]))
-      else:
-        asm_node.add(parser.create_asm_call(tokens[0]))
-    elif tokens.len == 2:
-      if tokens[1] == "]":
-        if is_label(tokens[0]):
-          asm_node.add(ASMLabel(label_name: tokens[0]))
-        else:
-          asm_node.add(parser.create_asm_call(tokens[0]))
-        return
-    elif tokens.len == 3:
-      if tokens[2] == "]":
-        asm_node.add(parser.create_asm_call(tokens[0], tokens[1]))
-        return
-      else:
-        parser.report(errTooManyASMOperands, tokens[1..(tokens.len - 1)])
-    elif tokens.len >= 4:
-      parser.report(errTooManyASMOperands, tokens[1..(tokens.len - 1)])
-      return
-    if parser.scanner.has_next:
-      tokens = parser.scanner.upto_next_line()
+    if tokens[tokens.len - 1].str_val == "]":
+      end_block = true
+      tokens.delete(tokens.len - 1)
+      if tokens.len >= 3:
+        parser.report(errTooManyASMOperands, tokens.token_str_vals)
+      elif tokens.len > 0:
+        asm_node.add(parser.parse_asm_line(tokens))
     else:
-      parser.report(errMissingASMEnding)
-      return
-
+      if tokens.len >= 3:
+        parser.report(errTooManyASMOperands, tokens.token_str_vals)
+      asm_node.add(parser.parse_asm_line(tokens))
+    if not(end_block):
+      if parser.scanner.has_next:
+        tokens = parser.scanner.upto_next_line()
+      else:
+        parser.report(errMissingASMEnding)
+        return
 
 proc translate_name(name: string): string =
-  echo "NAME: " & name
   if nes_transl_table.contains(name):
     return nes_transl_table[name]
   else:

@@ -23,6 +23,11 @@ type
 proc newToken(): Token =
   result = Token()
 
+proc token_str_vals*(tokens: seq[Token]): seq[string] =
+  result = @[]
+  for token in tokens:
+    result.add(token.str_val)
+
 proc isInteger*(str: string): bool =
   try:
     let f = parseInt str
@@ -97,11 +102,9 @@ proc skip_empty_lines*(scanner: Scanner) =
       scanner.skip_to_next_line
   scanner.set_accurate_count()
 
-proc current_token(scanner: Scanner) : Token = 
+proc parse_to_token*(scanner: Scanner, str_val: string): Token =
   var token = newToken()
-  token.column = scanner.column
-  token.line = scanner.line
-  token.str_val = scanner.columns[scanner.column]
+  token.str_val = str_val
   var kind: TokenKind
   case token.str_val:
   of ":":
@@ -133,6 +136,13 @@ proc current_token(scanner: Scanner) : Token =
   token.kind = kind
   return token
 
+proc current_token(scanner: Scanner): Token =
+  var str_val = scanner.columns[scanner.column] 
+  var token = scanner.parse_to_token(str_val)
+  token.column = scanner.column
+  token.line = scanner.line
+  return token
+
 proc peek*(scanner: Scanner): Token = 
   return scanner.current_token
 
@@ -160,9 +170,12 @@ proc backtrack*(scanner: Scanner, times = 1) =
   scanner.set_accurate_count()
 
 
-proc upto_next_line*(scanner: Scanner): seq[string] =  
+proc upto_next_line*(scanner: Scanner): seq[Token] =  
   var line_tokens = scanner.columns[scanner.column .. (scanner.columns.len - 1)]
   scanner.skip_to_next_line()
   scanner.skip_empty_lines()
   scanner.set_accurate_count()
-  return line_tokens
+  var tokens: seq[Token] = @[]
+  for token_str in line_tokens:
+    tokens.add(scanner.parse_to_token(token_str))
+  return tokens
