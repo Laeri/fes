@@ -1,5 +1,5 @@
 import
-  strutils, os, tables, terminal, types
+  strutils, os, tables, terminal, types, sequtils, typeinfo
 
 
 const
@@ -59,6 +59,46 @@ proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string], line_in
   if not(handler.silent):
     report(error_info)
   handler.errors.add(error_info)
+  
+
+proc line_indicator(line: int): string =
+  return $line & "| "
+
+proc to_string(str: seq[char]): string =
+  result = newStringOfCap(len(str))
+  for ch in str:
+    result.add(ch)
+
+proc low(slice: Slice): int =
+  result = slice.a
+
+proc high(slice: Slice): int =
+  result = slice.b
+
+proc print_error_indicator(range: ColumnRange) =
+  range.clamp_min(0)
+  var line: seq[char] = @[]
+  if range.low != 0:
+    for i in 0..range.low:
+      stdout.write(" ")
+  stdout.setForeGroundColor(ErrorColor)
+  for i in range.low..(range.high - 1):
+    stdout.write("^")
+  stdout.write("\n")
+  stdout.resetAttributes
+
+print_error_indicator((0..5).to_ColumnRange)
+
+proc prettyPrintError(msg_k: MsgKind, params: varargs[string], line_info: LineInfo) =
+  var range_at_start = LineRange(low: -1, high: 3)
+  var range_at_end = LineRange(low: -1, high: 3)
+  var msg = $msg_k % params
+  setForeGroundColor(ErrorColor)
+  stdout.write(ErrorTitle)
+  stdout.resetAttributes
+  stdout.writeln(msg)
+  stdout.flushFile
+  echo "file name: " & line_info.file_name & ": " & $line_info.line & ": " & $line_info.column
   
 
 proc printError(msg_k: MsgKind, params: varargs[string]) =

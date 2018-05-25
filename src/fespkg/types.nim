@@ -96,7 +96,17 @@ type
     scanner*: Scanner
     error_handler*: ErrorHandler
 
-  LineInfo* = tuple[line: int, column: int, line_str: string, file_name: string]
+  LineInfo* = ref object of RootObj
+    line*: int
+    column*: int
+    file_name*: string
+    line_str*: string
+  
+  CustomRange* = ref object of RootObj
+    low*: int
+    high*: int
+  ColumnRange* = ref object of CustomRange
+  LineRange* = ref object of CustomRange
 
   ErrorInfo* = ref object of RootObj
     msg*: MsgKind
@@ -137,6 +147,26 @@ type
 proc with_arg*(call: ASMCall): bool =
   return call.param != nil
 
+proc to_LineRange*(slice: HSlice): LineRange =
+  return LineRange(low: slice.a, high: slice.b)
+proc to_ColumnRange*(slice: HSlice): ColumnRange =
+  return ColumnRange(low: slice.a, high: slice.b)
+
+
+proc clamp*(custom_range: CustomRange, min: int, max: int) =
+  if custom_range.low < min:
+    custom_range.low = min
+  if custom_range.high > max:
+    custom_range.high = max
+
+proc clamp_min*(custom_range: CustomRange, min: int) =
+  custom_range.clamp(min, high(int))
+proc clamp_max*(custom_range: CustomRange, max: int) =
+  custom_range.clamp(low(int), max)
+
+proc shift_to(custom_range: CustomRange, middle: int) =
+  custom_range.low += middle
+  custom_range.high += middle
 
 proc isOPCODE*(str: string): bool =
   try:
