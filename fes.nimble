@@ -19,6 +19,13 @@ task run, "Run a file in the src/fespkg folder and generate binaries in bin/":
     var src_name = paramStr(2)
     exec "nim c -o=bin/" & src_name & " -r src/fespkg/" & src_name
 
+task comp, "Compile a file in the src/fespkg folder and generate binares in bin/":
+  if paramCount() < 2:
+    quit(QuitFailure)
+  else:
+    var src_name = paramStr(2)
+    exec "nim c -o=bin/" & src_name & " src/fespkg/" & src_name
+
 task tests, "Run all tests in tests/ folder":
   exec "nim c -r -o=bin/runtests tests/runtests"
 
