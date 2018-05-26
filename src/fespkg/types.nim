@@ -10,6 +10,7 @@ type
     error_handler*: ErrorHandler
     out_asm_folder*: string
     out_passes_folder*: string
+    show_asm_log*: bool
     optimize*: bool
     file_path*: string
     run*: bool
@@ -149,6 +150,8 @@ type
     errTooManyASMOperands = "asm statement \'$\' has too many operands: \'$\'"
     errInvalidASMInstruction = "asm instruction \'$1\' is not valid"
     errMissingIfElseEnding = "\'if\' statement has no corresponding \'then\' to close it"
+    errASMSourceError = "the generated source file doesn't conform to the expected nes assembly format:\n\n$1"
+    errAssemblyError = "error: $1, $2"
     END_ERRORS
 
     BEGIN_WARNINGS

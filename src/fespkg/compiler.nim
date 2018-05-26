@@ -411,8 +411,11 @@ proc run_in_emu(file_path: string) =
 
 proc generate_and_assemble(compiler: FESCompiler, asm_code: seq[ASMAction], file_path: string) =
   compiler.generate_and_store(asm_code, file_path)
-  var exit_code = execCmd "nesasm " & file_path
-  var (output, exitCoe2) = execCmdEx "nesasm " & file_path
+  let (outp, error_code) = execCmdEx "nesasm " & file_path
+  if  error_code != 0:
+    compiler.report(errAssemblyError, $error_code, outp) 
+  if outp.contains("error") or compiler.show_asm_log:
+    compiler.report(errASMSourceError, outp)
 
 proc do_passes(compiler: FESCompiler) =
   group_word_defs_last(compiler.parser.root)
