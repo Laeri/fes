@@ -359,7 +359,7 @@ proc check_multiple_defs(compiler: FESCompiler, node: ASTNode) =
   if names.len != names_set.len:
     for set_name in names_set:
       if names.count(set_name) > 1:
-        compiler.report(errWordAlreadyDefined, set_name)
+        compiler.parser.report(node, errWordAlreadyDefined, set_name)
 
 
 

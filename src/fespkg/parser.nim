@@ -37,7 +37,7 @@ proc is_valid_name*(name: string): bool =
     return true
 
 proc set_begin_info(parser: Parser, node: ASTNode, backtrack: bool = true) =
-  node.file_name = "Change"
+  node.file_name = parser.scanner.src_name
   node.line_range = LineRange()
   var backtracked = backtrack and (parser.scanner.column != 0)
   if backtracked:
@@ -79,7 +79,7 @@ proc report(parser: Parser, error: FError) =
 
 
 
-proc report(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[string]) =
+proc report*(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[string]) =
   parser.set_end_info(node)
   parser.report(parser.gen_error(node, msg, msg_args))
 

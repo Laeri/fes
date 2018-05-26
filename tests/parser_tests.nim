@@ -5,7 +5,7 @@ suite "Parser Suite":
 
   setup:
     var handler = newErrorHandler()
-    handler.set_silent
+    #handler.set_silent
     var parser = newParser(handler)
     var src: string
 
