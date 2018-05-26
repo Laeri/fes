@@ -449,11 +449,8 @@ proc compile*(compiler: FESCompiler) =
   if compiler.optimize:
     compiler.pp_optimize(asm_calls)
   var asm_str = aasm_to_string(asm_calls)
-  if (compiler.out_asm_folder != nil):
-    var out_name = compiler.out_asm_folder & extract_file_name(compiler.file_path).file_ending(".asm")
-  else:
-    var out_name = compiler.out_asm_folder & compiler.file_path.file_ending(".asm")
-  compiler.generate_and_assemble(asm_calls, compiler.out_asm_folder & "test_asm.asm")
+  echo compiler.out_asm_folder
+  compiler.generate_and_assemble(asm_calls, compiler.out_asm_folder.file_ending(".asm"))
   compiler.report(reportFinishedCompilation)
   compiler.report(reportCompilationTime, $(cpuTime() - time))
   var num_warnings = compiler.error_handler.num_warnings
