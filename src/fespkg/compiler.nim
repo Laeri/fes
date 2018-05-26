@@ -397,12 +397,12 @@ proc extract_file_name(file_name: string): string =
 proc file_ending(file_name: string, new_ending: string): string =
   return file_name.replace("\\..*$", new_ending)
 
-proc generate_and_store(asm_code: seq[ASMAction], file_path: string) =
+proc generate_and_store(compiler: FESCompiler, asm_code: seq[ASMAction], file_path: string) =
   var fs = newFileStream(file_path, fmWrite)
   var nes_str = generate_nes_str(asm_code)
   fs.write(nes_str)
   fs.close
-  echo "generated and saved: " & file_path
+  compiler.report(reportGeneratedASMFile, file_path)
 
 proc run_in_emu(file_path: string) =
   var emulator = "fceux" 
@@ -410,13 +410,12 @@ proc run_in_emu(file_path: string) =
   var (output, exitCoe2) = execCmdEx emulator & file_path
 
 proc generate_and_assemble(compiler: FESCompiler, asm_code: seq[ASMAction], file_path: string) =
-  generate_and_store(asm_code, file_path)
+  compiler.generate_and_store(asm_code, file_path)
   var exit_code = execCmd "nesasm " & file_path
   var (output, exitCoe2) = execCmdEx "nesasm " & file_path
 
 proc do_passes(compiler: FESCompiler) =
   group_word_defs_last(compiler.parser.root)
-  #echo compiler.parser.root.string_rep
   compiler.parser.root.add_start_label()
   compiler.check_multiple_defs(compiler.parser.root)
 
@@ -432,10 +431,12 @@ proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
 
 
 proc compile*(compiler: FESCompiler) =
+  compiler.report(reportCompilerVersion, compiler.name, compiler.version)
+  compiler.report(reportBeginCompilation, compiler.file_path)
   var src = readFile(compiler.file_path)
-  echo "SOURCE \n" & src
   if compiler.load_core_words:
     compiler.parser.parse_string(core, "core")
+    
   compiler.parser.parse_string(src, compiler.file_path)
 
   compiler.do_passes()
@@ -449,6 +450,7 @@ proc compile*(compiler: FESCompiler) =
   else:
     var out_name = compiler.out_asm_folder & compiler.file_path.file_ending(".asm")
   compiler.generate_and_assemble(asm_calls, compiler.out_asm_folder & "test_asm.asm")
+  compiler.report(reportFinishedCompilation)
 
   if compiler.run:
     discard  #compiler.run_in_emu()

@@ -3,6 +3,8 @@ import
 
 type
   FESCompiler* = ref object of RootObj
+    name*: string
+    version*: string
     parser*: Parser
     generator*: CodeGenerator
     error_handler*: ErrorHandler
@@ -162,6 +164,11 @@ type
     END_HINTS
 
     BEGIN_RESULTS
+    reportGeneratedASMFile = "file: \'$1\' has been generated"
+    reportCompilerVersion = "Compiler: $1 Version: $2"
+    reportBeginCompilation = "Compile file: \'$1\'"
+    reportFinishedCompilation = "Finished compilation"
+    
     END_RESULTS
 
 proc with_arg*(call: ASMCall): bool =

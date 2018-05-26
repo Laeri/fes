@@ -27,6 +27,8 @@ Options:
 
 let args = docopt(doc, version = (name & " " & version))
 var fes = newFESCompiler()
+fes.name = name
+fes.version = version
 
 fes.file_path = $args["<file_name>"]
 if args.contains("--out"):
