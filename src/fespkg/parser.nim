@@ -182,8 +182,13 @@ proc parse_comment(parser: Parser) =
 
 proc parse_variable(parser: Parser): VariableNode =
   result = VariableNode()
-  result.name = parser.scanner.next.str_val
-  return result
+  parser.set_begin_info(result)
+  if parser.scanner.has_next:
+    result.name = parser.scanner.next.str_val
+    if not(result.name.is_valid_name):
+      parser.report(result, errInvalidVariableName, result.name)
+  else:
+    parser.report(result, errMissingVariableName)
 
 method is_empty(node: ASTNode): bool {.base.}=
   return true
@@ -236,7 +241,6 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(while_node)
     elif token.str_val == "variable":
       var var_node = parser.parse_variable()
-      parser.set_begin_info(var_node)
       root.add(var_node)
     elif token.str_val == "then":
       break;

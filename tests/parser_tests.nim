@@ -129,10 +129,19 @@ suite "Parser Suite":
   test "errWordAlreadyDefined, word name cannot be defined twice":
     src = ": name 1 ; : name 1 ;"
     parser.parse_string(src)
-    #echo parser.code.aasm_to_string
     #check(handler.has_error_type(errWordAlreadyDefined) == true)
 
-  test "parse constant":
+  test "errInvalidVariableName: a number is not a valid variable name":
+    src = "variable 1"
+    parser.parse_string(src)
+    check(handler.has_error_type(errInvalidVariableName) == true)
+ 
+  test "missingVariableName: variable name should be supplied":
+    src = "variable"
+    parser.parse_string(src)
+    check(handler.has_error_type(errMissingVariableName))
+
+  test "parse variable":
     src = "variable date"
     parser.parse_string(src)
 

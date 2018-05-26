@@ -33,6 +33,10 @@ type
     name*: string
     address*: int
 
+  ConstantNode* = ref object of ASTNode
+    name*: string
+    value: int
+
   WhileNode* = ref object of ASTNode
     condition_block*: ASTNode
     then_block*: ASTNode
@@ -153,6 +157,8 @@ type
     errMissingIfElseEnding = "\'if\' statement has no corresponding \'then\' to close it"
     errASMSourceError = "the generated source file doesn't conform to the expected nes assembly format:\n\n$1"
     errAssemblyError = "error: $1, $2"
+    errInvalidVariableName = "name \'$1\' is not a valid variable name"
+    errMissingVariableName = "variable name is missing"
     END_ERRORS
 
     BEGIN_WARNINGS
