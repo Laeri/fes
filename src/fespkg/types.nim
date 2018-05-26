@@ -135,6 +135,7 @@ type
 
   ErrorHandler* = ref object of RootObj
     errors*: seq[FError]
+    warnings*: seq[MSGKind]
     silent*: bool
     scanner*: Scanner
 
@@ -171,7 +172,9 @@ type
     reportCompilerVersion = "Compiler: $1 Version: $2"
     reportBeginCompilation = "Compile file: \'$1\'"
     reportFinishedCompilation = "Finished compilation"
-    
+    reportCompilationTime = "compiled in $1 seconds"
+    reportWarningCount = "warnings: $1"
+    reportErrorCount = "errors: $1"
     END_RESULTS
 
 proc with_arg*(call: ASMCall): bool =

@@ -1,6 +1,6 @@
 import 
   strutils, sequtils, tables, typetraits, macros, os,
-  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast, sets, codegenerator
+  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast, sets, codegenerator, times
 
 
 proc newFESCompiler*(): FESCompiler =
@@ -434,6 +434,7 @@ proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
 
 
 proc compile*(compiler: FESCompiler) =
+  let time = cpuTime()
   compiler.report(reportCompilerVersion, compiler.name, compiler.version)
   compiler.report(reportBeginCompilation, compiler.file_path)
   var src = readFile(compiler.file_path)
@@ -454,7 +455,11 @@ proc compile*(compiler: FESCompiler) =
     var out_name = compiler.out_asm_folder & compiler.file_path.file_ending(".asm")
   compiler.generate_and_assemble(asm_calls, compiler.out_asm_folder & "test_asm.asm")
   compiler.report(reportFinishedCompilation)
-
+  compiler.report(reportCompilationTime, $(cpuTime() - time))
+  var num_warnings = compiler.error_handler.num_warnings
+  var num_errors = compiler.error_handler.num_errors
+  compiler.report(reportWarningCount, $num_warnings)
+  compiler.report(reportErrorCount, $num_errors)
   if compiler.run:
     discard  #compiler.run_in_emu()
     

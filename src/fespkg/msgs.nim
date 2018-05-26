@@ -34,6 +34,7 @@ proc newErrorIndication*(line: int, column_range: ColumnRange, msg:string = "", 
 proc newErrorHandler*(): ErrorHandler =
   result = ErrorHandler()
   result.errors = @[]
+  result.warnings = @[]
   result.silent = false
 
 proc set_silent*(handler: ErrorHandler) = 
@@ -44,6 +45,12 @@ proc set_silent*(handler: ErrorHandler, silent: bool) =
 
 proc has_errors*(handler: ErrorHandler): bool =
   return handler.errors.len > 0
+
+proc num_errors*(handler: ErrorHandler): int =
+  return handler.errors.len
+
+proc num_warnings*(handler: ErrorHandler): int =
+  return handler.warnings.len
 
 proc report(handler: ErrorHandler, error: FError)
 proc printMessage*(msg_k: MsgKind, params: varargs[string])
@@ -60,16 +67,15 @@ proc handle*(handler: ErrorHandler, error: FError) =
   handler.errors.add(error)
 
 proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string]) =
-  var error = newFError(msg, msg_args)
+  if msg in min_warn..max_warn:
+    handler.warnings.add(msg)
   if not(handler.silent):
       printMessage(msg, msg_args)
-  handler.errors.add(error)
+  if msg in min_err..max_err:
+    var error = newFError(msg, msg_args)
+    handler.errors.add(error)
 
-proc handle*(handler: ErrorHandler, msg: MsgKind, msg_args: seq[string], line_info: LineInfo) =
-  var error_info = newFError(msg, msg_args)
-  if not(handler.silent):
-    printMessage(msg, msg_args)
-  handler.errors.add(error_info)
+
   
 
 proc line_indicator(line: int): string =
