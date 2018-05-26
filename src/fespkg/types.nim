@@ -88,7 +88,8 @@ type
    
   Scanner* = ref object of RootObj
     src_index*: int
-    sources*: TableRef[string, string]
+    sources*: seq[string]
+    source_names*: seq[string]
     src_name*: string
     src*: string
     lines*: seq[string]

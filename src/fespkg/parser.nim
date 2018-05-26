@@ -306,20 +306,31 @@ proc parse_ifelse*(parser: Parser): IfElseNode =
   parser.set_end_info(ifelse_node)
   return ifelse_node
 
-proc parse_string*(parser: Parser, src: string) = 
-  parser.scanner.read_string(src)
-  var root = parse_sequence(parser)
+proc parse_string*(parser: Parser, src: string, name: string) = 
+  parser.scanner.read_string(src, name)
+  var root = parser.parse_sequence
   parser.root = root
 
-proc parse_sources*(parser: Parser, sources: varargs[string]) =
+proc parse_string*(parser: Parser, src: string) =
+  var t = "TEST_NAME"
+  (parser.scanner).read_string(src, t)
+  var root = parser.parse_sequence
+  parser.root = root
+
+proc parse_additional_src*(parser: Parser, src: string, name: string) =
+  parser.scanner.read_string(src, name)
+  var node = parser.parse_sequence
+  parser.root.sequence.add(node.sequence)
+
+proc parse_sources*(parser: Parser, sources: varargs[tuple[name: string, src: string]]) =
   var src = ""
-  for to_parse in sources:
-    src &= to_parse & "\n"
-  parser.parse_string(src)
+  parser.parse_string(sources[0].src, sources[0].name)
+  for i in 1..(sources.len - 1):
+    parser.parse_additional_src(sources[i].src, sources[i].name)
 
 proc parse_files*(parser: Parser, files: varargs[string]) =
-  var src: string = ""
+  var sources: seq[tuple[name: string, src: string]] = @[]
   for file in files:
-    src &= readFile(file)
-  parser.parse_string(src)
+    sources.add((name: file.string, src: readFile(file)))
+  parser.parse_sources(sources)
 

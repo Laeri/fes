@@ -433,10 +433,10 @@ proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
 
 proc compile*(compiler: FESCompiler) =
   var src = readFile(compiler.file_path)
+  echo "SOURCE \n" & src
   if compiler.load_core_words:
-    compiler.parser.parse_sources(core, src)
-  else:
-    compiler.parser.parse_sources(src)
+    compiler.parser.parse_string(core, "core")
+  compiler.parser.parse_string(src, compiler.file_path)
 
   compiler.do_passes()
   compiler.generator.gen(compiler.parser.root)

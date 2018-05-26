@@ -23,6 +23,9 @@ type
 
 proc newScanner*(): Scanner =
   result = Scanner()
+  result.sources = @[]
+  result.source_names = @[]
+  result.src_index = 0
 
 proc newToken(): Token =
   result = Token()
@@ -89,10 +92,12 @@ proc advance*(scanner: Scanner) =
   scanner.set_accurate_count()
 
 proc current_word_range*(scanner: Scanner): ColumnRange =
-  var from_pos = scanner.column_accurate
-  var to_pos = from_pos + scanner.columns[scanner.column].len - 1
-  return ColumnRange(low: from_pos, high: to_pos)
-
+  result = ColumnRange(low: scanner.column_accurate)
+  if scanner.column >= scanner.columns.len:
+    result.high = result.low
+  else:
+    result.high = result.low + scanner.columns[scanner.column].len - 1
+  
 proc current_line_pos*(scanner: Scanner): int =
   return scanner.line
 
@@ -103,8 +108,8 @@ proc current_src_file*(scanner: Scanner): string =
   return scanner.src_name
 
 
-proc read_string*(scanner: Scanner, src: string) =
-  scanner.src = src
+proc read_string*(scanner: Scanner, src: string, name: string) =
+  scanner.src_name = name
   scanner.lines = splitLines(src)
   if scanner.lines.len != 0:
     scanner.columns = scanner.lines[0].splitWhitespace
@@ -114,6 +119,10 @@ proc read_string*(scanner: Scanner, src: string) =
   scanner.column = -1
   scanner.column_accurate = 0
   scanner.advance
+
+proc read_string*(scanner: Scanner, src: string) =
+  var name = "TEST_NAME"
+  scanner.read_string(src, name)
 
 proc skip_to_next_line*(scanner: Scanner) =
   scanner.line += 1

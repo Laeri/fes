@@ -5,7 +5,7 @@ suite "Parser Suite":
 
   setup:
     var handler = newErrorHandler()
-    #handler.set_silent
+    handler.set_silent
     var parser = newParser(handler)
     var src: string
 
@@ -108,9 +108,39 @@ suite "Parser Suite":
     parser.parse_string(src)
     check(handler.has_error_type(warnMissingWhileThenBody) == true)
 
+  test "parser should be able to parse only one space":
+    src = " "
+    parser.parse_string(src)
+    check(handler.has_errors == false)
+
+  test "parser should be able to parse only new lines":
+    src = """
+
+
+"""
+    parser.parse_string(src)
+    check(handler.has_errors == false)
+
+  test "parser should be able to parse the empty string":
+    src = ""
+    parser.parse_string(src)
+    check(handler.has_errors == false)  
+
+  test "errWordAlreadyDefined, word name cannot be defined twice":
+    src = ": name 1 ; : name 1 ;"
+    parser.parse_string(src)
+    #echo parser.code.aasm_to_string
+    #check(handler.has_error_type(errWordAlreadyDefined) == true)
+
   test "parse constant":
     src = "variable date"
     parser.parse_string(src)
+
+  test "parse two src strings":
+    var src1 = "1 2"
+    var src2 = "3 4"
+    parser.parse_string(src1, "SRC1")
+    parser.parse_additional_src(src2, "SRC2")
 
   
 
