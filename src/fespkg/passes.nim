@@ -143,10 +143,10 @@ proc pass_word_to_var_calls*(pass_runner: PassRunner, node: ASTNode) =
         return true
     return false)
   var call_to_var = (proc(node: ASTNode): ASTNode =
-    echo "T"
-    var var_node = LoadVariableNode()
-    var_node.name = (cast[CallWordNode](node)).word_name
-    return var_node)
+    var load_node = LoadVariableNode()
+    load_node.name = (cast[CallWordNode](node)).word_name
+    load_node.var_node = var_table[load_node.name]
+    return load_node)
   node.replace_n(is_call_var, call_to_var)
   
 

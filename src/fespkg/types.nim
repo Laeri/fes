@@ -46,6 +46,7 @@ type
 
   LoadVariableNode* = ref object of ASTNode
     name*: string
+    var_node*: VariableNode
 
   ConstantNode* = ref object of ASTNode
     name*: string
