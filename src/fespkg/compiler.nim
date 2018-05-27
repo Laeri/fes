@@ -1,6 +1,6 @@
 import 
   strutils, sequtils, tables, typetraits, macros, os,
-  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast, sets, codegenerator, times
+  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast, sets, codegenerator, times, passes
 
 
 proc newFESCompiler*(): FESCompiler =
@@ -276,93 +276,6 @@ proc op(name: OPCODE, param: string): ASMCall =
   return ASMCall(op: name, str: $name, param: param)
 
 
-
-
-proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
-  var selected: seq[T] = @[]
-  var rejected: seq[T] = @[]
-  for el in sequence:
-    if el.pred:
-      selected.add(el)
-    else:
-      rejected.add(el)
-  return (selected, rejected)
-
-
-proc group_word_defs_last*(root: SequenceNode) = 
-  var partition = root.sequence.partition(is_def)
-  root.sequence = partition.rejected & partition.selected
-
-
-proc group_vars_first*(root: SequenceNode) =
-  var partition = root.sequence.partition(is_var)
-  root.sequence = partition.selected  & partition.rejected
-
-proc add_start_label*(root: SequenceNode) =
-  var asm_node = newASMNode()
-  asm_node.add(ASMLabel(label_name: "Start:"))
-  var tmp_seq: seq[ASTNode] = @[]
-  tmp_seq.add(asm_node)
-  root.sequence = tmp_seq & root.sequence
-
-
-
-
-type
-  ASTVisitor = ref object of RootObj
-
-
-method visit(visitor: ASTVisitor, node: ASTNode) {.base.} =
-  return
-
-method accept(node: ASTNode, visitor: ASTVisitor) {.base.} =
-  visitor.visit(node)
-
-type
-  CollectVisitor = ref object of ASTVisitor
-    pred: proc(node: ASTNode): bool
-    defs: seq[DefineWordNode]
-
-proc newCollectVisitor(pred: proc(node:ASTNode): bool = nil): CollectVisitor =
-  result = CollectVisitor(pred: pred)
-  result.defs = @[]
-
-method visit(collect_visitor: CollectVisitor, node: ASTNode)  =
-  return
-
-method visit(collect_visitor: CollectVisitor, node: DefineWordNode) =
-  collect_visitor.defs.add(node)
-  return
-
-method visit(collect_visitor: CollectVisitor, node: SequenceNode)  =
-  for n in node.sequence:
-    n.accept(collect_visitor)
-  
-
-proc collect_defs(node: ASTNode): seq[DefineWordNode] =
-  var visitor: CollectVisitor = newCollectVisitor(is_def)
-  node.accept(visitor)
-  return visitor.defs
-
-proc count[T](t_seq: seq[T], t_el: T): int =
-  result = 0
-  for seq_el in t_seq:
-    if seq_el == t_el:
-      inc(result)
-
-proc check_multiple_defs(compiler: FESCompiler, node: ASTNode) =
-  var defs = collect_defs(cast[SequenceNode](node))
-  var names: seq[string] = @[]
-  for def in defs:
-    names.add(def.word_name)
-  var names_set = names.toSet
-  if names.len != names_set.len:
-    for set_name in names_set:
-      if names.count(set_name) > 1:
-        compiler.parser.report(node, errWordAlreadyDefined, set_name)
-
-
-
 proc generate_nes_str(asm_code: seq[ASMAction]): string =
   var num_16k_prg_banks = 1
   var num_8k_chr_banks = 0
@@ -418,9 +331,9 @@ proc generate_and_assemble(compiler: FESCompiler, asm_code: seq[ASMAction], file
     compiler.report(errASMSourceError, outp)
 
 proc do_passes(compiler: FESCompiler) =
-  group_word_defs_last(compiler.parser.root)
-  compiler.parser.root.add_start_label()
-  compiler.check_multiple_defs(compiler.parser.root)
+  pass_group_word_defs_last(compiler.parser.root)
+  compiler.parser.root.pass_add_start_label()
+  compiler.pass_check_multiple_defs(compiler.parser.root)
 
 
 

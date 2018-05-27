@@ -44,6 +44,9 @@ proc is_def*(node: ASTNode): bool =
 proc is_var*(node: ASTNode): bool =
   return (node of VariableNode)
 
+proc is_word_call*(node: ASTNode): bool =
+  return (node of CallWordNode)
+
 
 method string_rep*(node: ASTNode, prefix = ""): string {.base.} =
   echo "error: node with no print function!!!"

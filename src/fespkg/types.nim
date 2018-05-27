@@ -17,6 +17,12 @@ type
     load_core_words*: bool
     silent*: bool
 
+  ASTVisitor* = ref object of RootObj
+
+  CollectVisitor*[T] = ref object of ASTVisitor
+    pred*: proc(node: ASTNode): bool
+    collected*: seq[T]
+
   CodeGenerator* = ref object of RootObj
     current_ifelse*: int
     current_while*: int
@@ -32,6 +38,9 @@ type
   VariableNode* = ref object of ASTNode
     name*: string
     address*: int
+
+  LoadVariableNode* = ref object of ASTNode
+    name*: string
 
   ConstantNode* = ref object of ASTNode
     name*: string
