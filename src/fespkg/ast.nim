@@ -25,6 +25,14 @@ proc newDefineWordNode*(): DefineWordNode =
 proc len*(node: SequenceNode): int =
   return node.sequence.len
 
+proc find_index*[T](lst: seq[T], pred: (proc(el: T): bool)): int =
+  for i in 0..(lst.len - 1):
+    if pred(lst[i]):
+      return i
+  return -1
+
+
+
 method add*(node: ASTNode, other: ASTNode) {.base.} =
   echo "base add in ASTNode should not be called"
 
@@ -48,58 +56,65 @@ proc is_word_call*(node: ASTNode): bool =
   return (node of CallWordNode)
 
 
-method string_rep*(node: ASTNode, prefix = ""): string {.base.} =
+method str*(node: ASTNode, prefix = ""): string {.base.} =
   echo "error: node with no print function!!!"
   return prefix & $node[]
 
-method string_rep*(node: SequenceNode, prefix = ""): string =
+method str*(node: SequenceNode, prefix = ""): string =
   var str: string = prefix & "SequenceNode:\n" 
   for child in node.sequence:
-    str &= child.string_rep(prefix & "  ") & "\n"
+    str &= child.str(prefix & "  ") & "\n"
   return str
 
-method string_rep*(node: WhileNode, prefix = ""): string =
-  var str: string = prefix & "WhileNode:\n" 
+method str*(node: WhileNode, prefix = ""): string =
+  var str: string = prefix & "WhileNode:\n"
+  str &= "condition:\n" & node.condition_block.str(prefix & "  ")
+  str &= "then:\n" & node.then_block.str(prefix & "  ")
   return str
 
-method string_rep*(node: IfElseNode, prefix = ""): string =
+method str*(node: IfElseNode, prefix = ""): string =
   var str: string = prefix & "IfElseNode:\n"
+  str &= "then:\n" & node.then_block.str(prefix & "  ")
+  str &= "else:\n" & node.else_block.str(prefix & "  ")
   return str
 
-method string_rep*(node: VariableNode, prefix = ""): string =
-  var str: string = prefix & "VariableNode:\n"
+method str*(node: VariableNode, prefix = ""): string =
+  var str: string = prefix & "VariableNode: " & node.name & " " & $node.address
   return str
 
+method str*(node: LoadVariableNode, prefix = ""): string = 
+  var str: string = prefix & "LoadVariableNode: " & node.name & "\n"
+  return str
 
-method string_rep*(action: ASMAction, prefix = ""): string {.base.} =
+method str*(action: ASMAction, prefix = ""): string {.base.} =
   echo "UNSPECIFIED ASM ACTION"
   return "!!!!!"
 
-method string_rep*(call: ASMCall, prefix = ""): string =
+method str*(call: ASMCall, prefix = ""): string =
   var arg = "  "
   if (call.with_arg):
     arg &= call.param
   result = prefix & "ASMCall: " & $call.op & arg
   return result
 
-method string_rep*(label: ASMLabel, prefix = ""): string =
+method str*(label: ASMLabel, prefix = ""): string =
   result = prefix & "ASMLabel: " & label.label_name
   return result
 
-method string_rep*(node: ASMNode, prefix = ""): string =
+method str*(node: ASMNode, prefix = ""): string =
   var str: string = prefix & "ASMNode:\n"
   for action in node.asm_calls:
-    str &= prefix & action.string_rep(prefix & "  ") & "\n"
+    str &= prefix & action.str(prefix & "  ") & "\n"
   return str
 
-method string_rep*(node: PushNumberNode, prefix = ""): string =
+method str*(node: PushNumberNode, prefix = ""): string =
   return prefix & "PushNumberNode: " & $node.number
 
-method string_rep*(node: DefineWordNode, prefix = ""): string =
+method str*(node: DefineWordNode, prefix = ""): string =
   var define_str = prefix & "DefineWordNode: " & node.word_name & "\n"
-  define_str &= node.definition.string_rep(prefix & "  ")
+  define_str &= node.definition.str(prefix & "  ")
   return define_str
 
-method string_rep*(node: CallWordNode, prefix = ""): string =
+method str*(node: CallWordNode, prefix = ""): string =
   return prefix & "CallWordNode: " & node.word_name
 
