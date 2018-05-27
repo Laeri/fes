@@ -118,6 +118,7 @@ type
     root*: SequenceNode
     scanner*: Scanner
     error_handler*: ErrorHandler
+    var_table*: TableRef[string, VariableNode]
 
   LineInfo* = ref object of RootObj
     line*: int

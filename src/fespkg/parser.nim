@@ -6,11 +6,12 @@ proc newParser*(): Parser =
   result.scanner = newScanner()
   result.error_handler = newErrorHandler()
   result.error_handler.scanner = result.scanner
-
+  result.var_table = newTable[string, VariableNode]()
 proc newParser*(handler: ErrorHandler): Parser = 
   result = newParser()
   result.error_handler = handler
   handler.scanner = result.scanner
+  result.var_table = newTable[string, VariableNode]() 
 
 var nes_transl_table: Table[string, string] =
   {
@@ -189,6 +190,7 @@ proc parse_variable(parser: Parser): VariableNode =
       parser.report(result, errInvalidVariableName, result.name)
   else:
     parser.report(result, errMissingVariableName)
+  parser.var_table[result.name] = result
 
 method is_empty(node: ASTNode): bool {.base.}=
   return true

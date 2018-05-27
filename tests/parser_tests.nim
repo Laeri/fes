@@ -1,11 +1,11 @@
 import
-  unittest, types, parser, msgs
+  unittest, types, parser, msgs, ast, tables
 
 suite "Parser Suite":
 
   setup:
     var handler = newErrorHandler()
-    #handler.set_silent
+    handler.set_silent
     var parser = newParser(handler)
     var src: string
 
@@ -150,6 +150,9 @@ suite "Parser Suite":
     var src2 = "3 4"
     parser.parse_string(src1, "SRC1")
     parser.parse_additional_src(src2, "SRC2")
+
+
+    
 
   
 

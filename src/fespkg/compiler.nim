@@ -334,7 +334,9 @@ proc do_passes(compiler: FESCompiler) =
   pass_group_word_defs_last(compiler.parser.root)
   compiler.parser.root.pass_add_start_label()
   compiler.pass_check_multiple_defs(compiler.parser.root)
-
+  compiler.pass_word_to_var_calls(compiler.parser.root)
+  compiler.parser.root.pass_add_end_label()
+  compiler.pass_word_to_var_calls(compiler.parser.root)
 
 
 const core = readFile("src/core/core.fth")
@@ -362,7 +364,6 @@ proc compile*(compiler: FESCompiler) =
   if compiler.optimize:
     compiler.pp_optimize(asm_calls)
   var asm_str = aasm_to_string(asm_calls)
-  echo compiler.out_asm_folder
   compiler.generate_and_assemble(asm_calls, compiler.out_asm_folder.file_ending(".asm"))
   compiler.report(reportFinishedCompilation)
   compiler.report(reportCompilationTime, $(cpuTime() - time))
