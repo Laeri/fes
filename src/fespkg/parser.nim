@@ -7,6 +7,8 @@ proc newParser*(): Parser =
   result.error_handler = newErrorHandler()
   result.error_handler.scanner = result.scanner
   result.var_table = newTable[string, VariableNode]()
+  result.var_index = 0
+
 proc newParser*(handler: ErrorHandler): Parser = 
   result = newParser()
   result.error_handler = handler
@@ -183,6 +185,8 @@ proc parse_comment(parser: Parser) =
 
 proc parse_variable(parser: Parser): VariableNode =
   result = VariableNode()
+  result.address = parser.var_index
+  parser.var_index += 1
   parser.set_begin_info(result)
   if parser.scanner.has_next:
     result.name = parser.scanner.next.str_val

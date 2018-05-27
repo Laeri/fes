@@ -158,11 +158,20 @@ method emit*(generator: CodeGenerator, node: WhileNode) =
 
 var base_address = "$0200"
 
+proc padded_addr_str(str: string): string = 
+  if str.len < 6:
+    result = "$"
+    for i in 1..(5 - str.len):
+      result &= "0"
+    result &= str[1 .. str.len - 1]
+
+proc index_to_addr_str(index: int): string =
+  return num_to_hex(index).padded_addr_str
 
 method emit*(generator: CodeGenerator, node: LoadVariableNode) = 
   generator.code.add(ASMCall(op: DEX))
   generator.code.add(ASMCall(op: STA, param: base_address & ",X"))
-  generator.code.add(ASMCall(op: LDA, param: "$" & $node.var_node.address))
+  generator.code.add(ASMCall(op: LDA, param: index_to_addr_str(node.var_node.address)))
 
 
 proc gen*(generator: CodeGenerator, node: ASTNode) =

@@ -1,4 +1,4 @@
-1 2 3 name input
+1 2 3 name input input2
 
 : name
 4 5 6
@@ -9,4 +9,4 @@ name
 ;
 
 variable input
-
+variable input2

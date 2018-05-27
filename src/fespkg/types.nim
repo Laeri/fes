@@ -125,6 +125,7 @@ type
     scanner*: Scanner
     error_handler*: ErrorHandler
     var_table*: TableRef[string, VariableNode]
+    var_index*: int
 
   LineInfo* = ref object of RootObj
     line*: int
