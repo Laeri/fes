@@ -1,5 +1,5 @@
 import 
-  unittest, types, compiler, msgs, parser, tables
+  unittest, types, compiler, msgs, passes, parser, tables, ast
 
 suite "Passes Suite":
 
@@ -9,6 +9,7 @@ suite "Passes Suite":
     var compiler = newFESCompiler()
     var src: string
     var parser = newParser(handler)
+    var pass_runner = newPassRunner(handler, parser.var_table)
 
   teardown:
     compiler = nil
@@ -19,4 +20,5 @@ suite "Passes Suite":
   test "load variable instead of calling a word name":
     src = " variable test_var test_var"
     parser.parse_string(src)
-    compiler.pass_word_to_var_calls(parser.root)
+    pass_runner.pass_word_to_var_calls(parser.root)
+    echo parser.root.str

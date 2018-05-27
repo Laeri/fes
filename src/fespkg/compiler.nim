@@ -8,6 +8,7 @@ proc newFESCompiler*(): FESCompiler =
   result.error_handler = newErrorHandler()
   result.parser = newParser(result.error_handler)
   result.generator = newCodeGenerator()
+  result.pass_runner = newPassRunner(result.error_handler, result.parser.var_table)
 
 
 proc report(compiler: FESCompiler, msg: MsgKind, msg_args: varargs[string]) =
@@ -331,12 +332,13 @@ proc generate_and_assemble(compiler: FESCompiler, asm_code: seq[ASMAction], file
     compiler.report(errASMSourceError, outp)
 
 proc do_passes(compiler: FESCompiler) =
-  pass_group_word_defs_last(compiler.parser.root)
-  compiler.parser.root.pass_add_start_label()
-  compiler.pass_check_multiple_defs(compiler.parser.root)
-  compiler.pass_word_to_var_calls(compiler.parser.root)
-  compiler.parser.root.pass_add_end_label()
-  compiler.pass_word_to_var_calls(compiler.parser.root)
+  var pass_runner = compiler.pass_runner
+  pass_runner.pass_group_word_defs_last(compiler.parser.root)
+  pass_runner.pass_add_start_label(compiler.parser.root)
+  pass_runner.pass_check_multiple_defs(compiler.parser.root)
+  pass_runner.pass_word_to_var_calls(compiler.parser.root)
+  pass_runner.pass_add_end_label(compiler.parser.root)
+  pass_runner.pass_word_to_var_calls(compiler.parser.root)
 
 
 const core = readFile("src/core/core.fth")

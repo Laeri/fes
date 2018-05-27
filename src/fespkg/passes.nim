@@ -1,7 +1,14 @@
 import
-  types, ast, sets, msgs, compiler, parser, typetraits, tables
+  types, ast, sets, msgs, typetraits, tables
 
 
+proc newPassRunner*(): PassRunner =
+  result = PassRunner()
+
+proc newPassRunner*(handler: ErrorHandler, var_table: TableRef[string, VariableNode]): PassRunner =
+  result = newPassRunner()
+  result.handler = handler
+  result.var_table = var_table
 
 proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
   var selected: seq[T] = @[]
@@ -65,7 +72,7 @@ proc count[T](t_seq: seq[T], t_el: T): int =
     if seq_el == t_el:
       inc(result)
 
-proc pass_check_multiple_defs*(compiler: FESCompiler, node: ASTNode) =
+proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
   var defs = collect_defs(cast[SequenceNode](node))
   var names: seq[string] = @[]
   for def in defs:
@@ -74,17 +81,17 @@ proc pass_check_multiple_defs*(compiler: FESCompiler, node: ASTNode) =
   if names.len != names_set.len:
     for set_name in names_set:
       if names.count(set_name) > 1:
-        compiler.parser.report(node, errWordAlreadyDefined, set_name)
+        discard #pass_runner.handler.report(node, errWordAlreadyDefined, set_name)
 
-proc pass_group_word_defs_last*(root: SequenceNode) = 
+proc pass_group_word_defs_last*(pass_runner: PassRunner, root: SequenceNode) = 
   var partition = root.sequence.partition(is_def)
   root.sequence = partition.rejected & partition.selected
 
-proc pass_group_vars_first*(root: SequenceNode) =
+proc pass_group_vars_first*(pass_runner: PassRunner, root: SequenceNode) =
   var partition = root.sequence.partition(is_var)
   root.sequence = partition.selected  & partition.rejected
 
-proc pass_add_start_label*(root: SequenceNode) =
+proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   var asm_node = newASMNode()
   asm_node.add(ASMLabel(label_name: "Start:"))
   var tmp_seq: seq[ASTNode] = @[]
@@ -92,29 +99,31 @@ proc pass_add_start_label*(root: SequenceNode) =
   root.sequence = tmp_seq & root.sequence
 
 
-proc replace_n(node: ASTNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode))  = 
+method replace_n(node: ASTNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) {.base.} = 
   discard
 
-proc replace_n(node: SequenceNode, pred: (proc(el: ASTNode): bool),rep: (proc(el: ASTNode): ASTNode)) = 
+method replace_n(node: SequenceNode, pred: (proc(el: ASTNode): bool),rep: (proc(el: ASTNode): ASTNode)) = 
   var i = 0
   while i < node.sequence.len:
     if pred(node.sequence[i]):
+      var replace_node = rep(node.sequence[i])
       node.sequence.delete(i)
+      node.sequence.insert(replace_node, i - 1)
     else:
       i += 1
 
-proc replace_n(node: IfElseNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
+method replace_n(node: IfElseNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
   node.then_block.replace_n(pred, rep)
   node.else_block.replace_n(pred, rep)
 
-proc replace_n(node: WhileNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
+method replace_n(node: WhileNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
   node.condition_block.replace_n(pred, rep)
 
-proc replace_n(node: DefineWordNode,pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
+method replace_n(node: DefineWordNode,pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
   node.definition.replace_n(pred, rep)
 
 
-proc pass_add_end_label*(root: SequenceNode) =
+proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   var end_node = newASMNode()
   end_node.add(ASMLabel(label_name: "End:"))
   end_node.add(ASMCall(op: JMP, param: "End")) # endless cycle
@@ -125,8 +134,8 @@ proc pass_add_end_label*(root: SequenceNode) =
   root.sequence.insert(jmp_node, first_def_index)
 
 
-proc pass_word_to_var_calls*(compiler: FESCompiler, node: ASTNode) = 
-  var var_table = compiler.parser.var_table
+proc pass_word_to_var_calls*(pass_runner: PassRunner, node: ASTNode) = 
+  var var_table = pass_runner.var_table
   var is_call_var = (proc (node: ASTNode): bool = 
     if node of CallWordNode:
       var call = cast[CallWordNode](node)
@@ -134,9 +143,10 @@ proc pass_word_to_var_calls*(compiler: FESCompiler, node: ASTNode) =
         return true
     return false)
   var call_to_var = (proc(node: ASTNode): ASTNode =
+    echo "T"
     var var_node = LoadVariableNode()
     var_node.name = (cast[CallWordNode](node)).word_name
     return var_node)
-  compiler.parser.root.replace_n(is_call_var, call_to_var)
+  node.replace_n(is_call_var, call_to_var)
   
 

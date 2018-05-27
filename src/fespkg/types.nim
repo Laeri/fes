@@ -8,6 +8,7 @@ type
     parser*: Parser
     generator*: CodeGenerator
     error_handler*: ErrorHandler
+    pass_runner*: PassRunner
     out_asm_folder*: string
     out_passes_folder*: string
     show_asm_log*: bool
@@ -16,6 +17,10 @@ type
     run*: bool
     load_core_words*: bool
     silent*: bool
+
+  PassRunner* = ref object of RootObj
+    handler*: ErrorHandler
+    var_table*: TableRef[string, VariableNode]
 
   ASTVisitor* = ref object of RootObj
 
