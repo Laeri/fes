@@ -140,6 +140,26 @@ proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   jmp_node.add(ASMCall(op: JMP, param: "End"))
   root.sequence.insert(jmp_node, first_def_index)
 
+proc pass_input_struct_type(pass_runner: PassRunner, root: SequenceNode) =
+  discard  
+
+proc pass_set_variable_addresses(pass_runner: PassRunner, root: SequenceNode) = 
+  discard
+
+proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
+  var def_table = pass_runner.definitions
+  var is_call = (proc (node: ASTNode): bool =
+    if node of OtherNode:
+      var other_node = cast[OtherNode](node)
+      if def_table.contains(other_node.name):
+        return true
+    return false)
+  var other_to_call = (proc(node: ASTNode): ASTNode =
+    var call_node = CallWordNode()
+    call_node.word_name = (cast[OtherNode](node)).name
+    call_node.word_def = def_table[call_node.word_name]
+    return call_node)
+  root.replace_n(is_call, other_to_call)
 
 proc pass_word_to_var_calls*(pass_runner: PassRunner, node: ASTNode) = 
   var var_table = pass_runner.var_table
@@ -204,6 +224,7 @@ proc pass_gen_setters(pass_runner: PassRunner, root: SequenceNode, struct_node: 
     asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str()))
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))
     asm_node.add(ASMCall(op: STA, param: "(" & base_addr_addr & "),Y"))
+
 
 # variable is defined global and statically!
 # Player player

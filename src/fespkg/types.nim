@@ -44,14 +44,22 @@ type
     line_range*: LineRange
     column_range*: ColumnRange
 
+  OtherNode* = ref object of ASTNode
+    name*: string
+
   StructNode* = ref object of ASTNode
     name*: string
     members*: seq[string]
     address*: int
 
+  VariableType* = enum
+    Struct, List, Number
+
   VariableNode* = ref object of ASTNode
     name*: string
     address*: int
+    var_type*: VariableType
+    type_node: ASTNode
 
   LoadVariableNode* = ref object of ASTNode
     name*: string
@@ -193,6 +201,8 @@ type
     errMissingStructEnding = "struct \'$1\' has no ending \'}\'"
     errMissingStructName = "struct is missing a name"
     errMalformedStruct = "struct is malformed"
+
+    errTestError = "Error in test \'$1\' occured"
     END_ERRORS
 
     BEGIN_WARNINGS

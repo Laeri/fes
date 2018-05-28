@@ -13,7 +13,26 @@ suite  "Parser Suite":
     parser = nil
     handler = nil
     src = nil
-  
+
+  test "parse word call before passes is OtherNode":
+    src = ": name ; name"
+    parser.parse_string(src)
+    var node_seq = parser.root.sequence
+    check(node_seq.len == 2)
+    check(node_seq[0] of DefineWordNode == true)
+    check(node_seq[1] of OtherNode == true)
+    var other_n = cast[OtherNode](node_seq[1])
+    check(other_n.name == "name")
+
+  test "struct reference before passes is OtherNode":
+    src = "struct Player { x y } variable player Player"
+    parser.parse_string(src)
+    var node_seq = parser.root.sequence
+    check(node_seq.len == 3) # StructNode, VariableNode, OtherNode
+    check(node_seq[0] of StructNode)
+    check(node_seq[1] of VariableNode)
+    check(node_seq[2] of OtherNode)
+
   test "errNestedWordDef: defining a word twice should be reported":
     src = ": name : name2 ;"
     parser.parse_string(src)

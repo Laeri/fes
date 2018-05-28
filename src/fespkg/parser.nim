@@ -153,14 +153,11 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
     elif token.str_val == ":":
       parser.report(def_node, errNestedWordDef, def_node.word_name)
     else:
-      var node = CallWordNode()
+      var node = OtherNode()
       parser.set_begin_info(node)
-      node.word_name = token.str_val.translate_name
-      parser.calls[node.word_name] = node
-      if not(node.word_name.is_valid_name):
-        parser.report(node, errInvalidCallWordName, token.str_val)
-      else:
-        def_node.add(node)
+      parser.set_end_info(node)
+      node.name = token.str_val 
+      def_node.add(node)
   parser.set_end_info(def_node)
   parser.report(def_node, errMissingWordEnding, def_node.word_name)
 
@@ -307,11 +304,9 @@ proc parse_sequence(parser: Parser): SequenceNode =
       node.number = token.str_val.parseInt
       root.add(node)
     else:
-      var node = CallWordNode(word_name: token.str_val.translate_name)
-      parser.calls[node.word_name] = node
+      var node = OtherNode(name: token.str_val)
       parser.set_begin_info(node)
-      if not(is_valid_name(token.str_val)):
-        parser.report(node, errInvalidCallWordName, token.str_val)
+      parser.set_end_info(node)
       root.add(node)
   parser.set_end_info(root)
   return root

@@ -21,11 +21,18 @@ suite "Passes Suite":
     src = " variable test_var test_var"
     parser.parse_string(src)
     pass_runner.pass_word_to_var_calls(parser.root)
-    echo parser.root.str
     #check(parser.root.sequence[1] of LoadVariableNode)
 
-  test "call to word without definition should be reported":
-    src = "no_def_call"
+
+  test "Pass: Transform OtherNode to WordCallNode if corresponding DefineWordNode exists":
+    src = ": name ; name"
     parser.parse_string(src)
-    pass_runner.pass_calls_to_def_check()
-    check(handler.has_error_type(errWordCallWithoutDefinition) == true)
+    var nodes = parser.root.sequence
+    check(nodes.len == 2)
+    check(nodes[0] of DefineWordNode)
+    check(nodes[1] of OtherNode)
+    var other_node = cast[OtherNode](nodes[1])
+    check(other_node.name == "name")
+    pass_runner.pass_set_word_calls(parser.root)
+    var call_node = cast[CallWordNode](nodes[1])
+    check(call_node.word_name == "name")

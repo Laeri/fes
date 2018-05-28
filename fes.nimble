@@ -37,4 +37,4 @@ task test, "Run specified test in tests/ folder":
     quit(QuitFailure)
   else:
     var src_name = paramStr(2)
-    exec "nim c -r " & silent & " -o=bin/" & src_name & " -r tests/" & src_name & " NIMTEST_OUTPUT_LVL=PRINT_FAILURES"
+    exec "nim c -r " & silent & " -o=bin/" & src_name & " -r tests/" & src_name

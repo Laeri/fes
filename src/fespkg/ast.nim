@@ -100,9 +100,12 @@ method str*(node: LoadVariableNode, prefix = ""): string =
   var str: string = prefix & "LoadVariableNode: " & node.name & "\n"
   return str
 
-method str*(action: ASMAction, prefix = ""): string {.base.} =
+method str*(action: ASMAction, prefix = ""): string =
   echo "UNSPECIFIED ASM ACTION"
   return "!!!!!"
+
+method str*(node: OtherNode, prefix = ""): string =
+  return prefix & "OtherNode: " & node.name & "\n"
 
 method str*(call: ASMCall, prefix = ""): string =
   var arg = "  "
