@@ -209,17 +209,24 @@ proc parse_struct(parser: Parser): StructNode =
   if parser.scanner.has_next:
     result.name = parser.scanner.next.str_val
     parser.report(result, errMissingStructName)
-
+  else:
+    parser.report(result, errMalformedStruct)
   if parser.scanner.has_next: # skip opening {
     var token = parser.scanner.next.str_val
     if token[0] == '{' and token.len > 1:
       token = token[1 .. token.len - 1]
       result.members.add(token)
+    elif token != "{":
+      parser.report(result, errMalformedStruct)
+  else:
+    parser.report(result, errMalformedStruct)
 
   while parser.scanner.has_next:
     var token = parser.scanner.next.str_val
     if token == "}":
       parser.set_end_info(result)
+      if result.members.len == 0:
+        parser.report(result, warnMissingStructBody, result.name)
       return result
     elif token.contains("}"):
       token = token[0 .. token.len - 2]

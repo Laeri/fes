@@ -188,6 +188,7 @@ type
     errWordCallWithoutDefinition = "the word \'$1\' has no corresponding definition!"
     errMissingStructEnding = "struct \'$1\' has no ending \'}\'"
     errMissingStructName = "struct is missing a name"
+    errMalformedStruct = "struct is malformed"
     END_ERRORS
 
     BEGIN_WARNINGS

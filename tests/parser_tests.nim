@@ -182,6 +182,15 @@ suite "Parser Suite":
     check(node.members[1] == "b")
     check(node.members[2] == "c")
 
+  test "warnMissingStructBody: empty struct body should be reported":
+    src = "struct test_name { }"
+    parser.parse_string(src)
+    check(handler.has_error_type(warnMissingStructBody))
+
+  test "errMissingStructEnding: struct should be closed with \'}\'":
+    src = "struct test_name {"
+    parser.parse_string(src)
+    check(handler.has_error_type(errMissingStructEnding))
 
     
 

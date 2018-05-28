@@ -64,6 +64,13 @@ method str*(node: ASTNode, prefix = ""): string {.base.} =
   echo "error: node with no print function!!!"
   return prefix & $node[]
 
+method str*(node: StructNode, prefix = ""): string = 
+  var str: string = prefix & "StructNode: " & node.name & " {\n"
+  for member in node.members:
+    str &= prefix & "  " & member & "\n"
+  str &= prefix & "}"
+  return str
+
 method str*(node: SequenceNode, prefix = ""): string =
   var str: string = prefix & "SequenceNode:\n" 
   for child in node.sequence:
