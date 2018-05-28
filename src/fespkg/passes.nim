@@ -185,6 +185,9 @@ proc gen_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: Struc
     asm_node.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect indexing
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset
     asm_node.add(ASMCall(op: LDA, param: "(" & base_addr_addr & "),Y")) # access base + member_offset
+    get_define.word_name = get_prefix & member
+    get_define.definition = asm_node
+    root.add(get_define)
 
 proc gen_setters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) = 
   discard
