@@ -161,20 +161,20 @@ proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
     return call_node)
   root.replace_n(is_call, other_to_call)
 
-proc pass_word_to_var_calls*(pass_runner: PassRunner, node: ASTNode) = 
+proc pass_set_variable_loads*(pass_runner: PassRunner, node: ASTNode) = 
   var var_table = pass_runner.var_table
-  var is_call_var = (proc (node: ASTNode): bool = 
-    if node of CallWordNode:
-      var call = cast[CallWordNode](node)
-      if var_table.contains(call.word_name):
+  var is_var = (proc (node: ASTNode): bool = 
+    if node of OtherNode:
+      var other_node = cast[OtherNode](node)
+      if var_table.contains(other_node.name):
         return true
     return false)
-  var call_to_var = (proc(node: ASTNode): ASTNode =
+  var other_to_load = (proc(node: ASTNode): ASTNode =
     var load_node = LoadVariableNode()
-    load_node.name = (cast[CallWordNode](node)).word_name
+    load_node.name = (cast[OtherNode](node)).name
     load_node.var_node = var_table[load_node.name]
     return load_node)
-  node.replace_n(is_call_var, call_to_var)
+  node.replace_n(is_var, other_to_load)
 
 proc pass_calls_to_def_check*(pass_runner: PassRunner) = 
   for call in pass_runner.calls.values:

@@ -337,9 +337,8 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_add_start_label(compiler.parser.root)
   pass_runner.pass_set_word_calls(compiler.parser.root)
   pass_runner.pass_check_multiple_defs(compiler.parser.root)
-  pass_runner.pass_word_to_var_calls(compiler.parser.root)
+  pass_runner.pass_set_variable_loads(compiler.parser.root)
   pass_runner.pass_add_end_label(compiler.parser.root)
-  pass_runner.pass_word_to_var_calls(compiler.parser.root)
 
 
 const core = readFile("src/core/core.fth")
