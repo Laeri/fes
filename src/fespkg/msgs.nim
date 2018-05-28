@@ -37,6 +37,21 @@ proc newErrorHandler*(): ErrorHandler =
   result.warnings = @[]
   result.silent = false
 
+proc varargs_to_seq[T](args: varargs[T]): seq[T] =
+  result =  @[]
+  for arg in args:
+    result.add(arg)
+
+proc gen_error*(node: ASTNode, msg: MsgKind, msg_args: varargs[string]): FError =
+  result = newFError(msg, @[])
+  result.file_name = node.file_name
+  result.start_line = node.line_range.low
+  result.start_column = node.column_range.low
+  result.line_range = node.line_range
+  result.indications.add(newErrorIndication(node.line_range.low, node.column_range))
+  result.msg_args = msg_args.varargs_to_seq
+  result.msg = msg
+
 proc set_silent*(handler: ErrorHandler) = 
   handler.silent = true
 

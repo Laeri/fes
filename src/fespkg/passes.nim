@@ -1,5 +1,5 @@
 import
-  types, ast, sets, msgs, typetraits, tables
+  types, ast, sets, msgs, typetraits, tables, parser
 
 
 proc newPassRunner*(): PassRunner =
@@ -7,8 +7,15 @@ proc newPassRunner*(): PassRunner =
 
 proc newPassRunner*(handler: ErrorHandler, var_table: TableRef[string, VariableNode]): PassRunner =
   result = newPassRunner()
-  result.handler = handler
+  result.error_handler = handler
   result.var_table = var_table
+
+proc newPassRunner*(parser: Parser): PassRunner =
+  result = newPassRunner()
+  result.error_handler = parser.error_handler
+  result.var_table = parser.var_table
+  result.definitions = parser.definitions
+  result.calls = parser.calls
 
 proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
   var selected: seq[T] = @[]
@@ -20,6 +27,9 @@ proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected
       rejected.add(el)
   return (selected, rejected)
 
+
+proc report(pass_runner: PassRunner,  node: ASTNode, msg: MsgKind, msg_args: varargs[string]) =
+  pass_runner.error_handler.handle(gen_error(node, msg, msg_args))
 
 method visit(visitor: ASTVisitor, node: ASTNode) {.base.} =
   return
@@ -81,7 +91,7 @@ proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
   if names.len != names_set.len:
     for set_name in names_set:
       if names.count(set_name) > 1:
-        discard #pass_runner.handler.report(node, errWordAlreadyDefined, set_name)
+        pass_runner.error_handler.handle(gen_error(node, errWordAlreadyDefined, set_name))
 
 proc pass_group_word_defs_last*(pass_runner: PassRunner, root: SequenceNode) = 
   var partition = root.sequence.partition(is_def)
@@ -108,7 +118,7 @@ method replace_n(node: SequenceNode, pred: (proc(el: ASTNode): bool),rep: (proc(
     if pred(node.sequence[i]):
       var replace_node = rep(node.sequence[i])
       node.sequence.delete(i)
-      node.sequence.insert(replace_node, i - 1)
+      node.sequence.insert(replace_node, i)
     else:
       i += 1
 
@@ -148,5 +158,12 @@ proc pass_word_to_var_calls*(pass_runner: PassRunner, node: ASTNode) =
     load_node.var_node = var_table[load_node.name]
     return load_node)
   node.replace_n(is_call_var, call_to_var)
+
+proc pass_calls_to_def_check*(pass_runner: PassRunner) = 
+  for call in pass_runner.calls.values:
+    var defs = pass_runner.definitions
+    if not(call.word_name in defs):
+      pass_runner.report(call, errWordCallWithoutDefinition, call.word_name)
+      
   
 

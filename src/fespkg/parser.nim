@@ -8,6 +8,8 @@ proc newParser*(): Parser =
   result.error_handler.scanner = result.scanner
   result.var_table = newTable[string, VariableNode]()
   result.var_index = 0
+  result.definitions = newTable[string, DefineWordNode]()
+  result.calls = newTable[string, CallWordNode]()
 
 proc newParser*(handler: ErrorHandler): Parser = 
   result = newParser()
@@ -62,20 +64,6 @@ proc set_info(parser: Parser, node: ASTNode) =
   parser.set_begin_info(node)
   parser.set_end_info(node)
 
-proc varargs_to_seq[T](args: varargs[T]): seq[T] =
-  result =  @[]
-  for arg in args:
-    result.add(arg)
-
-proc gen_error(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[string]): FError =
-  result = newFError(msg, @[])
-  result.file_name = node.file_name
-  result.start_line = node.line_range.low
-  result.start_column = node.column_range.low
-  result.line_range = node.line_range
-  result.indications.add(newErrorIndication(node.line_range.low, node.column_range))
-  result.msg_args = msg_args.varargs_to_seq
-  result.msg = msg
 
 proc report(parser: Parser, error: FError) =
   parser.error_handler.handle(error)
@@ -84,7 +72,7 @@ proc report(parser: Parser, error: FError) =
 
 proc report*(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[string]) =
   parser.set_end_info(node)
-  parser.report(parser.gen_error(node, msg, msg_args))
+  parser.report(gen_error(node, msg, msg_args))
 
 proc create_asm_call(parser: Parser, op: string, param: string = nil): ASMCall =
   if not(op.is_OPCODE):
@@ -167,6 +155,7 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       var node = CallWordNode()
       parser.set_begin_info(node)
       node.word_name = token.str_val.translate_name
+      parser.calls[node.word_name] = node
       if not(node.word_name.is_valid_name):
         parser.report(node, errInvalidCallWordName, token.str_val)
       else:
@@ -180,7 +169,7 @@ proc parse_comment(parser: Parser) =
     if token.str_val.contains(")"):
       return
     elif token.str_val.contains("("):
-      parser.parse_comment
+      parser.parse_comment    
 
 var MAX_VAR_NUMBER = 512
 proc parse_variable(parser: Parser): VariableNode =
@@ -192,11 +181,13 @@ proc parse_variable(parser: Parser): VariableNode =
   parser.set_begin_info(result)
   if parser.scanner.has_next:
     result.name = parser.scanner.next.str_val
+    parser.set_begin_info(result)
     if not(result.name.is_valid_name):
       parser.report(result, errInvalidVariableName, result.name)
   else:
     parser.report(result, errMissingVariableName)
   parser.var_table[result.name] = result
+  parser.set_end_info(result)
 
 method is_empty(node: ASTNode): bool {.base.}=
   return true
@@ -229,6 +220,7 @@ proc parse_sequence(parser: Parser): SequenceNode =
         if not(is_valid_name(token.str_val)):
           parser.report(def_node, errInvalidDefinitionWordName, token.str_val)
         def_node.word_name = token.str_val.translate_name
+      parser.definitions[def_node.word_name] = def_node
       parser.parse_word_definition(def_node)
       root.add(def_node)
       if def_node.is_empty:
@@ -269,6 +261,7 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(node)
     else:
       var node = CallWordNode(word_name: token.str_val.translate_name)
+      parser.calls[node.word_name] = node
       parser.set_begin_info(node)
       if not(is_valid_name(token.str_val)):
         parser.report(node, errInvalidCallWordName, token.str_val)

@@ -8,7 +8,7 @@ proc newFESCompiler*(): FESCompiler =
   result.error_handler = newErrorHandler()
   result.parser = newParser(result.error_handler)
   result.generator = newCodeGenerator()
-  result.pass_runner = newPassRunner(result.error_handler, result.parser.var_table)
+  result.pass_runner = newPassRunner(result.parser)
 
 
 proc report(compiler: FESCompiler, msg: MsgKind, msg_args: varargs[string]) =

@@ -19,8 +19,10 @@ type
     silent*: bool
 
   PassRunner* = ref object of RootObj
-    handler*: ErrorHandler
+    error_handler*: ErrorHandler
     var_table*: TableRef[string, VariableNode]
+    definitions*: TableRef[string, DefineWordNode]
+    calls*: TableRef[string, CallWordNode]
 
   ASTVisitor* = ref object of RootObj
 
@@ -126,6 +128,8 @@ type
     error_handler*: ErrorHandler
     var_table*: TableRef[string, VariableNode]
     var_index*: int
+    definitions*: TableRef[string, DefineWordNode]
+    calls*: TableRef[string, CallWordNode]
 
   LineInfo* = ref object of RootObj
     line*: int
@@ -177,6 +181,7 @@ type
     errInvalidVariableName = "name \'$1\' is not a valid variable name"
     errMissingVariableName = "variable name is missing"
     errTooManyVariablesDefined = "the maximum number of variables which can be used is the address range from $0000 to $0200\nwhich are 512 variables" 
+    errWordCallWithoutDefinition = "the word $1 has no corresponding definition!"
     END_ERRORS
 
     BEGIN_WARNINGS
