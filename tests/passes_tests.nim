@@ -58,10 +58,22 @@ suite "Passes Suite":
     pass_runner.pass_set_word_calls(parser.root)
     check(any_true(parser.root, is_other) == false)
 
-  test "Input struct type into VariableNode":
-    src = "struct Player { x y } variable player Player"
+  test "variable <name> <Type> should input its type into VariableNode":
+    src = "struct Player {x y z} variable player Player"
     parser.parse_string(src)
     pass_runner.pass_set_struct_var_type(parser.root)
-    echo parser.root.str
+    var seq_node = parser.root.sequence
+    check(seq_node.len == 2)
+    check(seq_node[0] of StructNode)
+    check(seq_node[1] of VariableNode)
+    var var_node = cast[VariableNode](seq_node[1])
+    check(var_node.var_type == Struct)
 
+  test "pass_set_variable_addresses(compiler.parser.root)":
+    #src = "variable name variable name2 struct Player {x y z} variable player Player"
+    src = "variable player Player struct Player {x y z} name"
+    parser.parse_string(src)
+    pass_runner.pass_set_struct_var_type(parser.root)
+    pass_runner.pass_set_variable_addresses(parser.root)
+    #echo parser.root.str
     

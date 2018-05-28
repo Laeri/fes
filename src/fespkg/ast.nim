@@ -93,7 +93,11 @@ method str*(node: IfElseNode, prefix = ""): string =
   return str
 
 method str*(node: VariableNode, prefix = ""): string =
-  var str: string = prefix & "VariableNode: " & node.name & " " & $node.address
+  var str: string = prefix & "VariableNode:\n"
+  str &= prefix & "   " & "name: " & node.name & "\n"
+  str &= prefix & "   " & "size: " & $node.size & "\n"
+  str &= prefix & "   " & "addr: " & $node.address & "\n"
+  str &= prefix & "   " & "type: " & $node.var_type & "\n"
   return str
 
 method str*(node: LoadVariableNode, prefix = ""): string = 
@@ -178,6 +182,9 @@ method any_true*(node: WhileNode, pred: proc(node: ASTNode): bool): bool =
 
 method any_true*(node: DefineWordNode, pred: proc(node: ASTNode): bool): bool = 
   return pred(node) or any_true(node.definition, pred)
+
+proc size*(node: StructNode): int =
+  return node.members.len
 
 
 

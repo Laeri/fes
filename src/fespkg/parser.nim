@@ -169,13 +169,11 @@ proc parse_comment(parser: Parser) =
     elif token.str_val.contains("("):
       parser.parse_comment    
 
-var MAX_VAR_NUMBER = 512
+
 proc parse_variable(parser: Parser): VariableNode =
   result = VariableNode()
-  result.address = parser.var_index
-  if parser.var_index >= MAX_VAR_NUMBER:
-    parser.report(result, errTooManyVariablesDefined)
-  parser.var_index += 1
+  result.var_type = Number
+  result.size = 1 
   parser.set_begin_info(result)
   if parser.scanner.has_next:
     result.name = parser.scanner.next.str_val

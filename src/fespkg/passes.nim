@@ -164,27 +164,50 @@ proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
     return call_node)
   root.replace_n(is_call, other_to_call)
 
-proc transform_var_struct*(node: ASTNode) = 
-  if node of SequenceNode:
-    var seq_node = cast[SequenceNode](node)
-    var last_var_node = false
-    for i in 0..(seq_node.sequence.len - 1):
-      var seq_el = seq_node.sequence[i]
-      if (seq_el of StructNode) and last_var_node:
-        var var_node = cast[VariableNode](seq_node.sequence[i - 1])
-        var struct_node = cast[StructNode](seq_node.sequence[i])
-        var_node.var_type = Struct
-        var_node.type_node = struct_node
-        seq_node.sequence.delete(i)
-        last_var_node = false
-      elif (seq_el of VariableNode):
-        last_var_node = true
-      else:
-        last_var_node = false
 
 # Pass No.7
 proc pass_set_struct_var_type*(pass_runner: PassRunner, root: SequenceNode) =
+  var transform_var_struct = (proc (node: ASTNode) = 
+    if node of SequenceNode:
+      var seq_node = cast[SequenceNode](node)
+      var last_var_node = false
+      var i = 0
+      while i < seq_node.sequence.len:
+        var seq_el = seq_node.sequence[i]
+        if (seq_el of OtherNode) and last_var_node:
+          var other_node = cast[OtherNode](seq_node.sequence[i])
+          if (other_node.name in pass_runner.structs):
+            var struct_node = pass_runner.structs[other_node.name]
+            var var_node = cast[VariableNode](seq_node.sequence[i - 1])
+            var_node.var_type = Struct
+            var_node.type_node = struct_node
+            seq_node.sequence.delete(i)
+            last_var_node = false
+          else:
+            last_var_node = false
+            i += 1
+        elif (seq_el of VariableNode):
+          last_var_node = true
+          i += 1
+        else:
+          last_var_node = false
+          i += 1)
   transform_node(root, transform_var_struct)
+
+# Pass No.8
+proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) = 
+  for var_node in pass_runner.var_table.values:
+    if var_node.var_type == Struct:
+      var struct_node = cast[StructNode](var_node.type_node)
+      var_node.address = pass_runner.var_index
+      var_node.size = struct_node.size
+      pass_runner.var_index += var_node.size
+    elif var_node.var_type == Number:
+      var_node.address = pass_runner.var_index
+      pass_runner.var_index += 1
+      var_node.size = 1
+    else:
+      echo "implement new variable and set its address"
 
 # Pass No.9
 proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
@@ -198,8 +221,7 @@ proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   root.sequence.insert(jmp_node, first_def_index)
 
 
-proc pass_set_variable_addresses(pass_runner: PassRunner, root: SequenceNode) = 
-  discard
+
 
 
 

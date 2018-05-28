@@ -340,6 +340,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_set_variable_loads(compiler.parser.root)
   pass_runner.pass_set_word_calls(compiler.parser.root)
   pass_runner.pass_set_struct_var_type(compiler.parser.root)
+  pass_runner.pass_set_variable_addresses(compiler.parser.root)
   pass_runner.pass_add_end_label(compiler.parser.root)
 
 
@@ -363,7 +364,7 @@ proc compile*(compiler: FESCompiler) =
   compiler.parser.parse_string(src, compiler.file_path)
 
   compiler.do_passes()
-  echo compiler.parser.root.str
+  #echo compiler.parser.root.str
   compiler.generator.gen(compiler.parser.root)
   var asm_calls = compiler.generator.code
   if compiler.optimize:

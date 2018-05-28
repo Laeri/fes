@@ -58,6 +58,7 @@ type
   VariableNode* = ref object of ASTNode
     name*: string
     address*: int
+    size*: int # in bytes
     var_type*: VariableType
     type_node*: ASTNode
 
