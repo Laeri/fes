@@ -77,6 +77,7 @@ method replace_n(node: SequenceNode, pred: (proc(el: ASTNode): bool),rep: (proc(
       node.sequence.delete(i)
       node.sequence.insert(replace_node, i)
     else:
+      replace_n(node.sequence[i], pred, rep)
       i += 1
 
 method replace_n(node: IfElseNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
@@ -100,16 +101,6 @@ proc count[T](t_seq: seq[T], t_el: T): int =
     if seq_el == t_el:
       inc(result)
 
-proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
-  var defs = collect_defs(cast[SequenceNode](node))
-  var names: seq[string] = @[]
-  for def in defs:
-    names.add(def.word_name)
-  var names_set = names.toSet
-  if names.len != names_set.len:
-    for set_name in names_set:
-      if names.count(set_name) > 1:
-        pass_runner.error_handler.handle(gen_error(node, errWordAlreadyDefined, set_name))
 
 # Pass No.1
 proc pass_group_word_defs_last*(pass_runner: PassRunner, root: SequenceNode) = 
@@ -129,26 +120,35 @@ proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   tmp_seq.add(asm_node)
   root.sequence = tmp_seq & root.sequence
 
+# Pass No.4
+proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
+  var defs = collect_defs(cast[SequenceNode](node))
+  var names: seq[string] = @[]
+  for def in defs:
+    names.add(def.word_name)
+  var names_set = names.toSet
+  if names.len != names_set.len:
+    for set_name in names_set:
+      if names.count(set_name) > 1:
+        pass_runner.error_handler.handle(gen_error(node, errWordAlreadyDefined, set_name))
 
+# Pass No.5
+proc pass_set_variable_loads*(pass_runner: PassRunner, node: ASTNode) = 
+  var var_table = pass_runner.var_table
+  var is_var = (proc (node: ASTNode): bool = 
+    if node of OtherNode:
+      var other_node = cast[OtherNode](node)
+      if var_table.contains(other_node.name):
+        return true
+    return false)
+  var other_to_load = (proc(node: ASTNode): ASTNode =
+    var load_node = LoadVariableNode()
+    load_node.name = (cast[OtherNode](node)).name
+    load_node.var_node = var_table[load_node.name]
+    return load_node)
+  node.replace_n(is_var, other_to_load)
 
-
-
-proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
-  var end_node = newASMNode()
-  end_node.add(ASMLabel(label_name: "End:"))
-  end_node.add(ASMCall(op: JMP, param: "End")) # endless cycle
-  root.sequence.add(end_node)
-  var first_def_index = find_index(root.sequence, is_def)
-  var jmp_node = newASMNode()
-  jmp_node.add(ASMCall(op: JMP, param: "End"))
-  root.sequence.insert(jmp_node, first_def_index)
-
-proc pass_input_struct_type(pass_runner: PassRunner, root: SequenceNode) =
-  discard  
-
-proc pass_set_variable_addresses(pass_runner: PassRunner, root: SequenceNode) = 
-  discard
-
+# Pass No.6
 proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
   var def_table = pass_runner.definitions
   var is_call = (proc (node: ASTNode): bool =
@@ -164,20 +164,43 @@ proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
     return call_node)
   root.replace_n(is_call, other_to_call)
 
-proc pass_set_variable_loads*(pass_runner: PassRunner, node: ASTNode) = 
-  var var_table = pass_runner.var_table
-  var is_var = (proc (node: ASTNode): bool = 
-    if node of OtherNode:
-      var other_node = cast[OtherNode](node)
-      if var_table.contains(other_node.name):
-        return true
-    return false)
-  var other_to_load = (proc(node: ASTNode): ASTNode =
-    var load_node = LoadVariableNode()
-    load_node.name = (cast[OtherNode](node)).name
-    load_node.var_node = var_table[load_node.name]
-    return load_node)
-  node.replace_n(is_var, other_to_load)
+proc transform_var_struct*(node: ASTNode) = 
+  if node of SequenceNode:
+    var seq_node = cast[SequenceNode](node)
+    var last_var_node = false
+    for i in 0..(seq_node.sequence.len - 1):
+      var seq_el = seq_node.sequence[i]
+      if (seq_el of StructNode) and last_var_node:
+        var var_node = seq_node.sequence[i - 1]
+        var struct_node = seq_node.sequence[i]
+        echo struct_node.str
+      elif (seq_el of VariableNode):
+        last_var_node = true
+      else:
+        last_var_node = false
+
+# Pass No.7
+proc pass_set_struct_var_type*(pass_runner: PassRunner, root: SequenceNode) =
+  transform_node(root, transform_var_struct)
+
+# Pass No.9
+proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
+  var end_node = newASMNode()
+  end_node.add(ASMLabel(label_name: "End:"))
+  end_node.add(ASMCall(op: JMP, param: "End")) # endless cycle
+  root.sequence.add(end_node)
+  var first_def_index = find_index(root.sequence, is_def)
+  var jmp_node = newASMNode()
+  jmp_node.add(ASMCall(op: JMP, param: "End"))
+  root.sequence.insert(jmp_node, first_def_index)
+
+
+proc pass_set_variable_addresses(pass_runner: PassRunner, root: SequenceNode) = 
+  discard
+
+
+
+
 
 proc pass_calls_to_def_check*(pass_runner: PassRunner) = 
   for call in pass_runner.calls.values:

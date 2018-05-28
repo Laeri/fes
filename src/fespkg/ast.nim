@@ -135,3 +135,34 @@ method str*(node: DefineWordNode, prefix = ""): string =
 method str*(node: CallWordNode, prefix = ""): string =
   return prefix & "CallWordNode: " & node.word_name
 
+method transform_node*(node: ASTNode, transform: proc(node: ASTNode)) {.base.} =
+  transform(node)
+
+method transform_node*(node: SequenceNode, transform: proc(node: ASTNode)) = 
+  transform(node)
+  for node in node.sequence:
+    transform_node(node, transform)
+
+method transform_node*(node: IfElseNode, transform: proc(node: ASTNode)) =
+  transform(node)
+  transform_node(node.then_block, transform)
+  transform_node(node.else_block, transform)
+
+method transform_node*(node: WhileNode, transform: proc(node: ASTNode)) = 
+  transform(node)
+  transform_node(node.condition_block, transform)
+  transform_node(node.then_block, transform)
+
+method transform_node*(node: DefineWordNode, transform: proc(node: ASTNode)) = 
+  transform(node)
+  transform_node(node.definition, transform)
+
+
+
+
+
+
+
+
+
+

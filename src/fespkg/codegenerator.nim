@@ -36,7 +36,7 @@ method `==`*(c1, c2: ASMCall): bool =
 
 
 method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
-  echo "error, node without code to emit"
+  echo "error, node: " & node.str & " without code to emit"
   discard
 
 # it is assumed that variable definitions are grouped first
