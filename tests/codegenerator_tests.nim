@@ -28,6 +28,18 @@ suite "CodeGenerator Suite":
     check(generator.code[1] == newASMCall(STA, "$0200,X"))
     check(generator.code[2] == newASMCall(LDA, "#$01"))
 
+  test "loading a variable should push its address onto the stack":
+    var load_node = LoadVariableNode()
+    var variable_node = VariableNode()
+    variable_node.name = "test_var"
+    variable_node.address = 5
+    load_node.var_node = variable_node
+    generator.emit(load_node)
+    check(generator.code.len == 3)
+    check(generator.code[0] == newASMCall(DEX))
+    check(generator.code[1] == newASMCall(STA, "$0200,X"))
+    check(generator.code[2] == newASMCall(LDA, "$0005"))
+
 
   test "sequence of push numbers and call words":
     src = "1 name1 2 name2"
