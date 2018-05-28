@@ -171,9 +171,12 @@ proc transform_var_struct*(node: ASTNode) =
     for i in 0..(seq_node.sequence.len - 1):
       var seq_el = seq_node.sequence[i]
       if (seq_el of StructNode) and last_var_node:
-        var var_node = seq_node.sequence[i - 1]
-        var struct_node = seq_node.sequence[i]
-        echo struct_node.str
+        var var_node = cast[VariableNode](seq_node.sequence[i - 1])
+        var struct_node = cast[StructNode](seq_node.sequence[i])
+        var_node.var_type = Struct
+        var_node.type_node = struct_node
+        seq_node.sequence.delete(i)
+        last_var_node = false
       elif (seq_el of VariableNode):
         last_var_node = true
       else:

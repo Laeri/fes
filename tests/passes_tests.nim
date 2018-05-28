@@ -57,4 +57,11 @@ suite "Passes Suite":
       return node of OtherNode)
     pass_runner.pass_set_word_calls(parser.root)
     check(any_true(parser.root, is_other) == false)
+
+  test "Input struct type into VariableNode":
+    src = "struct Player { x y } variable player Player"
+    parser.parse_string(src)
+    pass_runner.pass_set_struct_var_type(parser.root)
+    echo parser.root.str
+
     

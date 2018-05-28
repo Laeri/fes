@@ -59,7 +59,7 @@ type
     name*: string
     address*: int
     var_type*: VariableType
-    type_node: ASTNode
+    type_node*: ASTNode
 
   LoadVariableNode* = ref object of ASTNode
     name*: string

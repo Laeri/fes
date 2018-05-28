@@ -202,6 +202,14 @@ proc parse_while*(parser: Parser): WhileNode
 proc check_var_overflow(var_index: int) = 
   discard
 
+proc finish_struct(parser: Parser, node: StructNode): StructNode =
+  result = node
+  if result.members.len == 0:
+    parser.report(result, warnMissingStructBody, result.name)
+  parser.set_end_info(result)
+  parser.structs[result.name] = result
+
+
 proc parse_struct(parser: Parser): StructNode =
   result = newStructNode()
   parser.set_begin_infO(result)
@@ -225,19 +233,12 @@ proc parse_struct(parser: Parser): StructNode =
   while parser.scanner.has_next:
     var token = parser.scanner.next.str_val
     if token == "}":
-      parser.set_end_info(result)
-      if result.members.len == 0:
-        parser.report(result, warnMissingStructBody, result.name)
-      parser.structs[result.name] = result
-      result.address = parser.var_index
-      check_var_overflow(parser.var_index)
-      for member in result.members:
-        parser.var_index += 1
-        check_var_overflow(parser.var_index)
-      return result
-    elif token.contains("}"):
+      return parser.finish_struct(result)
+    elif token[token.len - 1] == '}':
       token = token[0 .. token.len - 2]
+      echo token
       result.members.add(token)
+      return parser.finish_struct(result)
     else:
       result.members.add(token)
   parser.report(result, errMissingStructEnding, result.name)
