@@ -1,5 +1,5 @@
 import
-  types, ast, sets, msgs, typetraits, tables, parser
+  types, utils, ast, sets, msgs, typetraits, tables, parser, codegenerator
 
 
 proc newPassRunner*(): PassRunner =
@@ -16,6 +16,7 @@ proc newPassRunner*(parser: Parser): PassRunner =
   result.var_table = parser.var_table
   result.definitions = parser.definitions
   result.calls = parser.calls
+  result.structs = parser.structs
 
 proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
   var selected: seq[T] = @[]
@@ -164,6 +165,38 @@ proc pass_calls_to_def_check*(pass_runner: PassRunner) =
     var defs = pass_runner.definitions
     if not(call.word_name in defs):
       pass_runner.report(call, errWordCallWithoutDefinition, call.word_name)
+
+proc gen_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
+  # assumes base address is on the stack
+  # removes base address and puts value of the member variable onto the stack
+  var get_prefix = "get-" & struct_node.name & "-"
+  for i in 0..(struct_node.members.len - 1):
+    var member = struct_node.members[i]
+    var get_name = get_prefix & member
+    var get_define = newDefineWordNode()
+    var asm_node = newASMNode()
+    # use indirect indexed address fetching with y register
+    # for example "lda ($01), Y" loads value at address $01 (the base address of the struct) and
+    # then applies the offset Y (to each member variable in the struct
+    # the base value is assumed to be TOS (in register A) and has to be stored at a memory location
+    # to perform this magic
+    # temporarily use location $FF!
+    var base_addr_addr = "$FF"
+    asm_node.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect indexing
+    asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset
+    asm_node.add(ASMCall(op: LDA, param: "(" & base_addr_addr & "),Y")) # access base + member_offset
+
+proc gen_setters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) = 
+  discard
+
+proc gen_new(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) = 
+  discard
+
+
+
+    
+    
+    
       
   
 

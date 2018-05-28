@@ -1,8 +1,8 @@
 import
   unittest, types, parser, msgs, ast, tables
 
-suite "Parser Suite":
-
+suite  "Parser Suite":
+  
   setup:
     var handler = newErrorHandler()
     handler.set_silent

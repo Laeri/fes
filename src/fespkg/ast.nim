@@ -16,6 +16,9 @@ proc newASMNode*(): ASMNode =
   node.asm_calls = @[]
   return node
 
+proc newASMCall*(): ASMCall =
+  result = ASMCall()
+
 proc newStructNode*(): StructNode =
   result = StructNode()
   result.members = @[]

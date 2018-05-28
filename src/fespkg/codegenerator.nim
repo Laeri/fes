@@ -1,5 +1,12 @@
 import
-  types, strutils, tables
+  types, utils, strutils, tables, ast
+
+
+proc push_asm_node(num: int): ASMNode = 
+  result = newASMNode()
+  result.add(ASMCall(op: DEX))
+  result.add(ASMCall(op: STA, param: "$0200,X"))
+  result.add(ASMCall(op: LDA, param: num_to_im_hex(num)))
 
 proc newCodeGenerator*(): CodeGenerator =
   result = CodeGenerator()
@@ -12,14 +19,6 @@ proc newCodeGenerator*(): CodeGenerator =
 proc newASMCall*(op: OPCODE, param: string = nil): ASMCall =
   result = ASMCall(op: op, param: param)
 
-proc digit_to_hex(number: int): string =
-  var hex = @["A", "B", "C", "D", "E", "F"]
-  if number < 10:
-    result = number.intToStr
-  else:
-    result = hex[number - 10]
-  return result
-
 proc next_ifelse(generator: CodeGenerator) =
   generator.current_ifelse += 1
 
@@ -28,23 +27,6 @@ proc next_while(generator: CodeGenerator) =
 
 proc next_address(generator: CodeGenerator) =
   generator.current_address += 1
-
-proc num_to_hex(number: int): string =
-  var hex: string = ""
-  var n = number
-  if n == 0:
-    hex = "0"
-  while (n / 16 > 0):
-    var val = n / 16
-    var rem = n mod 16
-    hex = rem.digit_to_hex & hex
-    n = int(val)
-  if (hex.len mod 2) == 1:
-    hex = "0" & hex
-  return "$" & hex
-
-proc num_to_im_hex(number: int): string =
-  return "#" & num_to_hex(number)
 
 method `==`*(c1: ASMAction, c2: ASMAction): bool {.base.} =
   return false
@@ -61,10 +43,7 @@ method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
 method emit*(generator: CodeGenerator, node: VariableNode) =
   node.address = generator.current_address
   generator.next_address
-  var param = node.address.num_to_im_hex
-  generator.code.add(ASMCall(op: DEX))
-  generator.code.add(ASMCall(op: STA, param: "$0200,X"))
-  generator.code.add(ASMCall(op: LDA, param: param))
+  generator.emit(push_asm_node(node.address))
   generator.variables[node.name] = node
 
 method emit*(generator: CodeGenerator, node: SequenceNode) = 
@@ -80,10 +59,7 @@ method emit*(generator: CodeGenerator, node: DefineWordNode) =
   generator.code.add(ASMCall(op: RTS))
 
 method emit*(generator: CodeGenerator, node: PushNumberNode) =
-  var param = node.number.num_to_im_hex
-  generator.code.add(ASMCall(op: DEX))
-  generator.code.add(ASMCall(op: STA, param: "$0200,X"))
-  generator.code.add(ASMCall(op: LDA, param: param))
+  generator.emit(push_asm_node(node.number))
 
 method emit*(generator: CodeGenerator, node: ASMNode) =
   for call in node.asm_calls:
@@ -158,15 +134,7 @@ method emit*(generator: CodeGenerator, node: WhileNode) =
 
 var base_address = "$0200"
 
-proc padded_addr_str(str: string): string = 
-  if str.len < 6:
-    result = "$"
-    for i in 1..(5 - str.len):
-      result &= "0"
-    result &= str[1 .. str.len - 1]
 
-proc index_to_addr_str(index: int): string =
-  return num_to_hex(index).padded_addr_str
 
 method emit*(generator: CodeGenerator, node: LoadVariableNode) = 
   generator.code.add(ASMCall(op: DEX))
@@ -178,6 +146,7 @@ proc gen*(generator: CodeGenerator, node: ASTNode) =
   generator.code.add(ASMCall(op: LDA, param: "#$FF")) # set X to #$FF in order to set stack start address to $02FF
   generator.code.add(ASMCall(op: TAX))
   generator.emit(node)
+
 
 
 proc aasm_to_string*(asm_actions: seq[ASMAction]): string =

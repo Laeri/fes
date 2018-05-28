@@ -10,6 +10,7 @@ proc newParser*(): Parser =
   result.var_index = 0
   result.definitions = newTable[string, DefineWordNode]()
   result.calls = newTable[string, CallWordNode]()
+  result.structs = newTable[string, StructNode]()
 
 proc newParser*(handler: ErrorHandler): Parser = 
   result = newParser()
@@ -201,6 +202,9 @@ method is_empty(node: SequenceNode): bool =
 proc parse_ifelse*(parser: Parser): IfElseNode
 proc parse_while*(parser: Parser): WhileNode
 
+proc check_var_overflow(var_index: int) = 
+  discard
+
 proc parse_struct(parser: Parser): StructNode =
   result = newStructNode()
   parser.set_begin_infO(result)
@@ -227,6 +231,12 @@ proc parse_struct(parser: Parser): StructNode =
       parser.set_end_info(result)
       if result.members.len == 0:
         parser.report(result, warnMissingStructBody, result.name)
+      parser.structs[result.name] = result
+      result.address = parser.var_index
+      check_var_overflow(parser.var_index)
+      for member in result.members:
+        parser.var_index += 1
+        check_var_overflow(parser.var_index)
       return result
     elif token.contains("}"):
       token = token[0 .. token.len - 2]

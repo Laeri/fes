@@ -23,6 +23,7 @@ type
     var_table*: TableRef[string, VariableNode]
     definitions*: TableRef[string, DefineWordNode]
     calls*: TableRef[string, CallWordNode]
+    structs*: TableRef[string, StructNode]
 
   ASTVisitor* = ref object of RootObj
 
@@ -45,6 +46,7 @@ type
   StructNode* = ref object of ASTNode
     name*: string
     members*: seq[string]
+    address*: int
 
   VariableNode* = ref object of ASTNode
     name*: string
@@ -134,6 +136,7 @@ type
     var_index*: int
     definitions*: TableRef[string, DefineWordNode]
     calls*: TableRef[string, CallWordNode]
+    structs*: TableRef[string, StructNode]
 
   LineInfo* = ref object of RootObj
     line*: int
