@@ -158,6 +158,30 @@ method transform_node*(node: DefineWordNode, transform: proc(node: ASTNode)) =
   transform_node(node.definition, transform)
 
 
+method any_true*(node: ASTNode, pred: proc(node: ASTNode): bool): bool {.base.} =
+  return pred(node)
+
+method any_true*(node: SequenceNode, pred: proc(node: ASTNode): bool): bool = 
+  if pred(node):
+    return true
+  else:
+    for node in node.sequence:
+      if any_true(node, pred):
+        return true
+  return false
+
+method any_true*(node: IfElseNode, pred: proc(node: ASTNode): bool): bool =
+  return pred(node) or any_true(node.then_block, pred) or any_true(node.else_block, pred)
+
+method any_true*(node: WhileNode, pred: proc(node: ASTNode): bool): bool = 
+  return pred(node) or any_true(node.condition_block, pred) or any_true(node.then_block, pred)
+
+method any_true*(node: DefineWordNode, pred: proc(node: ASTNode): bool): bool = 
+  return pred(node) or any_true(node.definition, pred)
+
+
+
+
 
 
 

@@ -49,3 +49,12 @@ suite "Passes Suite":
     pass_runner.pass_set_variable_loads(parser.root)
     var var_node = cast[LoadVariableNode](nodes[1])
     check(var_node.name == "player")
+
+  test "OtherNode->CallWordNode conversion should also happen in DefineWordNode's definition":
+    src = ": name1 ; : name2 name1 ;"
+    parser.parse_string(src)
+    var is_other = (proc (node: ASTNode): bool =
+      return node of OtherNode)
+    pass_runner.pass_set_word_calls(parser.root)
+    check(any_true(parser.root, is_other) == false)
+    
