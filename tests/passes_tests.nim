@@ -69,7 +69,7 @@ suite "Passes Suite":
     var var_node = cast[VariableNode](seq_node[1])
     check(var_node.var_type == Struct)
 
-  test "pass_set_variable_addresses(compiler.parser.root)":
+  test "size after pass_set_variable_addresses(compiler.parser.root)":
     src = "variable name struct Player {x y z} variable player Player"
     parser.parse_string(src)
     pass_runner.pass_set_struct_var_type(parser.root)
@@ -82,4 +82,19 @@ suite "Passes Suite":
     var struct_var = cast[VariableNode](seq_node[2])
     check(normal_var.size == 1)
     check(struct_var.size == 3)
+
+  test "address after pass_set_variable_addresses(compiler.parser.root)":
+    src = "struct Player {x y z} variable player Player variable name"
+    parser.parse_string(src)
+    pass_runner.pass_set_struct_var_type(parser.root)
+    pass_runner.pass_set_variable_addresses(parser.root)
+    var seq_node = parser.root.sequence
+    check(seq_node[0] of StructNode)
+    check(seq_node[1] of VariableNode)
+    check(seq_node[2] of VariableNode)
+    var normal_var = cast[VariableNode](seq_node[2])
+    var struct_var = cast[VariableNode](seq_node[1])
+    check(normal_var.address == 3)
+    check(struct_var.address == 0)
+    echo parser.root.str
     
