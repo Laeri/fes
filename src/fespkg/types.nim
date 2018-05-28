@@ -24,6 +24,7 @@ type
     definitions*: TableRef[string, DefineWordNode]
     calls*: TableRef[string, CallWordNode]
     structs*: TableRef[string, StructNode]
+    var_index*: int
 
   ASTVisitor* = ref object of RootObj
 

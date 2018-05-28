@@ -5,11 +5,6 @@ import
 proc newPassRunner*(): PassRunner =
   result = PassRunner()
 
-proc newPassRunner*(handler: ErrorHandler, var_table: TableRef[string, VariableNode]): PassRunner =
-  result = newPassRunner()
-  result.error_handler = handler
-  result.var_table = var_table
-
 proc newPassRunner*(parser: Parser): PassRunner =
   result = newPassRunner()
   result.error_handler = parser.error_handler
@@ -17,6 +12,7 @@ proc newPassRunner*(parser: Parser): PassRunner =
   result.definitions = parser.definitions
   result.calls = parser.calls
   result.structs = parser.structs
+  result.var_index = parser.var_index
 
 proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
   var selected: seq[T] = @[]
@@ -166,13 +162,15 @@ proc pass_calls_to_def_check*(pass_runner: PassRunner) =
     if not(call.word_name in defs):
       pass_runner.report(call, errWordCallWithoutDefinition, call.word_name)
 
-proc gen_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
+var base_addr_addr = "$FF"
+
+# syntax: <player_variable> get-Player-<member_name>
+proc pass_gen_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
   # assumes base address is on the stack
   # removes base address and puts value of the member variable onto the stack
   var get_prefix = "get-" & struct_node.name & "-"
   for i in 0..(struct_node.members.len - 1):
     var member = struct_node.members[i]
-    var get_name = get_prefix & member
     var get_define = newDefineWordNode()
     var asm_node = newASMNode()
     # use indirect indexed address fetching with y register
@@ -181,19 +179,39 @@ proc gen_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: Struc
     # the base value is assumed to be TOS (in register A) and has to be stored at a memory location
     # to perform this magic
     # temporarily use location $FF!
-    var base_addr_addr = "$FF"
+
     asm_node.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect indexing
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset
     asm_node.add(ASMCall(op: LDA, param: "(" & base_addr_addr & "),Y")) # access base + member_offset
     get_define.word_name = get_prefix & member
-    get_define.definition = asm_node
+    get_define.definition.add(asm_node)
     root.add(get_define)
 
-proc gen_setters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) = 
-  discard
+proc second_stack_item_addr_str(): string = 
+  return "$0200,X"
 
-proc gen_new(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) = 
-  discard
+# syntax: <variable> <player_variable> set-Player-<member_name>
+# assumes stack: (var player_var - player)
+# ! pushes the player base address pointer again to the stack 
+proc pass_gen_setters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) = 
+  var set_prefix = "set-" & struct_node.name & "-"
+  for i in 0..(struct_node.members.len - 1):
+    var member = struct_node.members[i]
+    var set_define = newDefineWordNode()
+    var asm_node = newASMNode()
+    # same magic as for gen_getters
+    asm_node.add(ASMCall(op: STA, param: base_addr_addr))
+    asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str()))
+    asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))
+    asm_node.add(ASMCall(op: STA, param: "(" & base_addr_addr & "),Y"))
+
+# variable is defined global and statically!
+# Player player
+# <Struct-name> <variable_name>
+# this happens after all variables are given their address in the parser
+proc pass_gen_new_struct_var(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
+  discard 
+  
 
 
 
