@@ -176,6 +176,7 @@ type
     errAssemblyError = "error: $1, $2"
     errInvalidVariableName = "name \'$1\' is not a valid variable name"
     errMissingVariableName = "variable name is missing"
+    errTooManyVariablesDefined = "the maximum number of variables which can be used is the address range from $0000 to $0200\nwhich are 512 variables" 
     END_ERRORS
 
     BEGIN_WARNINGS
