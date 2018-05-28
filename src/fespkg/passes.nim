@@ -66,7 +66,28 @@ proc newCollectVisitor[T](pred: proc(node:ASTNode): bool = nil): CollectVisitor[
   result = CollectVisitor[T](pred: pred)
   result.collected = @[]
 
+method replace_n(node: ASTNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) {.base.} = 
+  discard
 
+method replace_n(node: SequenceNode, pred: (proc(el: ASTNode): bool),rep: (proc(el: ASTNode): ASTNode)) = 
+  var i = 0
+  while i < node.sequence.len:
+    if pred(node.sequence[i]):
+      var replace_node = rep(node.sequence[i])
+      node.sequence.delete(i)
+      node.sequence.insert(replace_node, i)
+    else:
+      i += 1
+
+method replace_n(node: IfElseNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
+  node.then_block.replace_n(pred, rep)
+  node.else_block.replace_n(pred, rep)
+
+method replace_n(node: WhileNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
+  node.condition_block.replace_n(pred, rep)
+
+method replace_n(node: DefineWordNode,pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
+  node.definition.replace_n(pred, rep)
 
 proc collect_defs(node: ASTNode): seq[DefineWordNode] =
   var visitor: CollectVisitor[DefineWordNode] = newCollectVisitor[DefineWordNode](is_def)
@@ -90,14 +111,17 @@ proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
       if names.count(set_name) > 1:
         pass_runner.error_handler.handle(gen_error(node, errWordAlreadyDefined, set_name))
 
+# Pass No.1
 proc pass_group_word_defs_last*(pass_runner: PassRunner, root: SequenceNode) = 
   var partition = root.sequence.partition(is_def)
   root.sequence = partition.rejected & partition.selected
 
+# Pass No.2
 proc pass_group_vars_first*(pass_runner: PassRunner, root: SequenceNode) =
   var partition = root.sequence.partition(is_var)
   root.sequence = partition.selected  & partition.rejected
 
+# Pass No.3
 proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   var asm_node = newASMNode()
   asm_node.add(ASMLabel(label_name: "Start:"))
@@ -106,28 +130,7 @@ proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   root.sequence = tmp_seq & root.sequence
 
 
-method replace_n(node: ASTNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) {.base.} = 
-  discard
 
-method replace_n(node: SequenceNode, pred: (proc(el: ASTNode): bool),rep: (proc(el: ASTNode): ASTNode)) = 
-  var i = 0
-  while i < node.sequence.len:
-    if pred(node.sequence[i]):
-      var replace_node = rep(node.sequence[i])
-      node.sequence.delete(i)
-      node.sequence.insert(replace_node, i)
-    else:
-      i += 1
-
-method replace_n(node: IfElseNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
-  node.then_block.replace_n(pred, rep)
-  node.else_block.replace_n(pred, rep)
-
-method replace_n(node: WhileNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
-  node.condition_block.replace_n(pred, rep)
-
-method replace_n(node: DefineWordNode,pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
-  node.definition.replace_n(pred, rep)
 
 
 proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =

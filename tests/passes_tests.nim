@@ -20,7 +20,7 @@ suite "Passes Suite":
   test "load variable instead of calling a word name":
     src = " variable test_var test_var"
     parser.parse_string(src)
-    pass_runner.pass_word_to_var_calls(parser.root)
+    pass_runner.pass_set_variable_loads(parser.root)
     #check(parser.root.sequence[1] of LoadVariableNode)
 
 
@@ -49,4 +49,3 @@ suite "Passes Suite":
     pass_runner.pass_set_variable_loads(parser.root)
     var var_node = cast[LoadVariableNode](nodes[1])
     check(var_node.name == "player")
-    check(var_node.var_node == nodes[0])

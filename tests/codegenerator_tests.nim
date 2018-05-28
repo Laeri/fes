@@ -1,5 +1,5 @@
 import
-  random, sets, unittest, strutils, sequtils, scanner, types, codegenerator, parser
+  random, sets, unittest, strutils, sequtils, scanner, types, codegenerator, parser, passes
 
 
 
@@ -9,6 +9,8 @@ suite "CodeGenerator Suite":
     var generator = newCodeGenerator()
     var src: string
     var parser = newParser()
+    var pass_runner = newPassRunner(parser)
+
   teardown:
     discard
   
@@ -40,10 +42,11 @@ suite "CodeGenerator Suite":
     check(generator.code[1] == newASMCall(STA, "$0200,X"))
     check(generator.code[2] == newASMCall(LDA, "$0005"))
 
-
+#[
   test "sequence of push numbers and call words":
-    src = "1 name1 2 name2"
+    src = ": name 1; : name2 ; 1 name1 2 name2"
     parser.parse_string(src)
+    pass_runner.pass_set_word_calls(parser.root)
     generator.emit(parser.root)
     check(generator.code.len == 8)
     check(generator.code[0] == newASMCall(DEX))
@@ -54,6 +57,7 @@ suite "CodeGenerator Suite":
     check(generator.code[5] == newASMCall(STA, "$0200,X"))
     check(generator.code[6] == newASMCall(LDA, "#$02"))
     check(generator.code[7] == newASMCall(JSR, "name2"))
+]#
 
   test "asm call without argument in block should be generated":
     src = "[ inx ]"
