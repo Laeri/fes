@@ -16,6 +16,10 @@ proc newASMNode*(): ASMNode =
   node.asm_calls = @[]
   return node
 
+proc newStructNode*(): StructNode =
+  result = StructNode()
+  result.members = @[]
+
 
 proc newDefineWordNode*(): DefineWordNode =
   var node = DefineWordNode()

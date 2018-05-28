@@ -201,6 +201,33 @@ method is_empty(node: SequenceNode): bool =
 proc parse_ifelse*(parser: Parser): IfElseNode
 proc parse_while*(parser: Parser): WhileNode
 
+proc parse_struct(parser: Parser): StructNode =
+  result = newStructNode()
+  parser.set_begin_infO(result)
+  var first = false
+
+  if parser.scanner.has_next:
+    result.name = parser.scanner.next.str_val
+    parser.report(result, errMissingStructName)
+
+  if parser.scanner.has_next: # skip opening {
+    var token = parser.scanner.next.str_val
+    if token[0] == '{' and token.len > 1:
+      token = token[1 .. token.len - 1]
+      result.members.add(token)
+
+  while parser.scanner.has_next:
+    var token = parser.scanner.next.str_val
+    if token == "}":
+      parser.set_end_info(result)
+      return result
+    elif token.contains("}"):
+      token = token[0 .. token.len - 2]
+      result.members.add(token)
+    else:
+      result.members.add(token)
+  parser.report(result, errMissingStructEnding, result.name)
+  
 
 proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()
@@ -235,6 +262,9 @@ proc parse_sequence(parser: Parser): SequenceNode =
     elif token.str_val == "if":
       var ifelse_node = parser.parse_ifelse()
       root.add(ifelse_node)
+    elif token.str_val == "struct":
+      var struct_node = parser.parse_struct()
+      root.add(struct_node)
     elif token.str_val == "begin":
       var while_node = parser.parse_while()
       parser.set_begin_info(while_node)

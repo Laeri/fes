@@ -42,6 +42,10 @@ type
     line_range*: LineRange
     column_range*: ColumnRange
 
+  StructNode* = ref object of ASTNode
+    name*: string
+    members*: seq[string]
+
   VariableNode* = ref object of ASTNode
     name*: string
     address*: int
@@ -181,7 +185,9 @@ type
     errInvalidVariableName = "name \'$1\' is not a valid variable name"
     errMissingVariableName = "variable name is missing"
     errTooManyVariablesDefined = "the maximum number of variables which can be used is the address range from $0000 to $0200\nwhich are 512 variables" 
-    errWordCallWithoutDefinition = "the word $1 has no corresponding definition!"
+    errWordCallWithoutDefinition = "the word \'$1\' has no corresponding definition!"
+    errMissingStructEnding = "struct \'$1\' has no ending \'}\'"
+    errMissingStructName = "struct is missing a name"
     END_ERRORS
 
     BEGIN_WARNINGS
@@ -191,6 +197,7 @@ type
     warnMissingElseBody = "\'if\' statement has no \'else\' body"
     warnMissingWhileConditionBody = "\'while\' statement has no condition body"
     warnMissingWhileThenBody = "\'while\' statement has no then body"
+    warnMissingStructBody = "struct $1 has no body"
     END_WARNINGS
 
     BEGIN_HINTS

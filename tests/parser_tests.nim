@@ -151,6 +151,37 @@ suite "Parser Suite":
     parser.parse_string(src1, "SRC1")
     parser.parse_additional_src(src2, "SRC2")
 
+  test "parse struct":
+    src = "struct test_name { a b c }"
+    parser.parse_string(src)
+    check(parser.root.sequence.len == 1)
+    check(parser.root.sequence[0] of StructNode)
+    var node: StructNode = cast[StructNode](parser.root.sequence[0])
+    check(node.members.len == 3)
+    check(node.members[0] == "a")
+    check(node.members[1] == "b")
+    check(node.members[2] == "c")
+
+    src = "struct test_name {a b c }"
+    parser.parse_string(src)
+    check(parser.root.sequence.len == 1)
+    check(parser.root.sequence[0] of StructNode)
+    node = cast[StructNode](parser.root.sequence[0])
+    check(node.members.len == 3)
+    check(node.members[0] == "a")
+    check(node.members[1] == "b")
+    check(node.members[2] == "c")
+
+    src = "struct test_name { a b c}"
+    parser.parse_string(src)
+    check(parser.root.sequence.len == 1)
+    check(parser.root.sequence[0] of StructNode)
+    node = cast[StructNode](parser.root.sequence[0])
+    check(node.members.len == 3)
+    check(node.members[0] == "a")
+    check(node.members[1] == "b")
+    check(node.members[2] == "c")
+
 
     
 
