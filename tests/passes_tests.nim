@@ -70,10 +70,16 @@ suite "Passes Suite":
     check(var_node.var_type == Struct)
 
   test "pass_set_variable_addresses(compiler.parser.root)":
-    #src = "variable name variable name2 struct Player {x y z} variable player Player"
-    src = "variable player Player struct Player {x y z} name"
+    src = "variable name struct Player {x y z} variable player Player"
     parser.parse_string(src)
     pass_runner.pass_set_struct_var_type(parser.root)
     pass_runner.pass_set_variable_addresses(parser.root)
-    #echo parser.root.str
+    var seq_node = parser.root.sequence
+    check(seq_node[0] of VariableNode)
+    check(seq_node[1] of StructNode)
+    check(seq_node[2] of VariableNode)
+    var normal_var = cast[VariableNode](seq_node[0])
+    var struct_var = cast[VariableNode](seq_node[2])
+    check(normal_var.size == 1)
+    check(struct_var.size == 3)
     
