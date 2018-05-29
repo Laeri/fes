@@ -209,34 +209,12 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
     else:
       echo "implement new variable and set its address"
 
-# Pass No.9
-proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
-  var end_node = newASMNode()
-  end_node.add(ASMLabel(label_name: "End:"))
-  end_node.add(ASMCall(op: JMP, param: "End")) # endless cycle
-  root.sequence.add(end_node)
-  var first_def_index = find_index(root.sequence, is_def)
-  var jmp_node = newASMNode()
-  jmp_node.add(ASMCall(op: JMP, param: "End"))
-  root.sequence.insert(jmp_node, first_def_index)
 
-
-
-
-
-
-
-
-proc pass_calls_to_def_check*(pass_runner: PassRunner) = 
-  for call in pass_runner.calls.values:
-    var defs = pass_runner.definitions
-    if not(call.word_name in defs):
-      pass_runner.report(call, errWordCallWithoutDefinition, call.word_name)
 
 var base_addr_addr = "$FF"
-
+# Pass No.9
 # syntax: <player_variable> get-Player-<member_name>
-proc pass_gen_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
+proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
   # assumes base address is on the stack
   # removes base address and puts value of the member variable onto the stack
   var get_prefix = "get-" & struct_node.name & "-"
@@ -256,15 +234,18 @@ proc pass_gen_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: 
     asm_node.add(ASMCall(op: LDA, param: "(" & base_addr_addr & "),Y")) # access base + member_offset
     get_define.word_name = get_prefix & member
     get_define.definition.add(asm_node)
-    root.add(get_define)
+    root.add(get_define) 
+proc pass_gen_getters*(pass_runner: PassRunner, root: SequenceNode) =
+  for struct in pass_runner.structs.values:
+    pass_runner.add_struct_getters(root, struct)
 
 proc second_stack_item_addr_str(): string = 
   return "$0200,X"
-
+# Pass No.10
 # syntax: <variable> <player_variable> set-Player-<member_name>
 # assumes stack: (var player_var - player)
-# ! pushes the player base address pointer again to the stack 
-proc pass_gen_setters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) = 
+# ! pushes the player base address pointer again to the stack
+proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) = 
   var set_prefix = "set-" & struct_node.name & "-"
   for i in 0..(struct_node.members.len - 1):
     var member = struct_node.members[i]
@@ -275,14 +256,33 @@ proc pass_gen_setters(pass_runner: PassRunner, root: SequenceNode, struct_node: 
     asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str()))
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))
     asm_node.add(ASMCall(op: STA, param: "(" & base_addr_addr & "),Y"))
+    set_define.word_name = set_prefix & member
+    root.add(set_define)
+proc pass_gen_setters*(pass_runner: PassRunner, root: SequenceNode) =
+  for struct in pass_runner.structs.values:
+    pass_runner.add_struct_setters(root, struct)
+
+# Pass No. 11
+proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
+  var end_node = newASMNode()
+  end_node.add(ASMLabel(label_name: "End:"))
+  end_node.add(ASMCall(op: JMP, param: "End")) # endless cycle
+  root.sequence.add(end_node)
+  var first_def_index = find_index(root.sequence, is_def)
+  var jmp_node = newASMNode()
+  jmp_node.add(ASMCall(op: JMP, param: "End"))
+  root.sequence.insert(jmp_node, first_def_index)
+###
+
+proc pass_calls_to_def_check*(pass_runner: PassRunner) = 
+  for call in pass_runner.calls.values:
+    var defs = pass_runner.definitions
+    if not(call.word_name in defs):
+      pass_runner.report(call, errWordCallWithoutDefinition, call.word_name)
 
 
-# variable is defined global and statically!
-# Player player
-# <Struct-name> <variable_name>
-# this happens after all variables are given their address in the parser
-proc pass_gen_new_struct_var(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
-  discard 
+
+
   
 
 

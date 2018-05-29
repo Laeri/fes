@@ -96,5 +96,14 @@ suite "Passes Suite":
     var struct_var = cast[VariableNode](seq_node[1])
     check(normal_var.address == 3)
     check(struct_var.address == 0)
-    echo parser.root.str
-    
+
+  test "struct getter test":
+    src = "struct Player { x y }"
+    parser.parse_string(src)
+    pass_runner.pass_gen_getters(parser.root)
+    var seq_node = parser.root
+    check(seq_node.len == 3)
+    var get_x = cast[DefineWordNode](seq_node.sequence[1])
+    var get_y = cast[DefineWordNode](seq_node.sequence[2])
+    check(get_x.word_name == "get-Player-x")
+    check(get_y.word_name == "get-Player-y")

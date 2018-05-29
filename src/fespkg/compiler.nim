@@ -341,8 +341,9 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_set_word_calls(compiler.parser.root)
   pass_runner.pass_set_struct_var_type(compiler.parser.root)
   pass_runner.pass_set_variable_addresses(compiler.parser.root)
+  pass_runner.pass_gen_getters(compiler.parser.root)
+  pass_runner.pass_gen_setters(compiler.parser.root)
   pass_runner.pass_add_end_label(compiler.parser.root)
-
 
 const core = readFile("src/core/core.fth")
 const ppopt_src = readFile("src/ppopt/peephole_6502.txt")
