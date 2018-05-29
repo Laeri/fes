@@ -107,3 +107,14 @@ suite "Passes Suite":
     var get_y = cast[DefineWordNode](seq_node.sequence[2])
     check(get_x.word_name == "get-Player-x")
     check(get_y.word_name == "get-Player-y")
+
+  test "struct setter test":
+    src = "struct Player { x y }"
+    parser.parse_string(src)
+    pass_runner.pass_gen_setters(parser.root)
+    var seq_node = parser.root
+    check(seq_node.len == 3)
+    var get_x = cast[DefineWordNode](seq_node.sequence[1])
+    var get_y = cast[DefineWordNode](seq_node.sequence[2])
+    check(get_x.word_name == "set-Player-x")
+    check(get_y.word_name == "set-Player-y")
