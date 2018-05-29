@@ -129,6 +129,22 @@ suite "Passes Suite":
     check(var_node.var_type == List)
     check(var_node.name == "items")
 
+  test "gen list methods pass":
+    src = "variable items list-5"
+    parser.parse_string(src)
+    pass_runner.pass_set_list_var_type(parser.root)
+    pass_runner.pass_gen_list_methods(parser.root)
+    check(parser.root.len == 4)
+    check(parser.root[0] of VariableNode)
+    check(parser.root[1] of DefineWordNode)
+    check(parser.root[2] of DefineWordNode)
+    check(parser.root[3] of DefineWordNode)
+    var def_get = cast[DefineWordNode](parser.root[1])
+    var def_set = cast[DefineWordNode](parser.root[2])
+    var def_size = cast[DefineWordNode](parser.root[3])
+    check(def_get.word_name == "list-get")
+    check(def_set.word_name == "list-set")
+    check(def_size.word_name == "list-size")
 
 
 

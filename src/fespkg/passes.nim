@@ -262,6 +262,7 @@ proc pass_gen_setters*(pass_runner: PassRunner, root: SequenceNode) =
   for struct in pass_runner.structs.values:
     pass_runner.add_struct_setters(root, struct)
 
+# Pass No.11
 proc pass_set_list_var_type*(pass_runner: PassRunner, root: SequenceNode) =
   var transform_var_list = (proc (node: ASTNode) = 
     if node of SequenceNode:
@@ -286,7 +287,60 @@ proc pass_set_list_var_type*(pass_runner: PassRunner, root: SequenceNode) =
   transform_node(root, transform_var_list)
 
 
-# Pass No. 12
+# Pass No.12
+proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
+  # assumed it is called in this form: <var> <index> list-get
+  # replaces everything with ... var_base item]
+  # which means stack is: ... var_base index] where index is in register A
+  # we can use some indirect addressing mode as for structure member variable access
+  var list_get = newDefineWordNode()
+  list_get.word_name = "list-get"
+  var get_asm = newASMNode()
+  get_asm.add(ASMCall(op: CLC))
+  get_asm.add(ASMCall(op: ADC, param: "#$01"))
+  get_asm.add(ASMCall(op: TAY)) # offset is already TOS in A, but we have to add one to it because first element
+  # at base address holds the lists length
+  get_asm.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # put base address TOS
+  get_asm.add(ASMCall(op: STA, param: base_addr_addr)) # store base_addr for indirect addressing
+  get_asm.add(ASMCall(op: LDA, param: "(" & base_addr_addr & "),Y")) # do indirect addressing with offset in Y
+  list_get.definition.add(get_asm)
+  root.add(list_get)
+
+  # <list> <value> <index> list-set
+  var list_set = newDefineWordNode()
+  list_set.word_name = "list-set"
+  var set_asm = newASMNode()
+  set_asm.add(ASMCall(op: CLC))
+  set_asm.add(ASMCall(op: ADC, param: "#$01"))
+  set_asm.add(ASMCall(op: TAY)) # move index to Y, but first add 1 because first byte specifies the size
+  # then put base address onto tos (onto A)
+  # to do this decrease (increase in this case) the stack pointer X
+  set_asm.add(ASMCall(op: INX))
+  set_asm.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # base address is now in A
+  set_asm.add(ASMCall(op: STA, param: base_addr_addr)) # same trick as with struct
+  set_asm.add(ASMCall(op: DEX)) # move stack pointer up again so it SOS onto value
+  set_asm.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # load the vlaue onto A
+  set_asm.add(ASMCall(op: STA, param: "(" & base_addr_addr & "),Y")) # do indirect addressing
+  set_asm.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # now move base address onto the stack again
+  set_asm.add(ASMCall(op: INX))
+  list_set.definition.add(set_asm)
+  root.add(list_set)
+
+  # <var_name> list-size
+  # tos (A) holds the base address, which contains the size directly
+  # assumed first byte of list holds its size
+  var list_size = newDefineWordNode()
+  list_size.word_name = "list-size"
+  var size_asm = newASMNode()
+  size_asm.add(ASMCall(op: LDY, param: "#$00")) # set Y to 0 because indirect addressing is used with no offset
+  size_asm.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect addressing
+  size_asm.add(ASMCall(op: LDA, param: "(" & base_addr_addr & "),Y")) # replace tos with value (length) at first byte
+  list_size.definition.add(size_asm)
+  root.add(list_size)
+
+  
+
+# Pass No.13
 proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   var end_node = newASMNode()
   end_node.add(ASMLabel(label_name: "End:"))
