@@ -52,6 +52,9 @@ type
     members*: seq[string]
     address*: int
 
+  ListNode* = ref object of ASTNode
+    size*: int
+
   VariableType* = enum
     Struct, List, Number
 

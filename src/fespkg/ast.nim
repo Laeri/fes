@@ -62,10 +62,12 @@ proc is_var*(node: ASTNode): bool =
 proc is_word_call*(node: ASTNode): bool =
   return (node of CallWordNode)
 
-
 method str*(node: ASTNode, prefix = ""): string {.base.} =
   echo "error: node with no print function!!!"
   return prefix & $node[]
+
+method str*(node: ListNode, prefix = ""): string = 
+  return prefix & "ListNode:\n" & prefix & "   " & "size: " & $node.size
 
 method str*(node: StructNode, prefix = ""): string = 
   var str: string = prefix & "StructNode: " & node.name & " {\n"

@@ -272,6 +272,12 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(asm_node)
       if asm_node.is_empty:
         parser.report(asm_node, warnMissingASMBody)
+    elif token.str_val.len >= 6  and token.str_val[0..4] == "list-":
+      var list_node = ListNode()
+      var size_str = token.str_val[5..(token.str_val.len - 1)]
+      list_node.size = size_str.parseInt
+      parser.set_info(list_node)
+      root.add(list_node)
     elif token.str_val == "if":
       var ifelse_node = parser.parse_ifelse()
       root.add(ifelse_node)
