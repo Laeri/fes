@@ -343,6 +343,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_set_variable_addresses(compiler.parser.root)
   pass_runner.pass_gen_getters(compiler.parser.root)
   pass_runner.pass_gen_setters(compiler.parser.root)
+  pass_runner.pass_set_list_var_type
   pass_runner.pass_add_end_label(compiler.parser.root)
 
 const core = readFile("src/core/core.fth")

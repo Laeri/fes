@@ -262,7 +262,31 @@ proc pass_gen_setters*(pass_runner: PassRunner, root: SequenceNode) =
   for struct in pass_runner.structs.values:
     pass_runner.add_struct_setters(root, struct)
 
-# Pass No. 11
+proc pass_set_list_var_type*(pass_runner: PassRunner, root: SequenceNode) =
+  var transform_var_list = (proc (node: ASTNode) = 
+    if node of SequenceNode:
+      var seq_node = cast[SequenceNode](node)
+      var last_var_node = false
+      var i = 0
+      while i < seq_node.sequence.len:
+        var seq_el = seq_node.sequence[i]
+        if (seq_el of ListNode) and last_var_node:
+          var list_node = cast[ListNode](seq_node.sequence[i])
+          var var_node = cast[VariableNode](seq_node.sequence[i - 1])
+          var_node.var_type = List
+          var_node.type_node = list_node
+          seq_node.sequence.delete(i)
+          last_var_node = false
+        elif (seq_el of VariableNode):
+          last_var_node = true
+          i += 1
+        else:
+          last_var_node = false
+          i += 1)
+  transform_node(root, transform_var_list)
+
+
+# Pass No. 12
 proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   var end_node = newASMNode()
   end_node.add(ASMLabel(label_name: "End:"))
