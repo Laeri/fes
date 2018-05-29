@@ -118,3 +118,18 @@ suite "Passes Suite":
     var get_y = cast[DefineWordNode](seq_node.sequence[2])
     check(get_x.word_name == "set-Player-x")
     check(get_y.word_name == "set-Player-y")
+
+  test "input List type into variable":
+    src = "variable items list-5"
+    parser.parse_string(src)
+    pass_runner.pass_set_list_var_type(parser.root)
+    check(parser.root.len == 1)
+    check(parser.root[0] of VariableNode)
+    var var_node = cast[VariableNode](parser.root[0])
+    check(var_node.var_type == List)
+    check(var_node.name == "items")
+
+
+
+
+

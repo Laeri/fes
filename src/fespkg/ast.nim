@@ -29,8 +29,6 @@ proc newDefineWordNode*(): DefineWordNode =
   node.definition = newSequenceNode()
   return node
 
-proc len*(node: SequenceNode): int =
-  return node.sequence.len
 
 proc find_index*[T](lst: seq[T], pred: (proc(el: T): bool)): int =
   for i in 0..(lst.len - 1):
@@ -187,6 +185,24 @@ method any_true*(node: DefineWordNode, pred: proc(node: ASTNode): bool): bool =
 
 proc size*(node: StructNode): int =
   return node.members.len
+
+method len*(node: ASTNode): int {.base.} =
+  return 1
+
+method len*(node: DefineWordNode): int =
+  return node.definition.len
+
+method len*(node: SequenceNode): int =
+  return node.sequence.len
+
+method len*(node: IfElseNode): int =
+  return node.then_block.len + node.else_block.len
+
+method len*(node: WhileNode): int =
+  return node.condition_block.len + node.then_block.len
+
+proc `[]`*(node: SequenceNode, index: int): ASTNode =
+  result = node.sequence[index]
 
 
 
