@@ -34,6 +34,8 @@ method `==`*(c1: ASMAction, c2: ASMAction): bool {.base.} =
 method `==`*(c1, c2: ASMCall): bool =
   return (c1.op == c2.op) and (c1.param == c2.param)
 
+proc translate_to_label_name(name: string): string = 
+  replace(name, "-", "_")
 
 method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
   echo "error, node: " & node.str & " without code to emit"
@@ -51,10 +53,10 @@ method emit*(generator: CodeGenerator, node: SequenceNode) =
     generator.emit(node)
 
 method emit*(generator: CodeGenerator, node: CallWordNode) =
-  generator.code.add(ASMCall(op: JSR, param: node.word_name))
+  generator.code.add(ASMCall(op: JSR, param: translate_to_label_name(node.word_name)))
 
 method emit*(generator: CodeGenerator, node: DefineWordNode) =
-  generator.code.add(ASMLabel(label_name: (node.word_name & ":")))
+  generator.code.add(ASMLabel(label_name: (translate_to_label_name(node.word_name) & ":")))
   generator.emit(node.definition)
   generator.code.add(ASMCall(op: RTS))
 
