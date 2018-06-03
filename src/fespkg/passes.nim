@@ -263,6 +263,7 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))
     asm_node.add(ASMCall(op: STA, param: "(" & base_addr_addr & "),Y"))
     set_define.word_name = set_prefix & member
+    set_define.definition.add(asm_node)
     root.add(set_define)
 proc pass_gen_setters*(pass_runner: PassRunner, root: SequenceNode) =
   for struct in pass_runner.structs.values:
