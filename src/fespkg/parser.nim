@@ -30,7 +30,8 @@ var nes_transl_table: Table[string, string] =
     "<=": "smaller_or_equal",
     ">=": "greater_or_equal",
     "=": "equal",
-    "!=": "not_equal"
+    "!=": "not_equal",
+    "!": "store_var"
   }.toTable
 
 const
@@ -256,10 +257,9 @@ proc parse_sequence(parser: Parser): SequenceNode =
       else:
         token = parser.scanner.next
         parser.set_begin_info(def_node)
-        def_node.word_name = token.str_val
+        def_node.word_name = token.str_val.translate_name
         if not(is_valid_name(token.str_val)):
           parser.report(def_node, errInvalidDefinitionWordName, token.str_val)
-        def_node.word_name = token.str_val.translate_name
       parser.definitions[def_node.word_name] = def_node
       parser.parse_word_definition(def_node)
       root.add(def_node)
@@ -309,7 +309,7 @@ proc parse_sequence(parser: Parser): SequenceNode =
       node.number = token.str_val.parseInt
       root.add(node)
     else:
-      var node = OtherNode(name: token.str_val)
+      var node = OtherNode(name: translate_name(token.str_val))
       parser.set_begin_info(node)
       parser.set_end_info(node)
       root.add(node)
