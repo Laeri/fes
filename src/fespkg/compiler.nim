@@ -347,6 +347,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_gen_list_methods(compiler.parser.root)
   pass_runner.pass_add_end_label(compiler.parser.root)
 
+
 const core = readFile("src/core/core.fth")
 const ppopt_src = readFile("src/ppopt/peephole_6502.txt")
   
@@ -356,6 +357,7 @@ proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
   pp_optimizer.optimize(ppopt_src, asm_code)
 
 
+
 proc compile*(compiler: FESCompiler) =
   let time = cpuTime()
   compiler.report(reportCompilerVersion, compiler.name, compiler.version)
@@ -363,8 +365,9 @@ proc compile*(compiler: FESCompiler) =
   var src = readFile(compiler.file_path)
   if compiler.load_core_words:
     compiler.parser.parse_string(core, "core")
-    
-  compiler.parser.parse_string(src, compiler.file_path)
+    compiler.parser.parse_additional_src(src, compiler.file_path)
+  else:
+    compiler.parser.parse_string(src, compiler.file_path)
 
   compiler.do_passes()
   #echo compiler.parser.root.str
@@ -382,6 +385,25 @@ proc compile*(compiler: FESCompiler) =
   compiler.report(reportErrorCount, $num_errors)
   if compiler.run:
     discard  #compiler.run_in_emu()
+
+proc compile_test_str*(compiler: FESCompiler, input_src: string) =
+  var src = input_src
+  if compiler.load_core_words:
+    compiler.parser.parse_string(core, "core")
+    compiler.parser.parse_additional_src(src, compiler.file_path)
+  else:
+    compiler.parser.parse_string(src, compiler.file_path)
+  compiler.do_passes()
+  compiler.generator.gen(compiler.parser.root)
+  var asm_calls = compiler.generator.code
+  if compiler.optimize:
+    compiler.pp_optimize(asm_calls)
+  var asm_str = aasm_to_string(asm_calls)
+  compiler.generate_and_assemble(asm_calls, compiler.out_asm_folder.file_ending(".asm"))
+  var num_warnings = compiler.error_handler.num_warnings
+  var num_errors = compiler.error_handler.num_errors
+  compiler.report(reportWarningCount, $num_warnings)
+  compiler.report(reportErrorCount, $num_errors)
     
 
 

@@ -205,7 +205,6 @@ type
     errMissingStructEnding = "struct \'$1\' has no ending \'}\'"
     errMissingStructName = "struct is missing a name"
     errMalformedStruct = "struct is malformed"
-
     errTestError = "Error in test \'$1\' occured"
     END_ERRORS
 

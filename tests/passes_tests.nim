@@ -21,7 +21,8 @@ suite "Passes Suite":
     src = " variable test_var test_var"
     parser.parse_string(src)
     pass_runner.pass_set_variable_loads(parser.root)
-    #check(parser.root.sequence[1] of LoadVariableNode)
+    check(parser.root[0] of VariableNode)
+    check(parser.root[1] of LoadVariableNode)
 
 
   test "Pass: Transform OtherNode to WordCallNode if corresponding DefineWordNode exists":
@@ -36,6 +37,21 @@ suite "Passes Suite":
     pass_runner.pass_set_word_calls(parser.root)
     var call_node = cast[CallWordNode](nodes[1])
     check(call_node.word_name == "name")
+
+  test "OtherNode->WordCallNode pass transformation should also happen inside DefineWordNode's definition":
+    src = ": name name2 ; : name2 ;"
+    parser.parse_string(src)
+    pass_runner.pass_set_word_calls(parser.root)
+    echo parser.root.str
+    var nodes = parser.root.sequence
+    check(nodes.len == 2)
+    check(nodes[0] of DefineWordNode == true)
+    check(nodes[1] of DefineWordNode == true)
+    var def = cast[DefineWordNode](nodes[0]).definition
+    check(def[0] of CallWordNode == true)
+    echo def[0].str
+    var call = cast[CallWordNode](def[0])
+    check(call.word_name == "name2")
 
   test "Pass: Transform OtherNode to LoadVariableNode if corresponding VariableNode exists":
     src = "variable player player"

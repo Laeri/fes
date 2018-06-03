@@ -174,6 +174,7 @@ suite  "Parser Suite":
   test "parse variable":
     src = "variable date"
     parser.parse_string(src)
+    echo parser.root.str
 
   test "parse two src strings":
     var src1 = "1 2"

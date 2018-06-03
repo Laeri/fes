@@ -1,4 +1,6 @@
 bin/
 nimcache/
 fes
-
+tests/tmp/*
+# keep tests/tmp/ is an empty folder
+!tests/tmp/.gitkeep
