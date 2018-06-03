@@ -1,5 +1,5 @@
 import
-  types, msgs, compiler, ast, unittest, strutils, ../lib/nimes/src/nes, ../lib/nimes/src/nes/mem, utils
+  types, msgs, compiler, utils, ast, unittest, strutils, nimes_integration, ../lib/nimes/src/nes, ../lib/nimes/src/nes/mem, utils
 
 template check_memory(mem_addr: int, check_val: int): untyped =
   var addr_uint16 = cast[uint16](mem_addr)
@@ -11,13 +11,22 @@ template print_memory(from_addr: int, to_addr: int): untyped =
     var addr_uint16 = cast[uint16](i)
     echo "addr: " & $addr_uint16 & " val: " & $nes.cpu.mem[addr_uint16]
 
-proc create_nes_file(fes_src: string) =
-  discard
+template check_tos(check_val: uint8): untyped =
+  check(tos(nes) == check_val)
+
+template compile_and_run(src: string, seconds: float = 1): untyped {.dirty.} =
+  compiler.compile_test_str(src)
+  nes = newNES(tmp_nes_path)
+  nes.run(seconds)
+
+template check_sos(check_val: uint8): untyped {.dirty.} =
+  var sos: uint8 = nes.cpu.mem[second_of_stack_base_addr() + nes.cpu.x]
+  check(sos == check_val)
 
 suite "Emulation Suite":
 
   setup:
-    var compiler = newFESCompiler()
+    var compiler: FESCompiler = newFESCompiler()
     compiler.load_core_words = true
     # compile to temporary directory /tests/tmp
     # the output will be used as input into the nes emulator
@@ -33,10 +42,18 @@ suite "Emulation Suite":
     nes = nil
   
   test "variable should be stored at location $00":
-    compiler.load_core_words = true
-    compiler.compile_test_str("variable name 1 name !")
-    echo compiler.parser.root.str
+    compile_and_run("variable name 1 name !")
     nes = newNES(tmp_nes_path)
     nes.run(1)
-    print_memory(0, 15)
+    #print_memory(0, 15)
     check_memory(0, 1)
+
+  test "push number":
+    compile_and_run("1")
+    check_tos(1)
+
+  test "push two numbers":
+    compile_and_run("1 2")
+    check_tos(2)
+    check_sos(1)
+

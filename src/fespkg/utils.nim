@@ -38,3 +38,6 @@ proc num_to_im_hex*(number: int): string =
 
 proc index_to_addr_str*(index: int): string =
   return num_to_hex(index).padded_addr_str
+
+proc second_of_stack_base_addr*(): uint16 =
+  result = 0x0200
