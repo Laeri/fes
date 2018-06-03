@@ -48,11 +48,23 @@ suite "Emulation Suite":
     #print_memory(0, 15)
     check_memory(0, 1)
 
-  test "push number":
+  test "two variables should be stored at location $00 and $01":
+    compile_and_run("""
+variable name1
+variable name2
+variable name3
+5 name1 !
+10 name2 !
+15 name3 !""")
+    check_memory(0x00, 5)
+    check_memory(0x01, 10)
+    check_memory(0x02, 15)
+
+  test "pushed number should turn up in register A":
     compile_and_run("1")
     check_tos(1)
 
-  test "push two numbers":
+  test "pushing two numbers should end up in register A and memory location 0x0200 offset by register X ([$0200,X])":
     compile_and_run("1 2")
     check_tos(2)
     check_sos(1)
