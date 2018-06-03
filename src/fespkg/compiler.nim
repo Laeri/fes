@@ -334,17 +334,17 @@ proc generate_and_assemble(compiler: FESCompiler, asm_code: seq[ASMAction], file
 proc do_passes(compiler: FESCompiler) =
   var pass_runner = compiler.pass_runner
   pass_runner.pass_group_word_defs_last(compiler.parser.root)
-  pass_runner.pass_group_vars_first(compiler.parser.root)
   pass_runner.pass_add_start_label(compiler.parser.root)
   pass_runner.pass_check_multiple_defs(compiler.parser.root)
-  pass_runner.pass_set_variable_loads(compiler.parser.root)
-  pass_runner.pass_set_word_calls(compiler.parser.root)
   pass_runner.pass_set_struct_var_type(compiler.parser.root)
+  pass_runner.pass_set_variable_loads(compiler.parser.root)
   pass_runner.pass_set_variable_addresses(compiler.parser.root)
   pass_runner.pass_gen_getters(compiler.parser.root)
   pass_runner.pass_gen_setters(compiler.parser.root)
+  pass_runner.pass_set_word_calls(compiler.parser.root)
   pass_runner.pass_set_list_var_type(compiler.parser.root)
   pass_runner.pass_gen_list_methods(compiler.parser.root)
+  pass_runner.pass_group_vars_first(compiler.parser.root)
   pass_runner.pass_add_end_label(compiler.parser.root)
 
 

@@ -218,7 +218,6 @@ proc parse_struct(parser: Parser): StructNode =
 
   if parser.scanner.has_next:
     result.name = parser.scanner.next.str_val
-    parser.report(result, errMissingStructName)
   else:
     parser.report(result, errMalformedStruct)
   if parser.scanner.has_next: # skip opening {

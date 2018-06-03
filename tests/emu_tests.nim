@@ -69,3 +69,23 @@ variable name3
     check_tos(2)
     check_sos(1)
 
+  test "struct access":
+    compile_and_run("""
+struct Coord { x y }
+variable coords Coord
+3 coords set-Coord-x
+""")
+    print_memory(0, 15)
+    check_memory(0, 3)
+
+  test "struct setter test":
+    compile_and_run("""
+struct Player { x y }
+variable player Player
+3 player set-Player-y
+4 player set-Player-x
+""")
+    echo compiler.parser.root.str
+    check_memory(0x01, 3)
+    check_memory(0x00, 4)
+

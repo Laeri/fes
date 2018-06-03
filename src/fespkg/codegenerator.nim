@@ -41,6 +41,9 @@ method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
   echo "error, node: " & node.str & " without code to emit"
   discard
 
+method emit*(generator: CodeGenerator, node: VariableNode) =
+  discard
+
 
 method emit*(generator: CodeGenerator, node: SequenceNode) = 
   for node in node.sequence:
