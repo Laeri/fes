@@ -41,12 +41,6 @@ method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
   echo "error, node: " & node.str & " without code to emit"
   discard
 
-# it is assumed that variable definitions are grouped first
-method emit*(generator: CodeGenerator, node: VariableNode) =
-  node.address = generator.current_address
-  generator.next_address
-  generator.emit(push_asm_node(node.address))
-  generator.variables[node.name] = node
 
 method emit*(generator: CodeGenerator, node: SequenceNode) = 
   for node in node.sequence:
@@ -141,7 +135,8 @@ var base_address = "$0200"
 method emit*(generator: CodeGenerator, node: LoadVariableNode) = 
   generator.code.add(ASMCall(op: DEX))
   generator.code.add(ASMCall(op: STA, param: base_address & ",X"))
-  generator.code.add(ASMCall(op: LDA, param: index_to_addr_str(node.var_node.address)))
+  generator.code.add(ASMCall(op: LDA, param: num_to_im_hex(node.var_node.address)))
+  echo "emit " & node.var_node.name & " " & $node.var_node.address
 
 
 proc gen*(generator: CodeGenerator, node: ASTNode) =

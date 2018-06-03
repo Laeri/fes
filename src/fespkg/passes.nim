@@ -1,5 +1,5 @@
 import
-  types, utils, ast, sets, msgs, typetraits, tables, parser, codegenerator
+  types, utils, ast, sets, msgs, typetraits, tables, parser, codegenerator, algorithm
 
 
 proc newPassRunner*(): PassRunner =
@@ -195,8 +195,14 @@ proc pass_set_struct_var_type*(pass_runner: PassRunner, root: SequenceNode) =
   transform_node(root, transform_var_struct)
 
 # Pass No.8
-proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) = 
+proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
+# each variable node has an index already set in the parser by the order in which they are encountered
+  var sorted_vars: seq[VariableNode] = @[]
   for var_node in pass_runner.var_table.values:
+    sorted_vars.add(var_node)
+  sorted_vars.sort(proc (x, y: VariableNode): int =
+    result = cmp(x.var_index, y.var_index))
+  for var_node in sorted_vars:
     if var_node.var_type == Struct:
       var struct_node = cast[StructNode](var_node.type_node)
       var_node.address = pass_runner.var_index

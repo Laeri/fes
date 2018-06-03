@@ -174,7 +174,9 @@ proc parse_comment(parser: Parser) =
 proc parse_variable(parser: Parser): VariableNode =
   result = VariableNode()
   result.var_type = Number
-  result.size = 1 
+  result.size = 1
+  result.var_index = parser.var_index
+  parser.var_index += 1
   parser.set_begin_info(result)
   if parser.scanner.has_next:
     result.name = parser.scanner.next.str_val
