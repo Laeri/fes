@@ -23,6 +23,11 @@ template check_sos(check_val: uint8): untyped {.dirty.} =
   var sos: uint8 = nes.cpu.mem[second_of_stack_base_addr() + nes.cpu.x]
   check(sos == check_val)
 
+template print_tos(): untyped {.dirty.} =
+  nes.print_tos()
+
+
+
 suite "Emulation Suite":
 
   setup:
@@ -95,8 +100,6 @@ variable player Player
 3 player set-Player-y
 player get-Player-y
 """)
-    echo "TOS: " & $tos(nes)
-    print_memory(0,0x02FF)
     check_tos(3)
     
   test "struct getter test of x":
@@ -106,8 +109,58 @@ variable player Player
 3 player set-Player-x
 player get-Player-x
 """)
-    echo "TOS: " & $tos(nes)
-    echo "SOS: " & $sos(nes)
-    print_memory(0,20)
-    #check_tos(3)
+    check_tos(3)
+
+  test "+ positive":
+    compile_and_run("1 2 +")
+    check_tos(3)
+
+  test "+ negative":
+    compile_and_run("-10")
+    nes.print_tos()
+
+  test "-":
+    compile_and_run("5 3 -")
+    check_tos(2)
+
+  test "swap":
+    compile_and_run("1 2 swap")
+    check_tos(1)
+    check_sos(2)
+
+  test "drop":
+    compile_and_run("1 2 3 4 5 drop")
+    check_tos(4)
+    check_sos(3)
+
+  test "rot":
+    compile_and_run("1 2 3 rot")
+    check_tos(1)
+    check_sos(3)
+
+  test "dup":
+    compile_and_run("10 dup")
+    check_tos(10)
+    check_sos(10)
+
+  test "@: load variable content":
+    compile_and_run("variable player 3 player ! player @ ")
+    check_tos(3)
+
+  test "true":
+    compile_and_run("true")
+    print_tos()
+    check_tos(uint8_true())
+
+  test "false":
+    compile_and_run("false")
+    print_tos()
+    check_tos(uint8_false())
+
+  test "not":
+    compile_and_run("false not")
+    print_tos()
+    check_tos(uint8_true())
+
+  
 

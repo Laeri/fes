@@ -41,3 +41,9 @@ proc index_to_addr_str*(index: int): string =
 
 proc second_of_stack_base_addr*(): uint16 =
   result = 0x0200
+
+proc uint8_true*(): uint8 =
+  return 255
+
+proc uint8_false*(): uint8 =
+  return 0

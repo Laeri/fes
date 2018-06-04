@@ -151,26 +151,29 @@ equal_done:
 ;
 
 : <
-swap
 [
 cmp $0200,X
 inx
-bpl smaller_false
-lda #$FF
-jmp smaller_done
-smaller_false:
+bpl smaller_true
 lda #$00
+jmp smaller_done
+smaller_true:
+lda #$FF
 smaller_done:
 ]
 ;
 
 : >
-swap
 [
-cmp $02FF,X
+cmp $0200,X
 inx
+bmi greater_false
+beq greater_false
 greater_false:
+lda #$00
+jmp greater_done
 greater_true:
+lda #$FF
 greater_done:
 ]
 ;
