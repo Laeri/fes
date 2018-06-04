@@ -191,10 +191,45 @@ player get-Player-x
 
   test ">: true":
     compile_and_run("4 3 >")
-    #check_tos(uint8_true())
+    check_tos(uint8_true())
 
   test ">: false":
     compile_and_run("1 10 >")
-    print_tos()
-    #check_tos(uint8_false())
+    check_tos(uint8_false())
+
+  test ">=: true":
+    compile_and_run("2 1 >=")
+    check_tos(uint8_true())
+
+  test ">=: false":
+    compile_and_run("1 2 >=")
+    check_tos(uint8_false())
+
+  test "<=: true":
+    compile_and_run("1 2 <=")
+    check_tos(uint8_true())
+
+  test "<=: false":
+    compile_and_run("2 1 <=")
+    check_tos(uint8_false())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

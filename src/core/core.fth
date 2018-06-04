@@ -166,8 +166,8 @@ inx
 : >
 [
 cmp $0200,X
-bmi greater_false
-beq greater_false
+bmi greater_true
+beq greater_true
 greater_false:
 lda #$00
 jmp greater_done
