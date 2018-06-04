@@ -216,8 +216,9 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
       echo "implement new variable and set its address"
 
 
-
-var base_addr_addr = "$FF"
+proc second_stack_item_addr_str(): string = 
+  return "$0200,X"
+var base_addr_addr = "$FE"
 # Pass No.9
 # syntax: <player_variable> get-Player-<member_name>
 proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
@@ -233,8 +234,9 @@ proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node
     # then applies the offset Y (to each member variable in the struct
     # the base value is assumed to be TOS (in register A) and has to be stored at a memory location
     # to perform this magic
-    # temporarily use location $FF!
-
+    # temporarily use location $FE,
+    # indirect addressing uses 16bit addresses! Therefore $FF should contain 0, 
+    # first store tos (A)
     asm_node.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect indexing
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset
     asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # access base + member_offset
@@ -246,8 +248,7 @@ proc pass_gen_getters*(pass_runner: PassRunner, root: SequenceNode) =
   for struct in pass_runner.structs.values:
     pass_runner.add_struct_getters(root, struct)
 
-proc second_stack_item_addr_str(): string = 
-  return "$0200,X"
+
 # Pass No.10
 # syntax: <variable> <player_variable> set-Player-<member_name>
 # assumes stack: (var player_var - player)
@@ -261,8 +262,11 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
     # same magic as for gen_getters
     asm_node.add(ASMCall(op: STA, param: base_addr_addr))
     asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str()))
+    asm_node.add(ASMCall(op: INX))
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))
     asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
+    asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # drop value from the stack after storing in struct member
+    asm_node.add(ASMCall(op: INX))
     set_define.word_name = set_prefix & member
     set_define.definition.add(asm_node)
     pass_runner.definitions[set_define.word_name] = set_define

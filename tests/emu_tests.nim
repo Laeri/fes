@@ -14,7 +14,7 @@ template print_memory(from_addr: int, to_addr: int): untyped =
 template check_tos(check_val: uint8): untyped =
   check(tos(nes) == check_val)
 
-template compile_and_run(src: string, seconds: float = 1): untyped {.dirty.} =
+template compile_and_run(src: string, seconds: float = 0.2): untyped {.dirty.} =
   compiler.compile_test_str(src)
   nes = newNES(tmp_nes_path)
   nes.run(seconds)
@@ -78,14 +78,36 @@ variable coords Coord
     print_memory(0, 15)
     check_memory(0, 3)
 
-  test "struct setter test":
+  test "struct setter test of x,y":
     compile_and_run("""
 struct Player { x y }
 variable player Player
 3 player set-Player-y
 4 player set-Player-x
 """)
-    echo compiler.parser.root.str
     check_memory(0x01, 3)
     check_memory(0x00, 4)
+
+  test "struct getter test of y":
+    compile_and_run("""
+struct Player { x y }
+variable player Player
+3 player set-Player-y
+player get-Player-y
+""")
+    echo "TOS: " & $tos(nes)
+    print_memory(0,0x02FF)
+    check_tos(3)
+    
+  test "struct getter test of x":
+    compile_and_run("""
+struct Player { x y }
+variable player Player
+3 player set-Player-x
+player get-Player-x
+""")
+    echo "TOS: " & $tos(nes)
+    echo "SOS: " & $sos(nes)
+    print_memory(0,20)
+    #check_tos(3)
 

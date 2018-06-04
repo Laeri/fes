@@ -40,7 +40,7 @@ suite "CodeGenerator Suite":
     check(generator.code.len == 3)
     check(generator.code[0] == newASMCall(DEX))
     check(generator.code[1] == newASMCall(STA, "$0200,X"))
-    check(generator.code[2] == newASMCall(LDA, "$0005"))
+    check(generator.code[2] == newASMCall(LDA, "#$05"))
 
 #[
   test "sequence of push numbers and call words":
