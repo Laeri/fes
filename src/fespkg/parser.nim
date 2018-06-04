@@ -158,7 +158,7 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       var node = OtherNode()
       parser.set_begin_info(node)
       parser.set_end_info(node)
-      node.name = token.str_val 
+      node.name = token.str_val.translate_name
       def_node.add(node)
   parser.set_end_info(def_node)
   parser.report(def_node, errMissingWordEnding, def_node.word_name)
