@@ -163,6 +163,54 @@ player get-Player-x
     compile_and_run("true not")
     check_tos(uint8_false())
 
+  test "true and false":
+    compile_and_run("true false and")
+    check_tos(uint8_false())
+
+  test "false and true":
+    compile_and_run("false true and")
+    check_tos(uint8_false())
+
+  test "true and true":
+    compile_and_run("true true and")
+    check_tos(uint8_true())
+
+  test "false and false":
+    compile_and_run("false false and")
+    check_tos(uint8_false())
+
+  test "true or false":
+    compile_and_run("true false or")
+    check_tos(uint8_true())
+
+  test "false or true":
+    compile_and_run("false true or")
+    check_tos(uint8_true())
+
+  test "true or true":
+    compile_and_run("true true or")
+    check_tos(uint8_true())
+
+  test "false or false":
+    compile_and_run("false false or")
+    check_tos(uint8_false())
+
+  test "true xor false":
+    compile_and_run("true false xor")
+    check_tos(uint8_true())
+
+  test "false xor true":
+    compile_and_run("false true xor")
+    check_tos(uint8_true())
+
+  test "false xor false":
+    compile_and_run("false false xor")
+    check_tos(uint8_false())
+
+  test "true xor true":
+    compile_and_run("true true xor")
+    check_tos(uint8_false())
+
   test "=: true":
     compile_and_run("1 1 =")
     check_tos(uint8_true())
