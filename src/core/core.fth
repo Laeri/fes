@@ -97,6 +97,15 @@ inx
 ]
 ;
 
+( use $FE and $FF for temporary indirect indexed storage )
+: @
+[
+sta $FE
+ldy #$00
+lda [$FE],Y
+]
+;
+
 : +
 [
 CLC

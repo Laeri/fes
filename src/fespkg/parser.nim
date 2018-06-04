@@ -31,7 +31,8 @@ var nes_transl_table: Table[string, string] =
     ">=": "greater_or_equal",
     "=": "equal",
     "!=": "not_equal",
-    "!": "store_var"
+    "!": "store_var",
+    "@": "load_var"
   }.toTable
 
 const
