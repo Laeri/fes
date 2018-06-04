@@ -140,33 +140,32 @@ swap
 : =
 [
 cmp $0200,X
-inx
-bne equal_false
-lda #$FF
-jmp equal_done
-equal_false:
+beq equal_true
 lda #$00
+jmp equal_done
+equal_true:
+lda #$FF
 equal_done:
+inx
 ]
 ;
 
 : <
 [
 cmp $0200,X
-inx
-bpl smaller_true
+bcs smaller_true
 lda #$00
 jmp smaller_done
 smaller_true:
 lda #$FF
 smaller_done:
+inx
 ]
 ;
 
 : >
 [
 cmp $0200,X
-inx
 bmi greater_false
 beq greater_false
 greater_false:
@@ -175,6 +174,7 @@ jmp greater_done
 greater_true:
 lda #$FF
 greater_done:
+inx
 ]
 ;
 

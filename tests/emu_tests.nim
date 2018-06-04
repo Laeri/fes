@@ -149,18 +149,52 @@ player get-Player-x
 
   test "true":
     compile_and_run("true")
-    print_tos()
     check_tos(uint8_true())
 
   test "false":
     compile_and_run("false")
+    check_tos(uint8_false())
+
+  test "not false":
+    compile_and_run("false not")
+    check_tos(uint8_true())
+  
+  test "not true":
+    compile_and_run("true not")
+    check_tos(uint8_false())
+
+  test "=: true":
+    compile_and_run("1 1 =")
+    check_tos(uint8_true())
+
+  test "=: false":
+    compile_and_run("1 2 =")
+    check_tos(uint8_false())
+
+  test "!=: true":
+    compile_and_run("1 2 !=")
+    check_tos(uint8_true())
+
+  test "!=: false":
+    compile_and_run("1 1 !=")
+    check_tos(uint8_false())
+
+  test "<: true":
+    compile_and_run("3 4 <")
+    print_tos()
+    check_tos(uint8_true())
+  
+  test "<: false":
+    compile_and_run("10 1 <")
     print_tos()
     check_tos(uint8_false())
 
-  test "not":
-    compile_and_run("false not")
-    print_tos()
-    check_tos(uint8_true())
+  test ">: true":
+    compile_and_run("4 3 >")
+    #check_tos(uint8_true())
 
-  
+  test ">: false":
+    compile_and_run("1 10 >")
+    print_tos()
+    #check_tos(uint8_false())
 

@@ -369,6 +369,7 @@ proc compile*(compiler: FESCompiler) =
   else:
     compiler.parser.parse_string(src, compiler.file_path)
 
+
   compiler.do_passes()
   #echo compiler.parser.root.str
   compiler.generator.gen(compiler.parser.root)
@@ -393,7 +394,9 @@ proc compile_test_str*(compiler: FESCompiler, input_src: string) =
     compiler.parser.parse_additional_src(src, compiler.file_path)
   else:
     compiler.parser.parse_string(src, compiler.file_path)
+
   compiler.do_passes()
+  
   compiler.generator.gen(compiler.parser.root)
   var asm_calls = compiler.generator.code
   if compiler.optimize:
