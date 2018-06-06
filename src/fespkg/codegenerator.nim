@@ -41,9 +41,11 @@ method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
   echo "error, node: " & node.str & " without code to emit"
   discard
 
-method emit*(generator: CodeGenerator, node: VariableNode) =
-  discard
+proc var_base_addr(node: VariableNode): int =
+  return node.address
 
+method emit*(generator: CodeGenerator, node: VariableNode) =
+ discard
 
 method emit*(generator: CodeGenerator, node: SequenceNode) = 
   for node in node.sequence:
@@ -143,8 +145,8 @@ method emit*(generator: CodeGenerator, node: LoadVariableNode) =
 
 
 proc gen*(generator: CodeGenerator, node: ASTNode) =
-  generator.code.add(ASMCall(op: LDA, param: "#$FF")) # set X to #$FF in order to set stack start address to $02FF
-  generator.code.add(ASMCall(op: TAX))
+  #generator.code.add(ASMCall(op: LDA, param: "#$FF")) # set X to #$FF in order to set stack start address to $02FF
+  #generator.code.add(ASMCall(op: TAX))
   generator.emit(node)
 
 

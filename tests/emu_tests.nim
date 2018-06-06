@@ -261,7 +261,47 @@ player get-Player-x
     compile_and_run("2 1 <=")
     check_tos(uint8_false())
 
+  test "list: set one value":
+    compile_and_run("""
+variable lst list-5
+lst 3 0 list-set""")
+    check_memory(0x01, 3) # first element of a list holds its size
+    check_memory(0x00, 5)
+    
 
+  test "list: set multiple values":
+    compile_and_run("""
+variable lst list-5
+lst 3 0 list-set
+lst 4 1 list-set
+lst 5 2 list-set
+lst 6 3 list-set
+lst 7 4 list-set""")
+    check_memory(0x01, 3) # first element of a list holds its size
+    check_memory(0x02, 4)
+    check_memory(0x03, 5)
+    check_memory(0x04, 6)
+    check_memory(0x05, 7)
+    check_memory(0x00, 5) # check list size
+
+  test "list: size test":
+    compile_and_run("""
+variable lst list-1
+variable lst2 list-2
+variable lst3 list-3
+variable lst4 list-4""")
+    check_memory(0x00, 1)
+    check_memory(0x02, 2)
+    check_memory(0x05, 3)
+    check_memory(0x09, 4)
+
+  test "list: get one value":
+    compile_and_run("""
+variable lst list-1
+lst 10 0 list-set
+lst 0 list-get
+""")
+    check_tos(10)
 
 
 

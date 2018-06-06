@@ -237,7 +237,6 @@ proc parse_struct(parser: Parser): StructNode =
       return parser.finish_struct(result)
     elif token[token.len - 1] == '}':
       token = token[0 .. token.len - 2]
-      echo token
       result.members.add(token)
       return parser.finish_struct(result)
     else:
@@ -274,7 +273,7 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(asm_node)
       if asm_node.is_empty:
         parser.report(asm_node, warnMissingASMBody)
-    elif token.str_val.len >= 6  and token.str_val[0..4] == "list-":
+    elif token.str_val.len >= 6  and token.str_val[0..4] == "list-" and token.str_val[5..(token.str_val.len - 1)].isInteger:
       var list_node = ListNode()
       var size_str = token.str_val[5..(token.str_val.len - 1)]
       list_node.size = size_str.parseInt

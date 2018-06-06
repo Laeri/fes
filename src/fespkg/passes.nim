@@ -116,9 +116,9 @@ proc pass_group_vars_first*(pass_runner: PassRunner, root: SequenceNode) =
 proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   var asm_node = newASMNode()
   asm_node.add(ASMLabel(label_name: "Start:"))
-  var tmp_seq: seq[ASTNode] = @[]
-  tmp_seq.add(asm_node)
-  root.sequence = tmp_seq & root.sequence
+  asm_node.add(ASMCall(op: LDA , param: "#$FF"))
+  asm_node.add(ASMCall(op: TAX)) # setup stack
+  root.sequence.insert(asm_node, 0)
 
 # Pass No.4
 proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
@@ -212,6 +212,9 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
       var_node.address = pass_runner.var_index
       pass_runner.var_index += 1
       var_node.size = 1
+    elif var_node.var_type == List:
+      var_node.address = pass_runner.var_index
+      pass_runner.var_index += var_node.size + 1 # one more because size takes one field at the front
     else:
       echo "implement new variable and set its address"
 
@@ -248,6 +251,19 @@ proc pass_gen_getters*(pass_runner: PassRunner, root: SequenceNode) =
   for struct in pass_runner.structs.values:
     pass_runner.add_struct_getters(root, struct)
 
+
+# Pass: init list size asm node
+proc pass_init_list_sizes*(pass_runner: PassRunner, root: SequenceNode) =
+  for variable in pass_runner.var_table.values:
+    if variable.var_type == List:
+      var asm_node = newASMNode()
+      asm_node.add(ASMCall(op: DEX))
+      asm_node.add(ASMCall(op: STA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: LDA, param: num_to_im_hex(variable.size)))
+      asm_node.add(ASMCall(op: STA, param: num_to_hex(variable.address)))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: INX))
+      root.sequence.insert(asm_node, 0) # insert after start label
 
 # Pass No.10
 # syntax: <variable> <player_variable> set-Player-<member_name>
@@ -288,6 +304,7 @@ proc pass_set_list_var_type*(pass_runner: PassRunner, root: SequenceNode) =
           var list_node = cast[ListNode](seq_node.sequence[i])
           var var_node = cast[VariableNode](seq_node.sequence[i - 1])
           var_node.var_type = List
+          var_node.size = list_node.size
           var_node.type_node = list_node
           seq_node.sequence.delete(i)
           last_var_node = false
