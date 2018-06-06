@@ -162,6 +162,13 @@ suite "Passes Suite":
     check(def_set.word_name == "list-set")
     check(def_size.word_name == "list-size")
 
+  test "check no OtherNode present":
+    src = "no_valid_word_call"
+    parser.parse_string(src)
+    pass_runner.pass_check_no_OtherNodes(parser.root)
+    check(handler.has_error_type(errNoWordDefForName) == true)
+    
+
 
 
 

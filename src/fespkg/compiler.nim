@@ -347,6 +347,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_set_word_calls(compiler.parser.root)
   pass_runner.pass_add_start_label(compiler.parser.root)
   pass_runner.pass_add_end_label(compiler.parser.root)
+  pass_runner.pass_check_no_OtherNodes(compiler.parser.root)
 
 
 const core = readFile("src/core/core.fth")

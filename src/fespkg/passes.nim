@@ -385,6 +385,14 @@ proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   root.sequence.insert(jmp_node, first_def_index)
 ###
 
+# Pass - Check no OtherNode's present
+proc pass_check_no_OtherNodes*(pass_runner: PassRunner, root: SequenceNode) =
+  var visitor = newCollectVisitor[OtherNode](proc (node: ASTNode): bool =
+    result = node of OtherNode)
+  root.accept(visitor)
+  for node in visitor.collected:
+    pass_runner.report(node, errNoWordDefForName, node.name)
+
 proc pass_calls_to_def_check*(pass_runner: PassRunner) = 
   for call in pass_runner.calls.values:
     var defs = pass_runner.definitions

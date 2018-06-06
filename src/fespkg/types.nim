@@ -207,6 +207,7 @@ type
     errMissingStructName = "struct is missing a name"
     errMalformedStruct = "struct is malformed"
     errTestError = "Error in test \'$1\' occured"
+    errNoWordDefForName = "Compilation error: word call (?) $1 has no corresponding definition"
     END_ERRORS
 
     BEGIN_WARNINGS
