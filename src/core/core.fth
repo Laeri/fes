@@ -22,7 +22,69 @@ lda #$00
 ;
 
 
+( one factor in A, one in Y, from https://wiki.nesdev.com/w/index.php/8-bit_Multiply )
 
+: *
+[
+ldy $0200,X
+lsr a
+sta $FC
+sty $FD
+lda #$0
+ldy #$8
+mul_loop:
+bcc mul_noadd
+clc
+adc $FD
+mul_noadd:
+ror a
+ror $FC
+dey
+bne mul_loop
+lda $FC
+inx
+rts
+]
+;
+
+
+( https://wiki.nesdev.com/w/index.php/8-bit_Divide divisor in $FA, quotient in y counter, remainder in A )
+
+: /
+[
+sta $FA
+lda $0200,X
+inx
+ldy #$00
+sec
+div_one:
+sbc $FA
+bcc div_two
+iny
+bne div_one
+div_two:
+tya
+]
+;
+
+( / modified to adc the divisor at the end if the result fell below 0 )
+: mod
+[
+sta $FA
+lda $0200,X
+inx
+ldy #$00
+sec
+mod_one:
+sbc $FA
+bcc mod_two
+iny
+bne mod_one
+mod_two:
+clc
+adc $FA
+]
+;
 
 : dup
 [

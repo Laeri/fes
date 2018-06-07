@@ -6,7 +6,7 @@ template check_memory(mem_addr: int, check_val: int): untyped =
   var val_uint8 = cast[uint8](check_val)
   check(nes.cpu.mem[addr_uint16] == val_uint8)
 
-template print_memory(from_addr: int, to_addr: int): untyped =
+template print_memory(from_addr: int, to_addr: int = from_addr): untyped =
   for i in from_addr .. to_addr:
     var addr_uint16 = cast[uint16](i)
     echo "addr: " & $addr_uint16 & " val: " & $nes.cpu.mem[addr_uint16]
@@ -303,6 +303,47 @@ lst 0 list-get
 """)
     check_tos(10)
 
+  test "mul: 2 * 3":
+    compile_and_run("2 3 *")
+    check_tos(6)
+
+  test "mul: 10 * 15":
+    compile_and_run("10 15 *")
+    check_tos(150)
+
+  test "mul: 4 * 4":
+    compile_and_run("4 dup *")
+    check_tos(16)
+
+  test "8 / 2":
+    compile_and_run("8 2 /")
+    print_memory(0xFA, 0xFD)
+    check_tos(4)
+
+  test "16 / 4":
+    compile_and_run("16 4 /")
+    print_memory(0xFA, 0xFD)
+    check_tos(4)
+
+  test "7 / 3":
+    compile_and_run("7 3 /")
+    print_memory(0xFA, 0xFD)
+    check_tos(2)
+
+  test "16 mod 2":
+     compile_and_run("16 2 mod")
+     print_tos()
+     check_tos(0)
+
+  test "3 mod 2":
+     compile_and_run("3 2 mod")
+     print_tos()
+     check_tos(1)
+
+  test "17 mod 4":
+     compile_and_run("17 4 mod")
+     print_tos()
+     check_tos(1)
 
 
 
