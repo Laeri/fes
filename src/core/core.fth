@@ -100,6 +100,12 @@ inx
 ]
 ;
 
+: nip
+[
+inx
+]
+;
+
 : swap
 [
 ldy $0200,X

@@ -351,6 +351,7 @@ proc do_passes(compiler: FESCompiler) =
 
 
 const core = readFile("src/core/core.fth")
+const engine_lib = readFile("src/engine_lib/engine_lib.fes")
 const ppopt_src = readFile("src/ppopt/peephole_6502.txt")
   
 
@@ -367,9 +368,13 @@ proc compile*(compiler: FESCompiler) =
   var src = readFile(compiler.file_path)
   if compiler.load_core_words:
     compiler.parser.parse_string(core, "core")
+    if compiler.load_library:
+      compiler.parser.parse_additional_src(engine_lib, "engine_lib")
     compiler.parser.parse_additional_src(src, compiler.file_path)
   else:
     compiler.parser.parse_string(src, compiler.file_path)
+    if compiler.load_library:
+      compiler.parser.parse_additional_src(engine_lib, "engine_lib")
 
 
   compiler.do_passes()
@@ -393,9 +398,13 @@ proc compile_test_str*(compiler: FESCompiler, input_src: string) =
   var src = input_src
   if compiler.load_core_words:
     compiler.parser.parse_string(core, "core")
+    if compiler.load_library:
+      compiler.parser.parse_additional_src(engine_lib, "engine_lib")
     compiler.parser.parse_additional_src(src, compiler.file_path)
   else:
     compiler.parser.parse_string(src, compiler.file_path)
+    if compiler.load_library:
+      compiler.parser.parse_additional_src(engine_lib, "engine_lib")
 
   compiler.do_passes()
   

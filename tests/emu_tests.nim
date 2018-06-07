@@ -128,6 +128,11 @@ player get-Player-x
     check_tos(1)
     check_sos(2)
 
+  test "nip":
+    compile_and_run("1 2 3 nip")
+    check_sos(1)
+    check_tos(3)
+
   test "drop":
     compile_and_run("1 2 3 4 5 drop")
     check_tos(4)

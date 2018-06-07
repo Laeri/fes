@@ -1,0 +1,103 @@
+
+
+struct PaletteData {
+  bg0
+  bg1
+  bg2
+  bg3
+  s0
+  s1
+  s2
+  s3
+}
+
+struct Palette {
+  col0
+  col1
+  col2
+}
+
+struct NameTable {
+
+}
+
+variable ppu_mask
+variable ppu_settings
+
+const ppu_control_reg_1 $2000
+const ppu_control_reg2 $2001
+const ppu_status_reg $2002
+const ppu_io_set_reg $2006
+const ppu_io_rw_reg $2007
+
+( write to $2006 address where we will read/write from PPU )
+: set_ppu_rw_address
+ppu_io_set_reg !
+;
+
+( direct memory access )
+: dma
+;
+
+
+
+
+
+
+
+: load_palette
+;
+
+: use_8x8_sprites
+[
+lda $2000
+and #$EF
+sta $2000
+]
+;
+
+: use_8x16_sprites
+[
+lda $2000
+ora #$10
+sta $2000
+]
+;
+
+( PPU-MASK $2001 value setting )
+
+
+
+
+( bool - ; bit 7 has to be modified )
+: set_intensify_blues
+ppu_mask @
+swap
+if
+drop
+[
+ora #$80
+]
+ppu_mask !
+else
+drop
+[
+and #$7F
+]
+ppu_mask !
+then
+;
+
+: intensify_blues?
+ppu_mask @
+[
+asl A
+bcs intens_true
+intens_false:
+lda #$00
+jmp intens_end
+intens_true:
+lda #$FF
+intens_end:
+]
+;

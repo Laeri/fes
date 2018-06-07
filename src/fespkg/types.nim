@@ -16,6 +16,7 @@ type
     file_path*: string
     run*: bool
     load_core_words*: bool
+    load_library*: bool
     silent*: bool
 
   PassRunner* = ref object of RootObj

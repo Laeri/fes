@@ -23,6 +23,7 @@ Options:
   -s --silent               No compiler warnings or hints on stdout.
   --no_core_words           Don't load the core words, used for debugging purposes.
   --show_asm_log            Shows the output of the nes assembler.
+  --no_library              Don't load library words for graphics and audio control.
 """
 
 
@@ -40,5 +41,6 @@ fes.optimize = not(args["--no_optimize"].to_bool)
 fes.run = args["--run"].to_bool
 fes.silent = args["--silent"]
 fes.load_core_words = args["--no_core_words"].not
+fes.load_library = args["--no_library"].not
 fes.show_asm_log = args["--show_asm_log"].to_bool
 fes.compile()
