@@ -174,7 +174,6 @@ suite  "Parser Suite":
   test "parse variable":
     src = "variable date"
     parser.parse_string(src)
-    echo parser.root.str
 
   test "parse two src strings":
     var src1 = "1 2"
@@ -230,6 +229,18 @@ suite  "Parser Suite":
     check(parser.root.sequence[0] of ListNode)
     var list_node = cast[ListNode](parser.root.sequence[0])
     check(list_node.size == 3)
+
+  test "parse if else inside word definition":
+    src = ": name if 3 then ;"
+    parser.parse_string(src)
+    echo parser.root.str
+    check(handler.has_errors == false)
+
+  test "parse while inside word definition":
+    src = ": name begin true while 3 repeat ; "
+    parser.parse_string(src)
+    echo parser.root.str
+    check(handler.has_errors == false)
 
     
 

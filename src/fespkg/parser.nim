@@ -154,6 +154,10 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       parser.parse_asm_block(node)
       if node.is_empty:
         parser.report(node, warnMissingASMBody)
+    elif token.str_val == "begin":
+      var while_node = parser.parse_while()
+      parser.set_begin_info(while_node)
+      def_node.add(while_node)
     elif token.str_val.isInteger:
       var node = PushNumberNode()
       node.number = token.str_val.parseInt
