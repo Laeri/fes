@@ -345,6 +345,21 @@ lst 0 list-get
      print_tos()
      check_tos(1)
 
+  test "if: true no else":
+    compile_and_run("true if 1 then")
+    check_tos(1)
+
+  test "if: true with else":
+    compile_and_run("true if 1 else 2 then")
+    check_tos(1)
+ 
+  test "if: false with else":
+    compile_and_run("false if 1 else 2 then")
+    check_tos(2)
+
+  test "if: false no else":
+    compile_and_run("5 false if 2 then")
+    check_tos(5)
 
 
 

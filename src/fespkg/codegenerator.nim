@@ -102,9 +102,13 @@ method emit*(generator: CodeGenerator, node: IfElseNode) =
   generator.code.add(ASMCall(op: ASL, param: "A"))
   generator.code.add(ASMCall(op: BCC, param: generator.begin_else_label_name()))
   generator.code.add(generator.begin_then_label())
+  generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop condition
+  generator.code.add(ASMCall(op: INX))
   generator.emit(then_block)
   generator.code.add(ASMCall(op: JMP, param: generator.end_if_label_name()))
   generator.code.add(generator.begin_else_label())
+  generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop condition
+  generator.code.add(ASMCall(op: INX))
   generator.emit(else_block)
   generator.code.add(generator.end_if_label())
 
