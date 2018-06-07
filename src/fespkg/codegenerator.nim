@@ -133,9 +133,14 @@ method emit*(generator: CodeGenerator, node: WhileNode) =
   generator.emit(condition_block)
   generator.code.add(ASMCall(op: ASL, param: "A"))
   generator.code.add(ASMCall(op: BCC, param: generator.end_while_name()))
+  generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop computed flag of the stack
+  generator.code.add(ASMCall(op: INX))
   generator.code.add(generator.then_while_label())
   generator.emit(then_block)
+  generator.code.add(ASMCall(op: JMP, param: generator.begin_while_name()))
   generator.code.add(generator.end_while_label())
+  generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop computed flag of the stack
+  generator.code.add(ASMCall(op: INX))
 
 var base_address = "$0200"
 

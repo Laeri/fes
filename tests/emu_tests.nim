@@ -327,22 +327,18 @@ lst 0 list-get
 
   test "7 / 3":
     compile_and_run("7 3 /")
-    print_memory(0xFA, 0xFD)
     check_tos(2)
 
   test "16 mod 2":
      compile_and_run("16 2 mod")
-     print_tos()
      check_tos(0)
 
   test "3 mod 2":
      compile_and_run("3 2 mod")
-     print_tos()
      check_tos(1)
 
   test "17 mod 4":
      compile_and_run("17 4 mod")
-     print_tos()
      check_tos(1)
 
   test "if: true no else":
@@ -359,6 +355,14 @@ lst 0 list-get
 
   test "if: false no else":
     compile_and_run("5 false if 2 then")
+    check_tos(5)
+
+  test "while: countdown":
+    compile_and_run("10 begin dup 1 != while 1 - end")
+    check_tos(1)
+
+  test "while: no entry":
+    compile_and_run("5 begin false while 1 end")
     check_tos(5)
 
 

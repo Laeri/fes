@@ -86,6 +86,7 @@ method replace_n(node: IfElseNode, pred: (proc(el: ASTNode): bool), rep: (proc(e
 
 method replace_n(node: WhileNode, pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
   node.condition_block.replace_n(pred, rep)
+  node.then_block.replace_n(pred, rep)
 
 method replace_n(node: DefineWordNode,pred: (proc(el: ASTNode): bool), rep: (proc(el: ASTNode): ASTNode)) = 
   node.definition.replace_n(pred, rep)
