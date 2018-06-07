@@ -99,7 +99,7 @@ method emit*(generator: CodeGenerator, node: IfElseNode) =
   var else_block = node.else_block
   generator.code.add(generator.begin_if_label())
   generator.code.add(ASMCall(op: CLC))
-  generator.code.add(ASMCall(op: ASL))
+  generator.code.add(ASMCall(op: ASL, param: "A"))
   generator.code.add(ASMCall(op: BCC, param: generator.begin_else_label_name()))
   generator.code.add(generator.begin_then_label())
   generator.emit(then_block)
@@ -127,7 +127,7 @@ method emit*(generator: CodeGenerator, node: WhileNode) =
   var then_block = node.then_block
   generator.code.add(generator.begin_while_label())
   generator.emit(condition_block)
-  generator.code.add(ASMCall(op: ASL))
+  generator.code.add(ASMCall(op: ASL, param: "A"))
   generator.code.add(ASMCall(op: BCC, param: generator.end_while_name()))
   generator.code.add(generator.then_while_label())
   generator.emit(then_block)
