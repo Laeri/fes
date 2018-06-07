@@ -128,19 +128,25 @@ proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
         return
 
 proc translate_name(name: string): string =
+  result = name
   if nes_transl_table.contains(name):
-    return nes_transl_table[name]
-  else:
-    return name
+    result = nes_transl_table[name]
+  result = result.replace("?", "is")
 
 proc is_empty(node: ASMNode): bool = 
   return node.asm_calls.len == 0
+
+proc parse_ifelse*(parser: Parser): IfElseNode
+proc parse_while*(parser: Parser): WhileNode
 
 proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
   while parser.scanner.has_next:
     var token = parser.scanner.next
     if token.str_val == ";":
       return
+    if token.str_val == "if":
+      var ifelse_node = parser.parse_ifelse()
+      def_node.add(ifelse_node)
     elif token.str_val == "[":
       var node = newASMNode()
       parser.set_begin_info(node)
@@ -198,8 +204,7 @@ method is_empty(node: DefineWordNode): bool =
 method is_empty(node: SequenceNode): bool =
   return node.sequence.len == 0
 
-proc parse_ifelse*(parser: Parser): IfElseNode
-proc parse_while*(parser: Parser): WhileNode
+
 
 proc check_var_overflow(var_index: int) = 
   discard
