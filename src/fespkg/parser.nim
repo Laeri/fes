@@ -38,6 +38,12 @@ var nes_transl_table: Table[string, string] =
 const
   invalid_names = @[":", ";", "[", "]"]
 
+const
+  fes_comment_token_str = "#"
+
+const
+  asm_comment_token_str = ";"
+
 proc is_valid_name*(name: string): bool = 
   if name.isInteger or (name in invalid_names):
     return false
@@ -154,6 +160,8 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       parser.parse_asm_block(node)
       if node.is_empty:
         parser.report(node, warnMissingASMBody)
+    elif token.str_val == "#":
+      parser.scanner.skip_to_next_line()
     elif token.str_val == "begin":
       var while_node = parser.parse_while()
       parser.set_begin_info(while_node)
@@ -251,13 +259,24 @@ proc parse_struct(parser: Parser): StructNode =
     else:
       result.members.add(token)
   parser.report(result, errMissingStructEnding, result.name)
-  
+ 
+
+proc parse_const(parser: Parser): ConstNode =
+  var const_node = newConstNode()
+  parser.set_begin_info(const_node)
+  if parser.scanner.has_next:
+    const_node.name = parser.scanner.next.str_val
+  if parser.scanner.has_next:
+    const_node.value = parser.scanner.next.str_val
+  parser.set_end_info(const_node)
+  return const_node 
 
 proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()
   parser.set_begin_info(root, false)
   while parser.scanner.has_next:
     var token = parser.scanner.next
+    echo "TOKEN: " & token.str_val
     if token.str_val == ":":
       var def_node = newDefineWordNode()
       if not(parser.scanner.has_next()):
@@ -291,6 +310,8 @@ proc parse_sequence(parser: Parser): SequenceNode =
     elif token.str_val == "if":
       var ifelse_node = parser.parse_ifelse()
       root.add(ifelse_node)
+    elif token.str_val == "#":
+      parser.scanner.skip_to_next_line()
     elif token.str_val == "struct":
       var struct_node = parser.parse_struct()
       root.add(struct_node)
@@ -311,6 +332,9 @@ proc parse_sequence(parser: Parser): SequenceNode =
       break;
     elif token.str_val == "repeat":
       break;
+    elif token.str_val == "const":
+      var const_node = parser.parse_const()
+      root.add(const_node)
     elif token.str_val.contains("("):
       parser.parse_comment()
     elif token.str_val.isInteger:
@@ -320,9 +344,11 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(node)
     else:
       var node = OtherNode(name: translate_name(token.str_val))
+      echo node.name
       parser.set_begin_info(node)
       parser.set_end_info(node)
       root.add(node)
+  echo "FINISH"
   parser.set_end_info(root)
   return root
 

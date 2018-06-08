@@ -48,7 +48,4 @@ suite "Engine Library Suite":
     nes = nil
   
   test "check intensify_blues set":
-    compile_and_run("true set_intensify_blues intensify_blues?")
-    echo compiler.parser.root.str
-    print_memory(0x2001, 0x2001)
-    print_tos()
+    compile_and_run("set_intensify_blues intensify_blues?")

@@ -156,6 +156,7 @@ proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
     if node of OtherNode:
       var other_node = cast[OtherNode](node)
       if def_table.contains(other_node.name):
+        echo other_node.name & " found"
         return true
     return false)
   var other_to_call = (proc(node: ASTNode): ASTNode =
@@ -388,6 +389,7 @@ proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
 
 # Pass - Check no OtherNode's present
 proc pass_check_no_OtherNodes*(pass_runner: PassRunner, root: SequenceNode) =
+  echo root.str
   var visitor = newCollectVisitor[OtherNode](proc (node: ASTNode): bool =
     result = node of OtherNode)
   root.accept(visitor)

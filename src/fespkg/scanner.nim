@@ -138,6 +138,15 @@ proc skip_empty_lines*(scanner: Scanner) =
       scanner.skip_to_next_line
   scanner.set_accurate_count()
 
+proc skip_to_next_nonempty_line*(scanner: Scanner) =
+  while scanner.has_next:
+    scanner.line += 1
+    scanner.column = 0
+    scanner.columns = scanner.lines[scanner.line].splitWhitespace
+    scanner.column_accurate = 0
+    if scanner.lines[scanner.line].len != 0:
+      break
+
 proc parse_to_token*(scanner: Scanner, str_val: string): Token =
   var token = newToken()
   token.str_val = str_val

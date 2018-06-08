@@ -45,6 +45,10 @@ type
     line_range*: LineRange
     column_range*: ColumnRange
 
+  ConstNode* = ref object of ASTNode
+    name*: string
+    value*: string
+
   OtherNode* = ref object of ASTNode
     name*: string
 
@@ -100,7 +104,10 @@ type
   ASMNode* = ref object of ASTNode
     asm_calls*: seq[ASMAction]
 
+  CommentNode* = ref object of ASTNode
+
   ASMAction* = ref object of RootObj
+    comment*: string
 
   ASMCall* = ref object of ASMAction
     str*: string

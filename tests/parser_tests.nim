@@ -233,15 +233,30 @@ suite  "Parser Suite":
   test "parse if else inside word definition":
     src = ": name if 3 then ;"
     parser.parse_string(src)
-    echo parser.root.str
     check(handler.has_errors == false)
 
   test "parse while inside word definition":
     src = ": name begin true while 3 repeat ; "
     parser.parse_string(src)
-    echo parser.root.str
     check(handler.has_errors == false)
 
+  test "skip # line comment":
+    src = """
+# name is a word
+: name
+# def description
+1 2 3
+;
+"""
+    parser.parse_string(src)
+    check(handler.has_errors == false)
+    check(parser.root.sequence.len == 1)
+    check(parser.root[0] of DefineWordNode)
+
+  test "parse constant":
+    src = "const name $2000"
+    parser.parse_string(src)
+    echo parser.root.str
     
 
   

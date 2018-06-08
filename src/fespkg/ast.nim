@@ -23,6 +23,9 @@ proc newStructNode*(): StructNode =
   result = StructNode()
   result.members = @[]
 
+proc newConstNode*(): ConstNode =
+  result = ConstNode()
+
 
 proc newDefineWordNode*(): DefineWordNode =
   var node = DefineWordNode()
@@ -138,6 +141,11 @@ method str*(node: DefineWordNode, prefix = ""): string =
 
 method str*(node: CallWordNode, prefix = ""): string =
   return prefix & "CallWordNode: " & node.word_name
+
+method str*(node: ConstNode, prefix = ""): string =
+  result = prefix & "ConstNode:\n"
+  result &= prefix & "  name: " & node.name & "\n"
+  result &= prefix & "  value: " & node.value
 
 method transform_node*(node: ASTNode, transform: proc(node: ASTNode)) {.base.} =
   transform(node)
