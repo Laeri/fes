@@ -182,12 +182,15 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
   parser.report(def_node, errMissingWordEnding, def_node.word_name)
 
 proc parse_comment(parser: Parser) =
+  var balance = 1
   while parser.scanner.has_next:
     var token = parser.scanner.next
-    if token.str_val.contains(")"):
-      return
-    elif token.str_val.contains("("):
-      parser.parse_comment    
+    if token.str_val.contains("]#"):
+      balance -= 1
+    if token.str_val.contains("#["):
+      balance += 1
+    if balance == 0:
+      break    
 
 
 proc parse_variable(parser: Parser): VariableNode =
@@ -276,7 +279,6 @@ proc parse_sequence(parser: Parser): SequenceNode =
   parser.set_begin_info(root, false)
   while parser.scanner.has_next:
     var token = parser.scanner.next
-    echo "TOKEN: " & token.str_val
     if token.str_val == ":":
       var def_node = newDefineWordNode()
       if not(parser.scanner.has_next()):
@@ -335,7 +337,7 @@ proc parse_sequence(parser: Parser): SequenceNode =
     elif token.str_val == "const":
       var const_node = parser.parse_const()
       root.add(const_node)
-    elif token.str_val.contains("("):
+    elif token.str_val.contains("#["):
       parser.parse_comment()
     elif token.str_val.isInteger:
       var node = PushNumberNode()
@@ -344,11 +346,9 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(node)
     else:
       var node = OtherNode(name: translate_name(token.str_val))
-      echo node.name
       parser.set_begin_info(node)
       parser.set_end_info(node)
       root.add(node)
-  echo "FINISH"
   parser.set_end_info(root)
   return root
 

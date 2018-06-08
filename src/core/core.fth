@@ -1,9 +1,15 @@
-( hardware stack (used as the return stack), goes from $0100-$01FF
+#[ hardware stack (used as the return stack), goes from $0100-$01FF
  custom data stack: $0200-$02FF but backwards!!! (top down)
 ( base address is $0200, but X is set to #$FF which makes the stack start at $02FF )
  X is the stack pointer and points always to second element of the stack
 tos is accumulator
-)
+ ]#
+
+const BASE_ADDR "$0200"
+const TMP_0 "$FC"
+const TMP_1 "$FD"
+const TMP_2 "$FE"
+const TMP_3 "$FF"
 
 : true
 [
@@ -22,7 +28,7 @@ lda #$00
 ;
 
 
-( one factor in A, one in Y, from https://wiki.nesdev.com/w/index.php/8-bit_Multiply )
+#[ one factor in A, one in Y, from https://wiki.nesdev.com/w/index.php/8-bit_Multiply ]#
 
 : *
 [
@@ -48,7 +54,7 @@ rts
 ;
 
 
-( https://wiki.nesdev.com/w/index.php/8-bit_Divide divisor in $FA, quotient in y counter, remainder in A )
+#[ https://wiki.nesdev.com/w/index.php/8-bit_Divide divisor in $FA, quotient in y counter, remainder in A ]#
 
 : /
 [
@@ -67,7 +73,7 @@ tya
 ]
 ;
 
-( / modified to adc the divisor at the end if the result fell below 0 )
+ #[ / modified to adc the divisor at the end if the result fell below 0 ]#
 : mod
 [
 sta $FA
@@ -114,7 +120,7 @@ tya
 ]
 ;
 
-(x1 x2 x3 -- x2 x3 x1)
+#[ x1 x2 x3 -- x2 x3 x1 ]#
 : rot
 [
 ldy $0200,X
@@ -128,7 +134,7 @@ tya
 ]
 ;
 
-(x1 x2 -- x3)
+#[ x1 x2 -- x3 ]#
 : and
 [
 and $0200,X
@@ -136,7 +142,7 @@ inx
 ]
 ;
 
-(x1 x2 -- x3)
+#[ x1 x2 -- x3 ]#
 : or
 [
 ora $0200,X
@@ -144,7 +150,7 @@ inx
 ]
 ;
 
-(x1 x2 -- x3)
+#[ x1 x2 -- x3 ]#
 : xor
 [
 eor $0200,X
@@ -153,7 +159,7 @@ inx
 ;
 
 
-(x1 a-addr --)
+#[ x1 a-addr -- ]#
 : !
 [
 tay
@@ -165,7 +171,7 @@ inx
 ]
 ;
 
-( use $FE and $FF for temporary indirect indexed storage )
+#[ use $FE and $FF for temporary indirect indexed storage ]#
 : @
 [
 sta $FE
@@ -255,7 +261,6 @@ inx
 ;
 
 
-( not equal)
 : !=
 = not
 ;
