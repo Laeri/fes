@@ -114,7 +114,7 @@ inx
 
 : swap
 [
-ldy $0200,X
+ldy $0200,X ; test
 sta $0200,X
 tya
 ]

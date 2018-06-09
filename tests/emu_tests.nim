@@ -127,6 +127,7 @@ player get-Player-x
     compile_and_run("1 2 swap")
     check_tos(1)
     check_sos(2)
+    echo compiler.parser.root.str
 
   test "nip":
     compile_and_run("1 2 3 nip")

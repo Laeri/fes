@@ -95,16 +95,22 @@ proc create_asm_call(parser: Parser, op: string, param: string = nil): ASMCall =
 proc create_asm_label(parser: Parser, label_name: string): ASMLabel =
   return ASMLabel(label_name: label_name)
 
-proc parse_asm_line*(parser: Parser, tokens: seq[Token]): ASMAction =
+proc parse_asm_line*(parser: Parser, tokens: seq[Token], comment: string): ASMAction =
   var str_val = tokens[0].str_val
   if tokens.len == 1:
       if str_val[str_val.len - 1] == ':':
-        return ASMLabel(label_name: tokens[0].str_val)
+        var label = ASMLabel(label_name: tokens[0].str_val)
+        label.comment = comment
+        return label
       else:
-        return parser.create_asm_call(str_val)
+        var call = parser.create_asm_call(str_val)
+        call.comment = comment
+        return call
   elif tokens.len == 2:
     var arg_string = tokens[1].str_val
-    return parser.create_asm_call(str_val, arg_string)
+    var call = parser.create_asm_call(str_val, arg_string)
+    call.comment = comment
+    return call
 
 
 proc is_label(str: string): bool =
@@ -113,20 +119,31 @@ proc is_label(str: string): bool =
 
 proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
   var tokens: seq[Token] = parser.scanner.upto_next_line()
+
+
   var end_block = false
   while not(end_block):
+    var comment = ""
+    for i in 0..(tokens.len - 1):
+      if tokens[i].str_val[0] == ';':
+        for comment_token in tokens[i..(tokens.len - 1)]:
+          comment &= " " & comment_token.str_val
+        echo "comment: " & comment
+        tokens = tokens[0..(i - 1)]
+        break
     if tokens[tokens.len - 1].str_val == "]":
       end_block = true
       tokens.delete(tokens.len - 1)
       if tokens.len >= 3:
         parser.report(asm_node, errTooManyASMOperands)
       elif tokens.len > 0:
-        asm_node.add(parser.parse_asm_line(tokens))
+        asm_node.add(parser.parse_asm_line(tokens, comment))
     else:
       if tokens.len >= 3:
         parser.report(asm_node, errTooManyASMOperands)
-      asm_node.add(parser.parse_asm_line(tokens))
+      asm_node.add(parser.parse_asm_line(tokens, comment))
     if not(end_block):
+      parser.scanner.skip_empty_lines()
       if parser.scanner.has_next:
         tokens = parser.scanner.upto_next_line()
       else:
