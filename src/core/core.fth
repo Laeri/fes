@@ -11,6 +11,7 @@ const TMP_1 "$FD"
 const TMP_2 "$FE"
 const TMP_3 "$FF"
 
+
 : true
 [
 dex
@@ -171,12 +172,11 @@ inx
 ]
 ;
 
-#[ use $FE and $FF for temporary indirect indexed storage ]#
+#[ variables begin at $00, so address can be used as offset ]#
 : @
 [
-sta $FE
-ldy #$00
-lda [$FE],Y
+tay
+lda [$00],Y
 ]
 ;
 

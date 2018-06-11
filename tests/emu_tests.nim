@@ -53,7 +53,7 @@ suite "Emulation Suite":
     #print_memory(0, 15)
     check_memory(0, 1)
 
-  test "two variables should be stored at location $00 and $01":
+  test "three variables should be stored at location $00 and $01, $02":
     compile_and_run("""
 variable name1
 variable name2
@@ -64,6 +64,17 @@ variable name3
     check_memory(0x00, 5)
     check_memory(0x01, 10)
     check_memory(0x02, 15)
+
+  test "second variable should be loaded on stack":
+    compile_and_run("""
+variable name1
+variable name2
+5 name1 !
+10 name2 !
+name2 @""")
+    check_memory(0x00, 5)
+    check_memory(0x01, 10)
+    check_tos(10)
 
   test "pushed number should turn up in register A":
     compile_and_run("1")

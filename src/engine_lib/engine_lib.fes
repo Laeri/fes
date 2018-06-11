@@ -60,7 +60,7 @@ INX ; pop value from stack and just leave true/false in tos (accumulator)
 ;
 
 
-#[ #%10000000 = 128, use it like this until parser can parse binary and hex values ]#
+#[ ]#
 : set_intensify_blues
 if
 ppu_control_reg_2_buffer @
@@ -71,10 +71,13 @@ ppu_control_reg_2_buffer @
 0b01111111
 and
 then
+[
+sta $2001
+]
 ppu_control_reg_2_buffer !
 ;
 
-#[ bit 7 = #%10000000 = 128, load like this until parser parses #% and #$ ... ]# 
+#[ bit 7 = 0b10000000 ]# 
 : intensify_blues?
 ppu_control_reg_2_buffer @
 0b10000000 bit_set?

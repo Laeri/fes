@@ -55,6 +55,68 @@ suite "Engine Library Suite":
     compile_and_run("true set_intensify_blues intensify_blues?")
     check_tos(uint8_true())
 
+  test "check intensify_blues buffer":
+    compile_and_run("true set_intensify_blues ppu_control_reg_2_buffer @")
+    print_tos()
+    print_memory(0x2001, 0x2001)
+    print_memory(0x00, 0x08)
+
+  test "test intensify_blues from asm code":
+    compile_and_run("""
+[
+JSR true_
+JSR set_intensify_blues_
+JMP End
+true_:
+  DEX
+  STA $0200,X
+  LDA #$FF
+  RTS
+set_intensify_blues_:
+begin_if1_:
+  CLC
+  ASL A
+  BCC begin_else1_
+begin_then1_:
+  LDA $0200,X
+  INX
+  DEX
+  STA $0200,X
+  LDA #$01
+  JSR load_var
+  DEX
+  STA $0200,X
+  LDA #$80
+  JSR or
+  JMP end_if1_
+begin_else1_:
+  LDA $0200,X
+  INX
+  DEX
+  STA $0200,X
+  LDA #$01
+  JSR load_var
+  DEX
+  STA $0200,X
+  LDA #$7F
+  JSR and
+end_if1_:
+  STA $2001
+  DEX
+  STA $0200,X
+  LDA #$01
+  JSR store_var
+  LDA #$10
+  LDA $01
+  STA $2001
+  RTS
+]""")
+    print_memory(0x2001, 0x2001)
+    print_memory(0x00, 0x10)
+    print_tos()
+    nes.print_sos()
+
+
   test "bit set: true":
     compile_and_run("0b1000 0b1000 bit_set?")
     check_tos(uint8_true())

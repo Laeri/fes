@@ -314,6 +314,7 @@ proc file_ending(file_name: string, new_ending: string): string =
 proc generate_and_store(compiler: FESCompiler, asm_code: seq[ASMAction], file_path: string) =
   var fs = newFileStream(file_path, fmWrite)
   var nes_str = generate_nes_str(asm_code)
+  #echo compiler.parser.root.str
   fs.write(nes_str)
   fs.close
   compiler.report(reportGeneratedASMFile, file_path)
