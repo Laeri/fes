@@ -18,10 +18,8 @@ struct Palette {
 }
 
 
-variable ppu_mask
-variable ppu_settings
 
-const screen_width 255
+const screen_width 256
 const screen_height 240
 const tile_width 8
 const tile_height 8
@@ -31,22 +29,53 @@ const block_height 16
 
 
 const ppu_control_reg_1 0x2000
+variable ppu_control_reg_1_buffer
 
 const ppu_control_reg2 0x2001
+variable ppu_control_reg_2_buffer
 
 
 const ppu_status_reg 0x2002
-
-
-
 const ppu_io_set_reg 0x2006
-
 const ppu_io_rw_reg 0x2007
 
-: set_intensify_blues
-true true true
+#[ (value bit_in_binary - bool) use $FD for temporary storage ]#
+: bit_set?
+swap
+[
+sta $FD ; store temporarily because bit can only use zero page or absolute addressing modes
+]
+swap
+[
+bit $FD
+beq bit_set_false
+bit_set_true:
+lda #$FF
+jmp bit_set_done
+bit_set_false:
+lda #$00
+bit_set_done:
+INX ; pop value from stack and just leave true/false in tos (accumulator)
+]
 ;
 
+
+#[ #%10000000 = 128, use it like this until parser can parse binary and hex values ]#
+: set_intensify_blues
+if
+ppu_control_reg_2_buffer @
+0b10000000
+or
+else
+ppu_control_reg_2_buffer @
+0b01111111
+and
+then
+ppu_control_reg_2_buffer !
+;
+
+#[ bit 7 = #%10000000 = 128, load like this until parser parses #% and #$ ... ]# 
 : intensify_blues?
-false screen_width
+ppu_control_reg_2_buffer @
+0b10000000 bit_set?
 ;

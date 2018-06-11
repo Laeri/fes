@@ -47,5 +47,25 @@ suite "Engine Library Suite":
   teardown:
     nes = nil
   
-  test "check intensify_blues set":
-    compile_and_run("set_intensify_blues intensify_blues?")
+  test "check intensify_blues set: false":
+    compile_and_run("false set_intensify_blues intensify_blues?")
+    check_tos(uint8_false())
+
+  test "check intensify_blues set: true":
+    compile_and_run("true set_intensify_blues intensify_blues?")
+    check_tos(uint8_true())
+
+  test "bit set: true":
+    compile_and_run("0b1000 0b1000 bit_set?")
+    check_tos(uint8_true())
+
+  test "bit set_ false":
+    compile_and_run("0b1000 0b0001 bit_set?")
+    print_tos()
+    check_tos(uint8_false())
+
+
+
+
+
+
