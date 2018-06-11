@@ -262,9 +262,10 @@ proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
       var while_node = parser.parse_while()
       parser.set_begin_info(while_node)
       def_node.add(while_node)
-    elif token.str_val.isInteger:
+    elif token.str_val.is_valid_number_str:
       var node = PushNumberNode()
-      node.number = token.str_val.parseInt
+      parser.set_begin_info(node)
+      node.number = token.str_val.parse_to_integer
       def_node.add(node)
     elif token.str_val == ":":
       parser.report(def_node, errNestedWordDef, def_node.word_name)
