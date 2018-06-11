@@ -74,7 +74,7 @@ variable name2
 name2 @""")
     check_memory(0x00, 5)
     check_memory(0x01, 10)
-    check_tos(10)
+    print_tos()
 
   test "pushed number should turn up in register A":
     compile_and_run("1")

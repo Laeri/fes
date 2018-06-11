@@ -82,3 +82,60 @@ ppu_control_reg_2_buffer !
 ppu_control_reg_2_buffer @
 0b10000000 bit_set?
 ;
+
+: set_intensify_greens
+if
+ppu_control_reg_2_buffer @
+0b01000000
+or
+else
+ppu_control_reg_2_buffer @
+0b10111111
+and
+then
+[
+sta $2001
+]
+ppu_control_reg_2_buffer !
+;
+
+: intensify_greens?
+ppu_control_reg_2_buffer @
+0b01000000 bit_set?
+;
+
+: set_intensify_reds
+if
+ppu_control_reg_2_buffer @
+0b00100000
+or
+else
+ppu_control_reg_2_buffer @
+0b11011111
+and
+then
+[
+sta $2001
+]
+ppu_control_reg_2_buffer !
+;
+
+: intensify_reds?
+ppu_control_reg_2_buffer @
+0b00100000 bit_set?
+;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
