@@ -154,8 +154,6 @@ method emit*(generator: CodeGenerator, node: LoadVariableNode) =
 
 
 proc gen*(generator: CodeGenerator, node: ASTNode) =
-  #generator.code.add(ASMCall(op: LDA, param: "#$FF")) # set X to #$FF in order to set stack start address to $02FF
-  #generator.code.add(ASMCall(op: TAX))
   generator.emit(node)
 
 

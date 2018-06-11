@@ -95,57 +95,81 @@ proc create_asm_call(parser: Parser, op: string, param: string = nil): ASMCall =
 proc create_asm_label(parser: Parser, label_name: string): ASMLabel =
   return ASMLabel(label_name: label_name)
 
-proc parse_asm_line*(parser: Parser, tokens: seq[Token], comment: string): ASMAction =
-  var str_val = tokens[0].str_val
-  if tokens.len == 1:
-      if str_val[str_val.len - 1] == ':':
-        var label = ASMLabel(label_name: tokens[0].str_val)
-        label.comment = comment
-        return label
-      else:
-        var call = parser.create_asm_call(str_val)
-        call.comment = comment
-        return call
-  elif tokens.len == 2:
-    var arg_string = tokens[1].str_val
-    var call = parser.create_asm_call(str_val, arg_string)
-    call.comment = comment
-    return call
 
 
 proc is_label(str: string): bool =
   return (str[str.len - 1] == ':')
 
 
-proc parse_asm_block(parser: Parser, asm_node: ASMNode) = 
-  var tokens: seq[Token] = parser.scanner.upto_next_line()
+proc trim_spaces(str: string): string =
+  result = str
+  if result.len == 0:
+    return
+  while result[0] == ' ':
+    result = result[1..(result.len - 1)]
+  while result[result.len - 1] == ' ':
+    result = result[0..(result.len - 2)]
 
-
+proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
+  var line_str = parser.scanner.upto_next_line_str()
   var end_block = false
+  var tokens_str: string
+  var comment: ASMComment
+  var comment_found = false
+  echo "PARSE ASM"
   while not(end_block):
-    var comment = ""
-    for i in 0..(tokens.len - 1):
-      if tokens[i].str_val[0] == ';':
-        for comment_token in tokens[i..(tokens.len - 1)]:
-          comment &= " " & comment_token.str_val
-        echo "comment: " & comment
-        tokens = tokens[0..(i - 1)]
-        break
-    if tokens[tokens.len - 1].str_val == "]":
-      end_block = true
-      tokens.delete(tokens.len - 1)
-      if tokens.len >= 3:
-        parser.report(asm_node, errTooManyASMOperands)
-      elif tokens.len > 0:
-        asm_node.add(parser.parse_asm_line(tokens, comment))
+    echo "parse: " & line_str
+    if line_str.contains(";"):
+      comment_found = true
+      var pos = find(line_str, ";")
+      comment = newASMComment()
+      if pos == 0:
+        comment.on_own_line = true
+      else:
+        comment.on_own_line = false
+      comment.comment = line_str[pos..(line_str.len - 1)]
+      tokens_str = line_str[0..(pos - 1)]
     else:
-      if tokens.len >= 3:
-        parser.report(asm_node, errTooManyASMOperands)
-      asm_node.add(parser.parse_asm_line(tokens, comment))
+      tokens_str = line_str
+      comment_found = false
+
+    if comment_found and (comment.on_own_line):
+      asm_node.add(comment)
+
+    if tokens_str.contains("]"):
+      end_block = true
+      var end_pos = tokens_str.find("]")
+      tokens_str = tokens_str[0..(end_pos - 1)]
+      if tokens_str[end_pos..(tokens_str.len - 1)].splitWhitespace.len > 0:
+        echo "Errro: token after ] in asm block!"
+
+    tokens_str = tokens_str.trim_spaces
+    if tokens_str.splitWhitespace.len > 0:
+      var operator = tokens_str.splitWhitespace[0].trim_spaces
+      var operands: string
+      if tokens_str.splitWhitespace.len == 1:
+        operands = ""
+      else:
+        operands = tokens_str
+        operands.removePrefix(operator)
+        operands = operands.trim_spaces
+      if operands.contains(Letters) or operands.contains(Digits):
+        var call = parser.create_asm_call(operator, operands)
+        asm_node.add(call)
+      else:
+        if operator[operator.len - 1] == ':':
+          var label = parser.create_asm_label(operator)  
+          asm_node.add(label)
+        else:
+          var call = parser.create_asm_call(operator)
+          asm_node.add(call)
+    if comment_found and not(comment.on_own_line):
+      asm_node.add(comment)
+
     if not(end_block):
       parser.scanner.skip_empty_lines()
       if parser.scanner.has_next:
-        tokens = parser.scanner.upto_next_line()
+        line_str = parser.scanner.upto_next_line_str()
       else:
         parser.report(asm_node, errMissingASMEnding)
         return

@@ -118,15 +118,11 @@ method str*(call: ASMCall, prefix = ""): string =
   var arg = "  "
   if (call.with_arg):
     arg &= call.param
-  result = prefix & "ASMCall: " & $call.op & arg
-  if (call.comment != nil) and (call.comment.len != 0):
-    result &= "\n" & prefix & "        " & "comment: " & call.comment
+  result = prefix & "ASMCall: " & $call.op & arg & "\n"
   return result
 
 method str*(label: ASMLabel, prefix = ""): string =
-  result = prefix & "ASMLabel: " & label.label_name 
-  if (label.comment != nil) and (label.comment.len != 0):
-    result &= "\n" & prefix & "        " & "comment: " & label.comment
+  result = prefix & "ASMLabel: " & label.label_name & "\n"
   return result
 
 method str*(node: ASMNode, prefix = ""): string =

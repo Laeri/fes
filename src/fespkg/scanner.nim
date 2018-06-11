@@ -225,3 +225,8 @@ proc upto_next_line*(scanner: Scanner): seq[Token] =
     tokens.add(scanner.parse_to_token(token_str))
   return tokens
 
+proc upto_next_line_str*(scanner: Scanner): string =
+  var current_line = scanner.current_line_str()
+  result = current_line[scanner.column_accurate..(current_line.len - 1)]
+  scanner.skip_to_next_line()
+  scanner.skip_empty_lines()

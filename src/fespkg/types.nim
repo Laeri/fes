@@ -107,13 +107,16 @@ type
   CommentNode* = ref object of ASTNode
 
   ASMAction* = ref object of RootObj
-    comment*: string
 
   ASMCall* = ref object of ASMAction
     str*: string
     op*: OPCODE
     param*: string
     mode*: OP_MODE
+  
+  ASMComment* = ref object of ASMAction
+    comment*: string
+    on_own_line*: bool
 
   ASMLabel* = ref object of ASMAction
     label_name*: string
@@ -280,5 +283,10 @@ proc isOP_MODE*(str: string): bool =
   except ValueError:
      return false
   return true
+
+proc newASMComment*(): ASMComment =
+  result = ASMComment()
+  result.comment = ""
+  result.on_own_line = true
 
 
