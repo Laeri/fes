@@ -371,7 +371,21 @@ lst 0 list-get
     compile_and_run("5 begin false while 1 end")
     check_tos(5)
 
+  test "push binary number #%":
+    compile_and_run("#%1011")
+    check_tos(0b1011)
 
+  test "push binary number 0b":
+    compile_and_run("0b1011")
+    check_tos(0b1011)
+
+  test "push hex number #$2001":
+    compile_and_run("#$11")
+    check_tos(0x11)
+
+  test "push hex number 0x2001":
+    compile_and_run("0x11")
+    check_tos(0x11)
 
 
 

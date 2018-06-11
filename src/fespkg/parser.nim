@@ -194,6 +194,53 @@ proc is_empty(node: ASMNode): bool =
 proc parse_ifelse*(parser: Parser): IfElseNode
 proc parse_while*(parser: Parser): WhileNode
 
+proc is_binary_str(str: string): bool =
+  if str.len <= 2: 
+    return false
+  if (str[0..1] == "#%") or (str[0..1] == "0b"):
+    for ch in str[2..(str.len - 1)]:
+      if not(ch in Digits):
+        return false
+    return true
+  else:
+    return false
+
+proc is_hex_str(str: string): bool =
+  if str.len <= 2:
+    return false
+  if (str[0..1] == "#$") or (str[0..1] == "0x"):
+    for ch in str[2..(str.len - 1)]:
+      if not(ch in HexDigits):
+        return false
+    return true
+  else:
+    return false
+
+proc is_valid_number_str(str: string): bool =
+  if str.isInteger:
+    return true
+  return is_binary_str(str) or is_hex_str(str)
+
+proc parse_binary_str_to_int(str: string): int =
+  var bin_str = str[2..(str.len - 1)]
+  result = 0
+  var pow = 0
+  for i in 0..(bin_str.len - 1):
+    var digit = ($bin_str[(bin_str.len - 1) - i]).parseInt
+    result += digit shl pow
+    pow += 1
+
+proc parse_hex_str_to_int(str: string): int =
+  return str[2..(str.len - 1)].parseHexInt
+  
+proc parse_to_integer(str: string): int =
+   if str.isInteger:
+     return str.parseInt
+   elif is_binary_str(str):
+     return parse_binary_str_to_int(str)
+   elif is_hex_str(str):
+     return parse_hex_str_to_int(str)
+
 proc parse_word_definition(parser: Parser, def_node: DefineWordNode) =
   while parser.scanner.has_next:
     var token = parser.scanner.next
@@ -388,10 +435,10 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(const_node)
     elif token.str_val.contains("#["):
       parser.parse_comment()
-    elif token.str_val.isInteger:
+    elif token.str_val.is_valid_number_str:
       var node = PushNumberNode()
       parser.set_begin_info(node)
-      node.number = token.str_val.parseInt
+      node.number = token.str_val.parse_to_integer
       root.add(node)
     else:
       var node = OtherNode(name: translate_name(token.str_val))
