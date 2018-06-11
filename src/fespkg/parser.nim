@@ -111,14 +111,15 @@ proc trim_spaces(str: string): string =
     result = result[0..(result.len - 2)]
 
 proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
+  if not(parser.scanner.has_next):
+    parser.report(asm_node, errMissingASMEnding)
+    return
   var line_str = parser.scanner.upto_next_line_str()
   var end_block = false
   var tokens_str: string
   var comment: ASMComment
   var comment_found = false
-  echo "PARSE ASM"
   while not(end_block):
-    echo "parse: " & line_str
     if line_str.contains(";"):
       comment_found = true
       var pos = find(line_str, ";")
@@ -137,11 +138,17 @@ proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
       asm_node.add(comment)
 
     if tokens_str.contains("]"):
-      end_block = true
-      var end_pos = tokens_str.find("]")
-      tokens_str = tokens_str[0..(end_pos - 1)]
-      if tokens_str[end_pos..(tokens_str.len - 1)].splitWhitespace.len > 0:
-        echo "Errro: token after ] in asm block!"
+      var pos = tokens_str.find("]")
+      var len = tokens_str.trim_spaces.len
+      var end_asm = true
+      if (pos != 0) and (pos != len) and not(tokens_str[pos - 1] in Whitespace):
+        end_asm = false
+      if end_asm:
+        end_block = true
+        var end_pos = tokens_str.find("]")
+        tokens_str = tokens_str[0..(end_pos - 1)]
+        if tokens_str[end_pos..(tokens_str.len - 1)].splitWhitespace.len > 0:
+          echo "Error: token after ] in asm block!"
 
     tokens_str = tokens_str.trim_spaces
     if tokens_str.splitWhitespace.len > 0:

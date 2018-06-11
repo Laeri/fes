@@ -150,7 +150,6 @@ method emit*(generator: CodeGenerator, node: LoadVariableNode) =
   generator.code.add(ASMCall(op: DEX))
   generator.code.add(ASMCall(op: STA, param: base_address & ",X"))
   generator.code.add(ASMCall(op: LDA, param: num_to_im_hex(node.var_node.address)))
-  echo "emit " & node.var_node.name & " " & $node.var_node.address
 
 
 proc gen*(generator: CodeGenerator, node: ASTNode) =

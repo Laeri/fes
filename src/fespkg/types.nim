@@ -205,7 +205,7 @@ type
     errInvalidCallWordName = "wordname \'$1\' for a call not a valid name"
     errMissingWordDefName = "word definition has no name"
     errMissingASMEnding = "asm block has no ending"
-    errTooManyASMOperands = "asm statement \'$\' has too many operands: \'$\'"
+    #errTooManyASMOperands = "asm statement \'$\' has too many operands: \'$\'"
     errInvalidASMInstruction = "asm instruction \'$1\' is not valid"
     errMissingIfElseEnding = "\'if\' statement has no corresponding \'then\' to close it"
     errASMSourceError = "the generated source file doesn't conform to the expected nes assembly format:\n\n$1"

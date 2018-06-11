@@ -77,18 +77,6 @@ suite  "Parser Suite":
     parser.parse_string(src)
     check(handler.has_error_type(errMissingASMEnding) == true)
 
-  test "errTooManyASMOperands: an asm instruction can at most have one operand, two should be reported":
-    src = "[ JSR $00 $00 ]"
-    parser.parse_string(src)
-    check(handler.has_error_type(errTooManyASMOperands) == true)
-    src = "[ JSR $00 $00"
-    parser.parse_string(src)
-    check(handler.has_error_type(errTooManyASMOperands) == true)
-
-  test "errTooManyASMOperands: an asm instruction can at most have one operands, three should be reported":
-    src = "[ JSR $00 $00 $00"
-    parser.parse_string(src)
-    check(handler.has_error_type(errTooManyASMOperands) == true)
 
   test "errInvalidASMInstruction: invalid asm instruction should be reported":
     src = "[ NNN ]"
