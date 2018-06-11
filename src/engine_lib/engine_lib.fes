@@ -21,7 +21,7 @@ struct Palette {
 variable ppu_mask
 variable ppu_settings
 
-const screen_width 256
+const screen_width 255
 const screen_height 240
 const tile_width 8
 const tile_height 8
@@ -48,5 +48,5 @@ true true true
 ;
 
 : intensify_blues?
-false
+false screen_width
 ;

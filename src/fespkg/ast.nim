@@ -103,6 +103,10 @@ method str*(node: VariableNode, prefix = ""): string =
   str &= prefix & "   " & "type: " & $node.var_type & "\n"
   return str
 
+method str*(node: LoadConstantNode, prefix = ""): string =
+  var str: string = prefix & "LoadConstantNode: " & node.name & "\n"
+  return str
+
 method str*(node: LoadVariableNode, prefix = ""): string = 
   var str: string = prefix & "LoadVariableNode: " & node.name & "\n"
   return str

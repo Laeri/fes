@@ -13,6 +13,7 @@ proc newPassRunner*(parser: Parser): PassRunner =
   result.calls = parser.calls
   result.structs = parser.structs
   result.var_index = parser.var_index
+  result.const_table = parser.const_table
 
 proc partition[T](sequence: seq[T], pred: proc): tuple[selected: seq[T],rejected: seq[T]] =
   var selected: seq[T] = @[]
@@ -194,6 +195,21 @@ proc pass_set_struct_var_type*(pass_runner: PassRunner, root: SequenceNode) =
           last_var_node = false
           i += 1)
   transform_node(root, transform_var_struct)
+
+proc pass_set_constants*(pass_runner: PassRunner, root: SequenceNode) =
+  var const_table = pass_runner.const_table
+  var is_constant = (proc (node: ASTNode): bool = 
+    if node of OtherNode:
+      var other_node = cast[OtherNode](node)
+      if const_table.contains(other_node.name):
+        return true
+    return false)
+  var other_to_const = (proc(node: ASTNode): ASTNode =
+    var load_node = LoadConstantNode()
+    load_node.name = (cast[OtherNode](node)).name
+    load_node.const_node = const_table[load_node.name]
+    return load_node)
+  root.replace_n(is_constant, other_to_const)
 
 # Pass No.8
 proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =

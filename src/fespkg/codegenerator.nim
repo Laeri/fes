@@ -38,7 +38,8 @@ proc translate_to_label_name(name: string): string =
   replace(name, "-", "_")
 
 method emit*(generator: CodeGenerator, node: ASTNode) {.base.} =
-  echo "error, node: " & node.str & " without code to emit"
+  if not((node of ConstNode) or (node of StructNode)):
+    echo "error, node: " & node.str & " without code to emit"
   discard
 
 proc var_base_addr(node: VariableNode): int =
@@ -151,6 +152,11 @@ method emit*(generator: CodeGenerator, node: LoadVariableNode) =
   generator.code.add(ASMCall(op: STA, param: base_address & ",X"))
   generator.code.add(ASMCall(op: LDA, param: num_to_im_hex(node.var_node.address)))
 
+method emit*(generator: CodeGenerator, node: LoadConstantNode) =
+  var val_str = node.const_node.value
+  var val = val_str.parseInt
+  generator.emit(push_asm_node(val))
+  
 
 proc gen*(generator: CodeGenerator, node: ASTNode) =
   generator.emit(node)

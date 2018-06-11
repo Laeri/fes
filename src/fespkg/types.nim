@@ -26,6 +26,7 @@ type
     calls*: TableRef[string, CallWordNode]
     structs*: TableRef[string, StructNode]
     var_index*: int
+    const_table*: TableRef[string, ConstNode]
 
   ASTVisitor* = ref object of RootObj
 
@@ -75,9 +76,10 @@ type
     name*: string
     var_node*: VariableNode
 
-  ConstantNode* = ref object of ASTNode
+
+  LoadConstantNode* = ref object of ASTNode
     name*: string
-    value: int
+    const_node*: ConstNode
 
   WhileNode* = ref object of ASTNode
     condition_block*: ASTNode
@@ -159,6 +161,7 @@ type
     error_handler*: ErrorHandler
     var_table*: TableRef[string, VariableNode]
     var_index*: int
+    const_table*: TableRef[string, ConstNode]
     definitions*: TableRef[string, DefineWordNode]
     calls*: TableRef[string, CallWordNode]
     structs*: TableRef[string, StructNode]

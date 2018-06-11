@@ -11,6 +11,7 @@ proc newParser*(): Parser =
   result.definitions = newTable[string, DefineWordNode]()
   result.calls = newTable[string, CallWordNode]()
   result.structs = newTable[string, StructNode]()
+  result.const_table = newTable[string, ConstNode]()
 
 proc newParser*(handler: ErrorHandler): Parser = 
   result = newParser()
@@ -313,14 +314,14 @@ proc parse_struct(parser: Parser): StructNode =
  
 
 proc parse_const(parser: Parser): ConstNode =
-  var const_node = newConstNode()
-  parser.set_begin_info(const_node)
+  result = newConstNode()
+  parser.set_begin_info(result)
   if parser.scanner.has_next:
-    const_node.name = parser.scanner.next.str_val
+    result.name = parser.scanner.next.str_val
   if parser.scanner.has_next:
-    const_node.value = parser.scanner.next.str_val
-  parser.set_end_info(const_node)
-  return const_node 
+    result.value = parser.scanner.next.str_val
+  parser.set_end_info(result)
+  parser.const_table.add(result.name, result)
 
 proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()
