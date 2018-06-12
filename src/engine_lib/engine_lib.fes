@@ -5,10 +5,10 @@ struct PaletteData {
   bg1
   bg2
   bg3
-  s0
-  s1
-  s2
-  s3
+  sp0
+  sp1
+  sp2
+  sp3
 }
 
 struct Palette {
@@ -253,14 +253,119 @@ ppu_status_reg @
 0b00100000 bit_set?
 ;
 
-: 
+
+const background_palette_start_addr_high 0x3F
+const background_palette_start_addr_low 0x00
+const sprite_palette_start_addr_high 0x3F
+const sprite_palette_start_addr_low 0x10
 
 
+#[ (high_byte low_byte - ) write high_byte / low_byte to start transfer ]#
+: start_dma_transfer
+[
+sta $2003
+lda $0200,X
+sta $4014
+inx
+lda $0200,X
+inx
+]
+;
 
 
+: set_generate_nmi
+if
+ppu_control_reg_1_buffer @
+0b10000000
+or
+else
+ppu_control_reg_1_buffer @
+0b01111111
+and
+then
+[
+sta $2000
+]
+ppu_control_reg_1_buffer !
+;
+
+: set_sprite_size_8x8
+not
+if
+ppu_control_reg_1_buffer @
+0b01000000
+or
+else
+ppu_control_reg_1_buffer @
+0b10111111
+and
+then
+[
+sta $2000
+]
+ppu_control_reg_1_buffer !
+;
+
+: set_sprite_size_8x16
+if
+ppu_control_reg_1_buffer @
+0b01000000
+or
+else
+ppu_control_reg_1_buffer @
+0b10111111
+and
+then
+[
+sta $2000
+]
+ppu_control_reg_1_buffer !
+;
 
 
+not
+if
+ppu_control_reg_1_buffer @
+0b01000000
+or
+else
+ppu_control_reg_1_buffer @
+0b10111111
+and
+then
+[
+sta $2000
+]
+ppu_control_reg_1_buffer !
+;
 
+
+#[ assumes pointer to PaletteData struct is on stack ]#
+: load_palette_data
+dup get-PaletteData-bg0 load_palette
+dup get-PaletteData-bg1 load_palette
+dup get-PaletteData-bg2 load_palette
+dup get-PaletteData-bg3 load_palette
+dup get-PaletteData-sp0 load_palette
+dup get-PaletteData-sp1 load_palette
+dup get-PaletteData-sp2 load_palette
+dup get-PaletteData-sp3 load_palette
+;
+
+#[ assumes pointer to Palette struct is on stack ]#
+: load_palette
+dup get-Palette-col0 store_colour
+dup get-Palette-col1 store_colour
+get-Palette-col2 store_colour
+;
+
+#[ ]#
+: store_colour
+[
+sta $2007
+]
+drop
+;
 
 
 
