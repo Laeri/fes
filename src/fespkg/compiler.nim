@@ -1,6 +1,6 @@
 import 
   strutils, sequtils, tables, typetraits, macros, os,
-  streams, osproc, types, optimizer, scanner, msgs, typeinfo, sequtils, parser, ast, sets, codegenerator, times, passes
+  streams, osproc, types, optimizer, callgraph, scanner, msgs, typeinfo, sequtils, parser, ast, sets, codegenerator, times, passes
 
 
 proc newFESCompiler*(): FESCompiler =
@@ -352,7 +352,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_check_no_OtherNodes(compiler.parser.root)
 
 
-const core = readFile("src/core/core.fth")
+const core = readFile("src/core/core.fes")
 const engine_lib = readFile("src/engine_lib/engine_lib.fes")
 const ppopt_src = readFile("src/ppopt/peephole_6502.txt")
   
@@ -361,6 +361,9 @@ proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
   var pp_optimizer = newNESPPOptimizer()
   pp_optimizer.optimize(ppopt_src, asm_code)
 
+proc do_optimizations(compiler: FESCompiler) =
+  var graph = build_call_graph(compiler.parser.root)
+  remove_unused_defs(compiler.parser.root, graph)
 
 
 proc compile*(compiler: FESCompiler) =
@@ -380,6 +383,7 @@ proc compile*(compiler: FESCompiler) =
 
 
   compiler.do_passes()
+  compiler.do_optimizations()
   #echo compiler.parser.root.str
   compiler.generator.gen(compiler.parser.root)
   var asm_calls = compiler.generator.code
@@ -409,7 +413,7 @@ proc compile_test_str*(compiler: FESCompiler, input_src: string) =
       compiler.parser.parse_additional_src(engine_lib, "engine_lib")
 
   compiler.do_passes()
-  
+  compiler.do_optimizations()
   compiler.generator.gen(compiler.parser.root)
   var asm_calls = compiler.generator.code
   if compiler.optimize:
