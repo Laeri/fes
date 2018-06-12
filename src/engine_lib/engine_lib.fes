@@ -34,8 +34,8 @@ variable ppu_control_reg_1_buffer
 const ppu_control_reg2 0x2001
 variable ppu_control_reg_2_buffer
 
-
 const ppu_status_reg 0x2002
+
 const ppu_io_set_reg 0x2006
 const ppu_io_rw_reg 0x2007
 
@@ -233,6 +233,49 @@ ppu_control_reg_2_buffer @
 ppu_control_reg_2_buffer @
 0b00000001 bit_set?
 ;
+
+
+#[ PPUSTATUS, $2002 ]#
+
+: in_vblank?
+ppu_status_reg @
+0b10000000 bit_set?
+;
+
+: sprite0_hit?
+ppu_status_reg @
+0b01000000 bit_set?
+;
+
+
+: sprite_overflow?
+ppu_status_reg @
+0b00100000 bit_set?
+;
+
+: 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
