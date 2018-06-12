@@ -125,10 +125,114 @@ ppu_control_reg_2_buffer @
 0b00100000 bit_set?
 ;
 
+: set_show_sprites
+if
+ppu_control_reg_2_buffer @
+0b00010000
+or
+else
+ppu_control_reg_2_buffer @
+0b11101111
+and
+then
+[
+sta $2001
+]
+ppu_control_reg_2_buffer !
+;
 
 
 
 
+: set_show_background
+if
+ppu_control_reg_2_buffer @
+0b00001000
+or
+else
+ppu_control_reg_2_buffer @
+0b11110111
+and
+then
+[
+sta $2001
+]
+ppu_control_reg_2_buffer !
+;
+
+: set_show_sprites_leftmost_eight
+if
+ppu_control_reg_2_buffer @
+0b00000100
+or
+else
+ppu_control_reg_2_buffer @
+0b11111011
+and
+then
+[
+sta $2001
+]
+ppu_control_reg_2_buffer !
+;
+
+: set_show_background_leftmost_eight
+if
+ppu_control_reg_2_buffer @
+0b00000010
+or
+else
+ppu_control_reg_2_buffer @
+0b11111101
+and
+then
+[
+sta $2001
+]
+ppu_control_reg_2_buffer !
+;
+
+: set_greyscale
+if
+ppu_control_reg_2_buffer @
+0b00000001
+or
+else
+ppu_control_reg_2_buffer @
+0b11111110
+and
+then
+[
+sta $2001
+]
+ppu_control_reg_2_buffer !
+;
+
+
+: show_sprites?
+ppu_control_reg_2_buffer @
+0b00001000 bit_set?
+;
+
+: show_background?
+ppu_control_reg_2_buffer @
+0b00010000 bit_set?
+;
+
+: show_sprites_leftmost_eight?
+ppu_control_reg_2_buffer @
+0b00000100 bit_set?
+;
+
+: show_background_leftmost_eight?
+ppu_control_reg_2_buffer @
+0b00000010 bit_set?
+;
+
+: greyscale?
+ppu_control_reg_2_buffer @
+0b00000001 bit_set?
+;
 
 
 

@@ -4,3 +4,5 @@ fes
 tests/tmp/*
 # keep tests/tmp/ is an empty folder
 !tests/tmp/.gitkeep
+examples/*/*.nes
+examples/*/*.fns
