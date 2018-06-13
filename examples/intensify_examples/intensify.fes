@@ -1,1 +1,19 @@
-true set_intensify_greens
+variable counter1
+variable counter2
+
+begin true while
+counter2 @
+255 =
+if
+true set_intensify_reds
+else
+false set_intensify_reds
+then
+
+counter1 @ 1 + dup counter1 !
+255 =
+if
+0 counter1 !
+counter2 @ 1 + counter2 !
+then
+end

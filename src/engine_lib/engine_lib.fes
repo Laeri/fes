@@ -323,22 +323,6 @@ ppu_control_reg_1_buffer !
 ;
 
 
-not
-if
-ppu_control_reg_1_buffer @
-0b01000000
-or
-else
-ppu_control_reg_1_buffer @
-0b10111111
-and
-then
-[
-sta $2000
-]
-ppu_control_reg_1_buffer !
-;
-
 
 #[ assumes pointer to PaletteData struct is on stack ]#
 : load_palette_data
