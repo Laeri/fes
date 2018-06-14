@@ -502,8 +502,8 @@ proc fixup_branch_code(code: var seq[ASMAction], branch_index: int) =
   code.insert(no_jump_label, branch_index + 2)
 
 proc asm_pass_fix_branch_addr_too_far*(code: var seq[ASMAction]) =
-  var MAX_DIST_POS = 128
-  var MAX_DIST_NEG = -127
+  var MAX_DIST_POS = 120 # actually it is -127 - 128 but in the documentation it wasnt clear if op and param are included or not, so to be safe make the max range a bit smaller
+  var MAX_DIST_NEG = -120
   var found_branches = code.filter(proc (action: ASMAction): bool =
     if action of ASMCall:
       var call = cast[ASMCall](action)
