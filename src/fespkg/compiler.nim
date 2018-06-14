@@ -99,6 +99,8 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_add_end_label(compiler.parser.root)
   pass_runner.pass_check_no_OtherNodes(compiler.parser.root)
 
+  
+
 proc do_asm_passes(compiler: FESCompiler, code: var seq[ASMAction]) =
   asm_pass_fix_branch_addr_too_far(code)
 
@@ -115,6 +117,7 @@ proc pp_optimize(compiler: FESCompiler, asm_code: var seq[ASMAction]) =
 proc do_optimizations(compiler: FESCompiler) =
   var graph = build_call_graph(compiler.parser.root)
   remove_unused_defs(compiler.parser.root, graph)
+  inline(compiler.parser.root, graph)
 
 
 proc compile*(compiler: FESCompiler) =

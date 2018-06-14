@@ -1,5 +1,5 @@
 import 
-  unittest, types, compiler, msgs, passes, parser, tables, ast
+  unittest, types, compiler, msgs, passes, parser, tables, ast, callgraph
 
 suite "Passes Suite":
 

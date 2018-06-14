@@ -2,19 +2,29 @@ import
   types
 
 
-proc newIfElseNode*(): IfElseNode =
-  result = IfElseNode()
-
 proc newSequenceNode*(): SequenceNode =
   var node = SequenceNode()
   node.sequence = @[]
   return node
 
+proc newIfElseNode*(): IfElseNode =
+  result = IfElseNode()
+  result.then_block = newSequenceNode()
+  result.else_block = newSequenceNode()
+
+proc newWhileNode*(): WhileNode =
+  result = WhileNode()
+  result.condition_block = newSequenceNode()
+  result.then_block = newSequenceNode()
 
 proc newASMNode*(): ASMNode =
   var node = ASMNode()
   node.asm_calls = @[]
   return node
+
+proc newASMNode*(calls: seq[ASMAction]): ASMNode =
+  result = newASMNode()
+  result.asm_calls = calls
 
 proc newASMCall*(): ASMCall =
   result = ASMCall()
@@ -113,10 +123,15 @@ method str*(node: LoadVariableNode, prefix = ""): string =
 
 method str*(action: ASMAction, prefix = ""): string =
   echo "UNSPECIFIED ASM ACTION"
+  echo $(action of ASMLabel)
+  echo $(action of ASMCall)
   return "!!!!!"
 
 method str*(node: OtherNode, prefix = ""): string =
   return prefix & "OtherNode: " & node.name & "\n"
+
+method str*(node: ASMComment, prefix = ""): string =
+  return prefix & "ASMComment: " & node.comment & "\n"
 
 method str*(call: ASMCall, prefix = ""): string =
   var arg = "  "
@@ -198,23 +213,19 @@ method any_true*(node: DefineWordNode, pred: proc(node: ASTNode): bool): bool =
 proc size*(node: StructNode): int =
   return node.members.len
 
-method len*(node: ASTNode): int {.base.} =
-  return 1
-
-method len*(node: DefineWordNode): int =
-  return node.definition.len
-
-method len*(node: SequenceNode): int =
-  return node.sequence.len
-
-method len*(node: IfElseNode): int =
-  return node.then_block.len + node.else_block.len
-
-method len*(node: WhileNode): int =
-  return node.condition_block.len + node.then_block.len
 
 proc `[]`*(node: SequenceNode, index: int): ASTNode =
   result = node.sequence[index]
+
+
+proc len*(node: SequenceNode): int = 
+  result = 0
+  for n in node.sequence:
+    result += 1
+
+# length of a definition is just all the statement/calls it has
+proc len*(node: DefineWordNode): int = 
+  return node.definition.len
 
 
 

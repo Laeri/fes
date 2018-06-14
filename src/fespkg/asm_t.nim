@@ -278,6 +278,9 @@ method asm_str*(call: ASMCall): string =
 method asm_str*(label: ASMLabel): string =
   result = label.label_name & ":"
 
+method asm_str*(comment: ASMComment): string =
+  result = comment.comment
+
 
 proc is_branch*(call: ASMCall): bool =
   if not(call.with_arg):
@@ -327,11 +330,13 @@ method len*(asm_action: ASMAction): int {.base.} =
   echo "ASMAction len should not be called"
   return 0
 
+
+method len*(asm_comment: ASMComment): int =
+  return 0
+
 method len*(asm_call: ASMCall): int = 
   result = 1 # 1 byte for the opcode ?
-  echo "len of: " & asm_call.asm_str
   var addr_mode = parse_call_to_addressing_mode(asm_call)
-  echo "mode: " & $addr_mode
   result += info_table[asm_call.op][addr_mode].len
 
 method len*(asm_label: ASMLabel): int =

@@ -120,16 +120,21 @@ or:
   INX
   RTS
 store_var:
-  TAY
+  STA $FE
   LDA $0200,X
-  STA $00,Y
+  STX $FD
+  LDX $FE
+  STA $00,X
+  LDX $FE
   INX
   LDA $0200,X
   INX
   RTS
 load_var:
-  TAY
-  LDA $00,Y
+  STX $FE
+  TAX
+  LDA $00,X
+  LDX $FE
   RTS
 add:
   CLC

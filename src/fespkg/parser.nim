@@ -308,10 +308,10 @@ proc parse_variable(parser: Parser): VariableNode =
   parser.set_end_info(result)
 
 method is_empty(node: ASTNode): bool {.base.}=
-  return true
+  discard
 
 method is_empty(node: DefineWordNode): bool = 
-  return node.definition.len == 0
+  return node.definition.sequence.len == 0
 
 method is_empty(node: SequenceNode): bool =
   return node.sequence.len == 0

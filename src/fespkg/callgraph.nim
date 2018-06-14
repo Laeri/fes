@@ -1,5 +1,5 @@
 import
-  types, msgs, strutils, sets, sequtils
+  types, msgs, strutils, sets, sequtils, tables, ast, codegenerator, asm_t
 
 type
   CallGraph* = ref object of RootObj
@@ -9,6 +9,7 @@ type
     call_from*: ASTNode
     call_node*: CallWordNode
     call_to*: DefineWordNode
+    
 
 method collect_top_level_calls(node: ASTNode): seq[CallWordNode] {.base.} =
   return @[]
@@ -89,6 +90,90 @@ proc remove_unused_defs*(root: SequenceNode, call_graph: CallGraph) =
       else:
         return true
     return false)
+
+
+
+
+method size*(node: ASTNode): int {.base.} =
+  echo "ERROR"
+  discard
+
+method size*(node: DefineWordNode): int =
+  result = node.definition.size + 1 # rts
+
+method size*(node: SequenceNode): int =
+  result = 0
+  for n in node.sequence:
+    result += n.size
+
+# size(IfElseNode) = size(then_block) + size(else_block) + size(asm_statements_to_realize_compare_and_jump) 
+method size*(node: IfElseNode): int =
+  # create a dummy ifelsenode and a dummy generator
+  # ifelsenode has empty then, else statement
+  # generate code for dummy node, the length of this code is the overhead to 
+  # realize an if-else-statement
+  var dummy_if_else = newIfElseNode()
+  var generator = newCodeGenerator()
+  generator.emit(dummy_if_else)
+  var asm_node = newASMNode()
+  asm_node.asm_calls = generator.code
+  return node.then_block.size + node.else_block.size + asm_node.size
+
+method size*(node: WhileNode): int =
+  # same idea with dummy whilenode and codegenerator
+  var dummy_while = newWhileNode()
+  var generator = newCodeGenerator()
+  generator.emit(dummy_while)
+  var asm_node = newASMNode()
+  asm_node.asm_calls = generator.code
+  return node.condition_block.size + node.then_block.size + asm_node.size
+
+method size*(node: ASMNode): int =
+  result = 0
+  for c in node.asm_calls:
+    result += c.len
+
+method size*(node: LoadVariableNode): int =
+  var gen = newCodeGenerator()
+  gen.emit(node)
+  var asm_node = newASMNode(gen.code)
+  return asm_node.size
+
+method size*(node: PushNumberNode): int =
+  var gen = newCodeGenerator()
+  gen.emit(node)
+  var asm_node = newASMNode(gen.code)
+  return asm_node.size
+
+method size*(node: CallWordNode): int =
+ var gen = newCodeGenerator()
+ gen.emit(node)
+ var asm_node = newASMNode(gen.code)
+ return asm_node.size
+
+method size*(node: LoadConstantNode): int =
+  var gen = newCodeGenerator()
+  gen.emit(node)
+  var asm_node = newASMNode(gen.code)
+  return asm_node.size
+
+proc inline*(root: SequenceNode, call_graph: CallGraph) =
+  # for the moment no bank switching:
+  let MAX_PROGRAM_BYTE_SIZE = 16 * 1024 # 16 KB bank 1 KB = 1025 byte
+
+  var rebate_ratio: TableRef[string, float] = newTable[string, float]()
+  var size: TableRef[string, int] = newTable[string, int]()
+
+  # Two possibilities:
+  # 1. Calculate size of all nodes (add size of additionally generated asm statements)
+  # 2. Collapse IfElseNode, WhileNode into SequenceNode and ASMBlocks and then calculate size from that
+  # use method 1 for the moment, it could be helpful to collapse nodes but we will see
+
+  for def_node in call_graph.nodes:
+    size[def_node.word_name] = def_node.size
+    echo "name: " & def_node.word_name
+    echo "size: " & $def_node.size 
+  
 
 
 
