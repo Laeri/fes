@@ -458,12 +458,9 @@ proc byte_distance_from_branch_to_addr(code: seq[ASMAction], branch_index: int):
 
   if start < 0:
     start = 0
-
-  echo "label_index: " & $label_index
   
   var byte_len = 0
   for i in start..label_index:
-    echo "i: " & $i
     var asm_line = code[i]
     byte_len += asm_line.len ### !!! to calculate len, addressing mode has to be set in every call
     # param has to be parsed to correct mode!
@@ -513,9 +510,7 @@ proc asm_pass_fix_branch_addr_too_far*(code: var seq[ASMAction]) =
 
   for branch in found_branches:
     var branch_index = code.find(branch)
-    echo "branch index: " & $branch_index
     var dist = byte_distance_from_branch_to_addr(code, branch_index)
-    echo "dist: " & $dist
     if (dist > MAX_DIST_POS) or (dist < MAX_DIST_NEG):
       echo "fix branch: " & code[branch_index].asm_str
       fixup_branch_code(code, branch_index)

@@ -1,5 +1,5 @@
 import
-  random, sets, unittest, strutils, sequtils, scanner, types, codegenerator, parser, passes
+  random, sets, unittest, strutils, sequtils, scanner, types, codegenerator, parser, passes, asm_t
 
 
 
