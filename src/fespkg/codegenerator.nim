@@ -16,8 +16,7 @@ proc newCodeGenerator*(): CodeGenerator =
   result.current_address = 0
   result.variables = newTable[string, VariableNode]()
 
-proc newASMCall*(op: OPCODE, param: string = nil): ASMCall =
-  result = ASMCall(op: op, param: param)
+
 
 proc next_ifelse(generator: CodeGenerator) =
   generator.current_ifelse += 1

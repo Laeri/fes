@@ -14,7 +14,9 @@ Start:
 begin_while1:
   JSR true
   ASL A
-  BCC end_while1
+  BCS no_jump_end_while10
+  JMP end_while1
+no_jump_end_while10:
   LDA $0200,X
   INX
 begin_then_while1:

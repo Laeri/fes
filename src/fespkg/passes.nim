@@ -1,5 +1,5 @@
 import
-  types, utils, ast, sets, msgs, typetraits, tables, parser, codegenerator, algorithm
+  types, asm_t, utils, ast, sets, msgs, typetraits, tables, strutils, parser, codegenerator, algorithm, sequtils
 
 
 proc newPassRunner*(): PassRunner =
@@ -117,7 +117,7 @@ proc pass_group_vars_first*(pass_runner: PassRunner, root: SequenceNode) =
 # Pass No.3
 proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   var asm_node = newASMNode()
-  asm_node.add(ASMLabel(label_name: "Start:"))
+  asm_node.add(ASMLabel(label_name: "Start"))
   asm_node.add(ASMCall(op: LDA , param: "#$FF"))
   asm_node.add(ASMCall(op: TAX)) # setup stack
   root.sequence.insert(asm_node, 0)
@@ -393,7 +393,7 @@ proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
 # Pass No.13
 proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   var end_node = newASMNode()
-  end_node.add(ASMLabel(label_name: "End:"))
+  end_node.add(ASMLabel(label_name: "End"))
   end_node.add(ASMCall(op: JMP, param: "End")) # endless cycle
   root.sequence.add(end_node)
   var first_def_index = find_index(root.sequence, is_def)
@@ -415,6 +415,110 @@ proc pass_calls_to_def_check*(pass_runner: PassRunner) =
     var defs = pass_runner.definitions
     if not(call.word_name in defs):
       pass_runner.report(call, errWordCallWithoutDefinition, call.word_name)
+
+
+proc get_asm_labels(code: seq[ASMAction]): seq[string] =
+  var labels: seq[string] = @[]
+  for c in code:
+    if c of ASMLabel:
+      var label = cast[ASMLabel](c)
+      if not(labels.contains(label.label_name)):
+        labels.add(label.label_name)
+  return labels
+
+proc find_label_index(code: seq[ASMAction], label_name: string): int =
+  for i in 0..(code.len - 1):
+    if (code[i] of ASMLabel):
+      var label = cast[ASMLabel](code[i])
+      if label.label_name == label_name:
+        return i
+  return -1
+
+
+
+proc addressing_mode(call: ASMCall): OP_MODE =
+  discard # check opcode and param to determine mode
+
+proc addressing_mode_to_param_len(mode: OP_MODE): int =
+  discard # map addressing mode to parameter length
+
+
+proc byte_distance_from_branch_to_addr(code: seq[ASMAction], branch_index: int): int =
+  var branch = cast[ASMCall](code[branch_index])
+  var label_name = branch.param
+  var label_index = find_label_index(code, label_name)
+  var start: int
+  # ? from where is the maximal offset calculated?  from the address directly after
+  # the relative offset in the branch instruction or from the branch instruction itself?
+  # otherwise the distance from the branch to the label will be off by one or two bytes!
+  if branch_index > label_index:
+    start = branch_index - 1
+  else:
+    start = branch_index + 1
+
+  if start < 0:
+    start = 0
+
+  echo "label_index: " & $label_index
+  
+  var byte_len = 0
+  for i in start..label_index:
+    echo "i: " & $i
+    var asm_line = code[i]
+    byte_len += asm_line.len ### !!! to calculate len, addressing mode has to be set in every call
+    # param has to be parsed to correct mode!
+  return byte_len
+
+
+proc is_label_name_available(name: string, code: seq[ASMAction]): bool =
+  var labels = code.filter(proc (action: ASMAction): bool =
+    result = action of ASMLabel)
+  var label_names: seq[string] = @[]
+  for label_action in labels:
+    var label = cast[ASMLabel](label_action)
+    label_names.add(label.label_name)
+  return not(label_names.contains(name))
+
+
+# transforms for example :
+# <branch> <too_far_addr>
+# to:
+# <inv_branch> no_jump
+# JMP <too_far_addr>
+# no_jump: 
+proc fixup_branch_code(code: var seq[ASMAction], branch_index: int) =
+  var branch = cast[ASMCall](code[branch_index])
+  var label_num = 0
+  var no_jump_label_name = "no_jump_" & branch.param & $label_num # count up until label is available
+  while not(no_jump_label_name.is_label_name_available(code)):
+    label_num += 1
+    no_jump_label_name = no_jump_label_name[0..(no_jump_label_name.len - 2)] & $label_num
+  var inv_branch_call = newASMCall(branch.op.inverse_branch, no_jump_label_name)
+  var jump_to_real_addr = newASMCall(JMP, branch.param)
+  code.delete(branch_index)
+  code.insert(inv_branch_call, branch_index)
+  code.insert(jump_to_real_addr, branch_index + 1)
+  var no_jump_label = ASMLabel(label_name: no_jump_label_name)
+  code.insert(no_jump_label, branch_index + 2)
+
+proc asm_pass_fix_branch_addr_too_far*(code: var seq[ASMAction]) =
+  var MAX_DIST_POS = 128
+  var MAX_DIST_NEG = -127
+  var found_branches = code.filter(proc (action: ASMAction): bool =
+    if action of ASMCall:
+      var call = cast[ASMCall](action)
+      if call.is_branch:
+        return true
+    return false)
+
+  for branch in found_branches:
+    var branch_index = code.find(branch)
+    echo "branch index: " & $branch_index
+    var dist = byte_distance_from_branch_to_addr(code, branch_index)
+    echo "dist: " & $dist
+    if (dist > MAX_DIST_POS) or (dist < MAX_DIST_NEG):
+      echo "fix branch: " & code[branch_index].asm_str
+      fixup_branch_code(code, branch_index)
 
 
 

@@ -136,7 +136,7 @@ type
     STX, STY, INVALID_OPCODE
   
   OP_MODE* = enum
-    Immediate, Zero_Page, Zero_Page_X, Zero_Page_Y Absolute, Absolute_X, Absolute_Y, Indirect, Indirect_X, Indirect_Y, Accumulator, Relative, Implied
+    ERROR_NO_OP_MODE_SPECIFIED, Immediate, Zero_Page, Zero_Page_X, Zero_Page_Y Absolute, Absolute_X, Absolute_Y, Indirect, Indirect_X, Indirect_Y, Accumulator, Relative, Implied
 
   ASMInfo* = ref object of ASTNode
     mode*: OP_MODE

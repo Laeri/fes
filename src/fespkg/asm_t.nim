@@ -8,6 +8,8 @@ proc newASMInfo*(op_mode: OP_MODE, op_length: int, op_time: int): ASMInfo =
 template asm_data*(op_mode: OP_MODE, op_length: int, op_time: int): ASMInfo =
   ASMInfo(mode: op_mode, len: op_length,time: op_time)
 
+proc newASMCall*(op: OPCODE, param: string = nil): ASMCall =
+  result = ASMCall(op: op, param: param)
 
 var info_table* = newTable[OPCODE, TableRef[OP_MODE, ASMInfo]]()
 
@@ -240,28 +242,48 @@ info_table.setup(
   Implied, 1, 2
 )
 
-method len*(asm_action: ASMAction): int {.base.} =
-  echo "ASMAction len should not be called"
-  return 0
-
-method len*(asm_call: ASMCall): int = 
-  result = 1 # 1 byte for the opcode ?
-  result += info_table[asm_call.op][asm_call.mode].len
-
-method len*(asm_label: ASMLabel): int =
-  return 0
-
-proc op*(name: OPCODE, param: string): ASMCall = 
-  return ASMCall(op: name, str: $name, param: param)
-
 var branches*: seq[OPCODE] = @[BEQ, BNE, BCC, BCS, BVC, BVS, BMI, BPL]
+
+
+proc inverse_branch*(op: OPCODE): OPCODE =
+  if not(branches.contains(op)):
+    echo "inverse_branch function a non branch opcode supplied"
+  result = case op:
+    of BEQ:
+      BNE
+    of BNE:
+      BEQ
+    of BCC:
+      BCS
+    of BCS:
+      BCC
+    of BVC:
+      BVS
+    of BMI:
+      BPL
+    of BPL:
+      BMI
+    else:
+      INVALID_OPCODE
+  
+
+method asm_str*(action: ASMAction): string {.base.} =
+  discard
+
+method asm_str*(call: ASMCall): string =
+  result = $call.op
+  if call.with_arg:
+    result &= " " & call.param
+
+method asm_str*(label: ASMLabel): string =
+  result = label.label_name & ":"
+
 
 proc is_branch*(call: ASMCall): bool =
   if not(call.with_arg):
     result = false
   else:
     result = branches.contains(call.op) # branches is a variable defined in asm_t.nim
-
 
 proc addressing_mode(param: string): OP_MODE =
   if param.contains("[") and param.contains("X"):
@@ -282,10 +304,16 @@ proc addressing_mode(param: string): OP_MODE =
       return Zero_Page_Y
   elif param.contains("#"):
     return Immediate
-  if param.len == 5: # $ABCD
-    return Absolute
-  elif param.len == 3: # $AB
-    return Zero_Page
+  elif param.contains("$"):
+    if param.len == 5: # $ABCD
+      return Absolute
+    elif param.len == 3: # $AB
+      return Zero_Page
+  elif param.len > 0: # jump address
+    if param.contains("["): # indirect jump
+      return Indirect
+    else:
+      return Absolute
 
 proc parse_call_to_addressing_mode*(call: ASMCall): OP_MODE =
   if not(call.with_arg):
@@ -295,16 +323,24 @@ proc parse_call_to_addressing_mode*(call: ASMCall): OP_MODE =
   var param = call.param
   return param.addressing_mode
 
-method asm_str*(action: ASMAction): string {.base.} =
-  discard
+method len*(asm_action: ASMAction): int {.base.} =
+  echo "ASMAction len should not be called"
+  return 0
 
-method asm_str*(call: ASMCall): string =
-  result = $call.op
-  if call.with_arg:
-    result &= " " & call.param
+method len*(asm_call: ASMCall): int = 
+  result = 1 # 1 byte for the opcode ?
+  echo "len of: " & asm_call.asm_str
+  var addr_mode = parse_call_to_addressing_mode(asm_call)
+  echo "mode: " & $addr_mode
+  result += info_table[asm_call.op][addr_mode].len
 
-method asm_str*(label: ASMLabel): string =
-  result = label.label_name & ":"
+method len*(asm_label: ASMLabel): int =
+  return 0
+
+proc op*(name: OPCODE, param: string): ASMCall = 
+  return ASMCall(op: name, str: $name, param: param)
+
+
     
     
 
