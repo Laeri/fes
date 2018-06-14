@@ -163,9 +163,12 @@ inx
 #[ x1 a-addr -- ]#
 : !
 [
-tay
+sta $FE
 lda $0200,X
-sta $00,Y
+stx $FD
+ldx $FE
+sta $00,X
+ldx $FE
 inx
 lda $0200,X
 inx
@@ -175,8 +178,10 @@ inx
 #[ variables begin at $00, so address can be used as offset ]#
 : @
 [
-tay
-lda $00,Y
+stx $FE ; temporarily store X
+tax
+lda $00,X
+ldx $FE ; reset X
 ]
 ;
 
