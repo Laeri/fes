@@ -1,5 +1,5 @@
 import
-  types, utils, strutils, tables, ast
+  types, utils, strutils, tables, ast, asm_t
 
 
 proc push_asm_node(num: int): ASMNode = 
@@ -56,7 +56,7 @@ method emit*(generator: CodeGenerator, node: CallWordNode) =
   generator.code.add(ASMCall(op: JSR, param: translate_to_label_name(node.word_name)))
 
 method emit*(generator: CodeGenerator, node: DefineWordNode) =
-  generator.code.add(ASMLabel(label_name: (translate_to_label_name(node.word_name) & ":")))
+  generator.code.add(ASMLabel(label_name: (translate_to_label_name(node.word_name))))
   generator.emit(node.definition)
   generator.code.add(ASMCall(op: RTS))
 
@@ -82,16 +82,16 @@ proc end_if_label_name(generator: CodeGenerator): string =
 
 
 proc begin_if_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.begin_if_label_name() & ":")
+  return ASMLabel(label_name: generator.begin_if_label_name())
 
 proc begin_then_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.begin_then_label_name() & ":")
+  return ASMLabel(label_name: generator.begin_then_label_name())
 
 proc begin_else_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.begin_else_label_name() & ":")
+  return ASMLabel(label_name: generator.begin_else_label_name())
 
 proc end_if_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.end_if_label_name() & ":")
+  return ASMLabel(label_name: generator.end_if_label_name())
 
 
 method emit*(generator: CodeGenerator, node: IfElseNode) =
@@ -120,11 +120,11 @@ proc end_while_name(generator: CodeGenerator): string =
 proc then_while_name(generator: CodeGenerator): string =
   return "begin_then_while" & $generator.current_while
 proc begin_while_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.begin_while_name & ":")
+  return ASMLabel(label_name: generator.begin_while_name)
 proc end_while_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.end_while_name & ":")
+  return ASMLabel(label_name: generator.end_while_name)
 proc then_while_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.then_while_name & ":")
+  return ASMLabel(label_name: generator.then_while_name)
 
 method emit*(generator: CodeGenerator, node: WhileNode) =
   generator.next_while()
@@ -168,13 +168,10 @@ proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
   for asm_code in asm_actions:
     if asm_code of ASMCall:
       var call = cast[ASMCall](asm_code)
-      var arg = ""
-      if call.with_arg:
-        arg = " " & call.param
-      result &= "  " & $call.op & arg & "\n"
+      result &= "  " & call.asm_str & "\n"
     elif asm_code of ASMLabel:
       var label = cast[ASMLabel](asm_code)
-      result &= cast[ASMLabel](asm_code).label_name & "\n"
+      result &= label.asm_str & "\n"
   return result
 
 

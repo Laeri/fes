@@ -166,7 +166,7 @@ proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
         asm_node.add(call)
       else:
         if operator[operator.len - 1] == ':':
-          var label = parser.create_asm_label(operator)  
+          var label = parser.create_asm_label(operator[0..operator.len - 2]) # cutoff : at end  
           asm_node.add(label)
         else:
           var call = parser.create_asm_call(operator)
