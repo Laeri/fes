@@ -101,8 +101,8 @@ method str*(node: WhileNode, prefix = ""): string =
 
 method str*(node: IfElseNode, prefix = ""): string =
   var str: string = prefix & "IfElseNode:\n"
-  str &= "then:\n" & node.then_block.str(prefix & "  ")
-  str &= "else:\n" & node.else_block.str(prefix & "  ")
+  str &= prefix & "  " & "then:\n" & node.then_block.str(prefix & "  " & "  ")
+  str &= prefix & "  " & "else:\n" & node.else_block.str(prefix & "  " & "  ")
   return str
 
 method str*(node: VariableNode, prefix = ""): string =
