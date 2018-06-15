@@ -245,7 +245,7 @@ suite  "Parser Suite":
     src = "const name $2000"
     parser.parse_string(src)
     echo parser.root.str
-    
+
 
   
 

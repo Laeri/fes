@@ -95,7 +95,22 @@ INX
     generator.emit(parser.root)
     var code_str = generator.code_as_string
     check(code_str == "  INX\n")
-  
+
+    
+
+  test "nested if's should have distinct label names!":
+    src = "if 5 else if 3 else 4 if 0 else 1 then then then if 6 else 7 then"
+    parser.parse_string(src)
+    generator.emit(parser.root)
+    var code = generator.code
+    var labels = code.filter(proc (action: ASMAction): bool =
+      action of ASMLabel)
+    var label_names: seq[string] = @[]
+    for l in labels:
+      var label = cast[ASMLabel](l)
+      label_names.add(label.label_name)
+    var label_set = label_names.toSet
+    check(label_set.len == label_names.len) # otherwise a label was in there more than once
 
 
 

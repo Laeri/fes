@@ -66,51 +66,52 @@ method emit*(generator: CodeGenerator, node: ASMNode) =
   for call in node.asm_calls:
     generator.code.add(call)
 
-proc begin_if_label_name(generator: CodeGenerator): string =
-  return "begin_if" & $generator.current_ifelse
+proc begin_if_label_name(generator: CodeGenerator, index: int): string =
+  return "begin_if" & $index
 
-proc begin_then_label_name(generator: CodeGenerator): string =
-  return "begin_then" & $generator.current_ifelse
+proc begin_then_label_name(generator: CodeGenerator, index: int): string =
+  return "begin_then" & $index
 
-proc begin_else_label_name(generator: CodeGenerator): string =
-  return "begin_else" & $generator.current_ifelse
+proc begin_else_label_name(generator: CodeGenerator, index: int): string =
+  return "begin_else" & $index
 
-proc end_if_label_name(generator: CodeGenerator): string =
-  return "end_if" & $generator.current_ifelse
+proc end_if_label_name(generator: CodeGenerator, index: int): string =
+  return "end_if" & $index
 
 
 
-proc begin_if_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.begin_if_label_name())
+proc begin_if_label(generator: CodeGenerator, index: int): ASMLabel =
+  return ASMLabel(label_name: generator.begin_if_label_name(index))
 
-proc begin_then_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.begin_then_label_name())
+proc begin_then_label(generator: CodeGenerator, index: int): ASMLabel =
+  return ASMLabel(label_name: generator.begin_then_label_name(index))
 
-proc begin_else_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.begin_else_label_name())
+proc begin_else_label(generator: CodeGenerator, index: int): ASMLabel =
+  return ASMLabel(label_name: generator.begin_else_label_name(index))
 
-proc end_if_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.end_if_label_name())
+proc end_if_label(generator: CodeGenerator, index: int): ASMLabel =
+  return ASMLabel(label_name: generator.end_if_label_name(index))
 
 
 method emit*(generator: CodeGenerator, node: IfElseNode) =
+  var current_ifelse_index = generator.current_ifelse
   generator.next_ifelse()
   var then_block = node.then_block
   var else_block = node.else_block
-  generator.code.add(generator.begin_if_label())
+  generator.code.add(generator.begin_if_label(current_ifelse_index))
   generator.code.add(ASMCall(op: CLC))
   generator.code.add(ASMCall(op: ASL, param: "A"))
-  generator.code.add(ASMCall(op: BCC, param: generator.begin_else_label_name()))
-  generator.code.add(generator.begin_then_label())
+  generator.code.add(ASMCall(op: BCC, param: generator.begin_else_label_name(current_ifelse_index)))
+  generator.code.add(generator.begin_then_label(current_ifelse_index))
   generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop condition
   generator.code.add(ASMCall(op: INX))
   generator.emit(then_block)
-  generator.code.add(ASMCall(op: JMP, param: generator.end_if_label_name()))
-  generator.code.add(generator.begin_else_label())
+  generator.code.add(ASMCall(op: JMP, param: generator.end_if_label_name(current_ifelse_index)))
+  generator.code.add(generator.begin_else_label(current_ifelse_index))
   generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop condition
   generator.code.add(ASMCall(op: INX))
   generator.emit(else_block)
-  generator.code.add(generator.end_if_label())
+  generator.code.add(generator.end_if_label(current_ifelse_index))
 
 proc begin_while_name(generator: CodeGenerator): string =
   return "begin_while" & $generator.current_while
