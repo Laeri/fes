@@ -113,34 +113,35 @@ method emit*(generator: CodeGenerator, node: IfElseNode) =
   generator.emit(else_block)
   generator.code.add(generator.end_if_label(current_ifelse_index))
 
-proc begin_while_name(generator: CodeGenerator): string =
-  return "begin_while" & $generator.current_while
-proc end_while_name(generator: CodeGenerator): string =
-  return "end_while" & $generator.current_while
-proc then_while_name(generator: CodeGenerator): string =
-  return "begin_then_while" & $generator.current_while
-proc begin_while_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.begin_while_name)
-proc end_while_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.end_while_name)
-proc then_while_label(generator: CodeGenerator): ASMLabel =
-  return ASMLabel(label_name: generator.then_while_name)
+proc begin_while_name(generator: CodeGenerator, index: int): string =
+  return "begin_while" & $index
+proc end_while_name(generator: CodeGenerator, index: int): string =
+  return "end_while" & $index
+proc then_while_name(generator: CodeGenerator, index: int): string =
+  return "begin_then_while" & $index
+proc begin_while_label(generator: CodeGenerator, index: int): ASMLabel =
+  return ASMLabel(label_name: generator.begin_while_name(index))
+proc end_while_label(generator: CodeGenerator, index: int): ASMLabel =
+  return ASMLabel(label_name: generator.end_while_name(index))
+proc then_while_label(generator: CodeGenerator, index: int): ASMLabel =
+  return ASMLabel(label_name: generator.then_while_name(index))
 
 method emit*(generator: CodeGenerator, node: WhileNode) =
+  var current_while_index = generator.current_while
   generator.next_while()
   var condition_block = node.condition_block
   var then_block = node.then_block
-  generator.code.add(generator.begin_while_label())
+  generator.code.add(generator.begin_while_label(current_while_index))
   generator.emit(condition_block)
   generator.code.add(ASMCall(op: CLC))
   generator.code.add(ASMCall(op: ASL, param: "A"))
-  generator.code.add(ASMCall(op: BCC, param: generator.end_while_name()))
+  generator.code.add(ASMCall(op: BCC, param: generator.end_while_name(current_while_index)))
   generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop computed flag of the stack
   generator.code.add(ASMCall(op: INX))
-  generator.code.add(generator.then_while_label())
+  generator.code.add(generator.then_while_label(current_while_index))
   generator.emit(then_block)
-  generator.code.add(ASMCall(op: JMP, param: generator.begin_while_name()))
-  generator.code.add(generator.end_while_label())
+  generator.code.add(ASMCall(op: JMP, param: generator.begin_while_name(current_while_index)))
+  generator.code.add(generator.end_while_label(current_while_index))
   generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop computed flag of the stack
   generator.code.add(ASMCall(op: INX))
 

@@ -113,4 +113,21 @@ INX
     check(label_set.len == label_names.len) # otherwise a label was in there more than once
 
 
+  test "nested while's should have distinc label names!":
+    src = "begin 255 while begin 0 while begin 255 while 0 end end end"
+    parser.parse_string(src)
+    generator.emit(parser.root)
+    var code = generator.code
+    var labels = code.filter(proc (action: ASMAction): bool =
+      action of ASMLabel)
+    var label_names: seq[string] = @[]
+    for l in labels:
+      var label = cast[ASMLabel](l)
+      label_names.add(label.label_name)
+    var label_set = label_names.toSet
+    check(label_set.len == label_names.len) # otherwise a label was in there more than once
+
+
+
+
 
