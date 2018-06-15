@@ -1,5 +1,99 @@
 
 
+struct Input {
+  ByteValue
+}
+
+variable input1 Input
+variable input2 Input
+
+
+#[
+Joypad1: $4016
+Joypad2: $4017
+
+http://wiki.nesdev.com/w/index.php/Controller_Reading
+bit:   	 7     6     5     4     3     2     1     0
+button:	 A     B  Select Start  Up   Down  Left  Right
+]#
+
+: read_inputs
+read_inputs1
+read_inputs2
+;
+
+#[ input_pointer - bool ]#
+: a_pressed?
+get-Input-ByteValue 0x80 bit_set?
+;
+
+: b_pressed?
+get-Input-ByteValue 0x40 bit_set?
+;
+
+: select_pressed?
+get-Input-ByteValue 0x20 bit_set?
+;
+
+: start_pressed?
+get-Input-ByteValue 0x10 bit_set?
+;
+
+: up_pressed?
+get-Input-ByteValue 0x08 bit_set?
+;
+
+: down_pressed?
+get-Input-ByteValue 0x04 bit_set?
+;
+
+: left_pressed?
+get-Input-ByteValue 0x02 bit_set?
+;
+
+: right_pressed?
+get-Input-ByteValue 0x01 bit_set?
+;
+
+: read_inputs1
+[
+dex
+sta $0200,X ; first store a
+lda #$01 ; set strobe bit to begin reading the register
+sta $4016
+sta $FE ; use $FE for temporary storage
+lsr a ; A := 0
+sta $4016 ; clear  strobe bit to stop reloading and begin to read all 8 buttons
+read_inputs_loop:
+lda $4016
+lsr a
+rol $FE
+bcc read_inputs_loop
+lda $FE ; put button values into tos
+]
+input1 set-Input-ByteValue
+;
+
+: read_inputs2
+[
+dex
+sta $0200,X ; first store a
+lda #$01 ; set strobe bit to begin reading the register
+sta $4017
+sta $FE ; use $FE for temporary storage
+lsr a ; A := 0
+sta $4017 ; clear  strobe bit to stop reloading and begin to read all 8 buttons
+read_inputs_loop2:
+lda $4017
+lsr a
+rol $FE
+bcc read_inputs_loop2
+lda $FE ; put button values into tos
+]
+input2 set-Input-ByteValue
+;
+
+
 struct PaletteData {
   bg0
   bg1
@@ -10,6 +104,7 @@ struct PaletteData {
   sp2
   sp3
 }
+
 
 struct Palette {
   col0

@@ -1,5 +1,5 @@
 import
-  types, msgs, compiler, utils, ast, unittest, strutils, nimes_integration, ../lib/nimes/src/nes, ../lib/nimes/src/nes/mem, utils
+  types, msgs, compiler, utils, ast, unittest, strutils, nimes_integration, ../lib/nimes/src/nes/types as nimes_types, ../lib/nimes/src/nes, ../lib/nimes/src/nes/mem, utils
 
 template check_memory(mem_addr: int, check_val: int): untyped =
   var addr_uint16 = cast[uint16](mem_addr)
@@ -17,6 +17,11 @@ template check_tos(check_val: uint8): untyped =
 template compile_and_run(src: string, seconds: float = 0.2): untyped {.dirty.} =
   compiler.compile_test_str(src)
   nes = newNES(tmp_nes_path)
+  nes.run(seconds)
+
+template compile_and_run(src: string, mod_nes: NES, seconds: float = 0.2): untyped {.dirty.} =
+  compiler.compile_test_str(src)
+  nes = mod_nes
   nes.run(seconds)
 
 template check_sos(check_val: uint8): untyped {.dirty.} =
@@ -65,10 +70,42 @@ suite "Engine Library Suite":
     compile_and_run("0b1000 0b1000 bit_set?")
     check_tos(uint8_true())
 
-  test "bit set_ false":
+  test "bit set false":
     compile_and_run("0b1000 0b0001 bit_set?")
     print_tos()
     check_tos(uint8_false())
+
+  test "read player1 input":
+    compiler.compile_test_str("read_inputs input1 get-Input-ByteValue")
+    nes = newNES(tmp_nes_path)
+    nes.controllers[0].setButtons([true, false, false, false, false, false, false, false])
+    nes.run(1)
+    check_tos(0x80)
+
+  test "read player2 input":
+    compiler.compile_test_str("read_inputs input2 get-Input-ByteValue")
+    nes = newNES(tmp_nes_path)
+    nes.controllers[1].setButtons([true, false, false, false, false, false, false, false])
+    nes.run(1)
+    check_tos(0x80)
+
+  test "input: A pressed?":
+    compiler.compile_test_str("read_inputs input1 a_pressed?")
+    nes = newNES(tmp_nes_path)
+    nes.controllers[0].setButtons([true, false, false, false, false, false, false, false])
+    nes.run(1)
+    check_tos(uint8_true())
+
+  test "input: B pressed?":
+    compiler.compile_test_str("read_inputs input1 b_pressed?")
+    nes = newNES(tmp_nes_path)
+    nes.controllers[0].setButtons([false, true, false, false, false, false, false, false])
+    nes.run(1)
+    check_tos(uint8_true())
+
+
+
+
 
 
 
