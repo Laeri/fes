@@ -131,6 +131,7 @@ method emit*(generator: CodeGenerator, node: WhileNode) =
   var then_block = node.then_block
   generator.code.add(generator.begin_while_label())
   generator.emit(condition_block)
+  generator.code.add(ASMCall(op: CLC))
   generator.code.add(ASMCall(op: ASL, param: "A"))
   generator.code.add(ASMCall(op: BCC, param: generator.end_while_name()))
   generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop computed flag of the stack
