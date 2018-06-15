@@ -89,19 +89,33 @@ suite "Engine Library Suite":
     nes.run(1)
     check_tos(0x80)
 
-  test "input: A pressed?":
+  test "input: A pressed? true":
     compiler.compile_test_str("read_inputs input1 a_pressed?")
     nes = newNES(tmp_nes_path)
     nes.controllers[0].setButtons([true, false, false, false, false, false, false, false])
     nes.run(1)
     check_tos(uint8_true())
 
-  test "input: B pressed?":
+  test "input: B pressed? true":
     compiler.compile_test_str("read_inputs input1 b_pressed?")
     nes = newNES(tmp_nes_path)
     nes.controllers[0].setButtons([false, true, false, false, false, false, false, false])
     nes.run(1)
     check_tos(uint8_true())
+
+  test "input: A pressed? false":
+    compiler.compile_test_str("read_inputs input1 a_pressed?")
+    nes = newNES(tmp_nes_path)
+    nes.controllers[0].setButtons([false, false, false, false, false, false, false, false])
+    nes.run(1)
+    check_tos(uint8_false())
+
+  test "input: B pressed? false":
+    compiler.compile_test_str("read_inputs input1 b_pressed?")
+    nes = newNES(tmp_nes_path)
+    nes.controllers[0].setButtons([false, false, false, false, false, false, false, false])
+    nes.run(1)
+    check_tos(uint8_false())
 
 
 
