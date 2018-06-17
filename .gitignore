@@ -6,3 +6,4 @@ tests/tmp/*
 !tests/tmp/.gitkeep
 examples/*/*.nes
 examples/*/*.fns
+examples/*/*.asm
