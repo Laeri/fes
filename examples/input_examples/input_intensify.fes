@@ -1,0 +1,6 @@
+begin true while
+  read_inputs
+  input1 b_pressed? set_intensify_reds
+  input1 a_pressed? set_intensify_greens
+  input1 start_pressed? set_intensify_blues
+end
