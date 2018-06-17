@@ -122,6 +122,39 @@ player get-Player-x
 """)
     check_tos(3)
 
+  test "struct settting, getting multiple times":
+    compile_and_run("""
+struct Input { ByteValue }
+variable input1 Input
+128 input1 set-Input-ByteValue
+10 input1 set-Input-ByteValue
+135 input1 set-Input-ByteValue
+input1 get-Input-ByteValue""")
+    check_tos(135)
+
+  test "several structs":
+    compile_and_run("""
+struct Coords { x y }
+struct Input { ByteValue}
+variable coords1 Coords
+variable input1 Input
+variable coords2 Coords
+variable input2 Input
+128 input1 set-Input-ByteValue
+5 coords1 set-Coords-x
+10 coords1 set-Coords-y
+125 input2 set-Input-ByteValue
+input1 get-Input-ByteValue""")
+    check_tos(128)
+
+  test "struct accessing with overwritten memory":
+    compiler.compile_test_str("struct Input { ByteValue } variable input Input 3 input set-Input-ByteValue input get-Input-ByteValue")
+    nes = newNES(tmp_nes_path)
+    for i in 0..0x02FF:
+      nes.cpu.mem[cast[uint16](i)] = cast[uint8](0xFF) # overwrite all memory locations
+    nes.run(1)
+    check_tos(3)
+
   test "+ positive":
     compile_and_run("1 2 +")
     check_tos(3)
