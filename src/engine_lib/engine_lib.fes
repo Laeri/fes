@@ -585,16 +585,31 @@ and #$03
 ]
 ;
 
-#[
+
 #[ (dx sprite_ptr - ) ]#
 : move_sprite_by_x
-get-Sprite-x
+dup get-Sprite-x
+rot
++
+swap set-Sprite-x
 ;
 
+#[ dy sprite_ptr - ) ]#
 : move_sprite_by_y
+dup get-Sprite-y
+rot
++
+swap set-Sprite-y
 ;
 
-]#
+#[ dx dy sprite_ptr - ) ]#
+: move_sprite_by_xy
+swap
+over
+move_sprite_by_y
+move_sprite_by_x
+;
+
 
 
 

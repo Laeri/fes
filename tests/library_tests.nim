@@ -159,6 +159,38 @@ player flip_vertically?""")
     print_memory(0x00, 0x10)
     check_tos(uint8_true())
 
+  test "sprite: move x-Direction":
+    compile_and_run("""
+variable player Sprite
+0 player set-Sprite-x
+0 player set-Sprite-y
+10 player move_sprite_by_x
+player get-Sprite-x
+""")
+    check_tos(10)
+
+  test "sprite: move x-Direction":
+    compile_and_run("""
+variable player Sprite
+0 player set-Sprite-x
+0 player set-Sprite-y
+11 player move_sprite_by_x
+player get-Sprite-x
+""")
+    check_tos(11)
+
+  test "sprite: move x-Direction":
+    compile_and_run("""
+variable player Sprite
+0 player set-Sprite-x
+0 player set-Sprite-y
+10 11 player move_sprite_by_xy
+player get-Sprite-x
+player get-Sprite-y
+""")
+    check_tos(11)
+    check_sos(10)
+
 
 
 
