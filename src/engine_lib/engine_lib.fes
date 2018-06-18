@@ -459,7 +459,7 @@ x
 
 #[ Attributes: nintendoage.com/forum/messageview.cfm?catid=22&threadid=6082
 
- 76543210
+  76543210
   |||   ||
   |||   ++- Color Palette of sprite.  Choose which set of 4 from the 16 colors to use
   |||
@@ -470,36 +470,72 @@ x
 ]#
 
 #[ ( bool sprite_ptr - ) ]#
-: set_flip_sprite_vertically
-if
-  get-Sprite-attributes dup @
-  0x80 or swap !
-else
-  get-Sprite-attributes dup @
-  0x7F and swap !
-then
+: set_flip_vertically
+dup get-Sprite-attributes
+rot
+[
+ and #%10000000
+ ora $0200,X ; (sprite_ptr attribute_val bool)
+ inx ; (sprite_ptr new_val)
+]
+swap set-Sprite-attributes
+;
+
+#[ ( sprite_ptr - ) ]#
+: flip_vertically?
+get-Sprite-attributes
+[
+CLC
+asl A
+bcs flip_vert_true
+flip_vert_false:
+lda #$00
+jmp flip_vert_end
+flip_vert_true:
+lda #$FF
+flip_vert_end:
+]
 ;
 
 
 #[ ( bool sprite_ptr - ) ]#
-: set_flip_sprite_horizontally
-if
-  get-Sprite-attributes dup @
-  0x40 or swap !
-else
-  get-Sprite-attributes dup @
-  0b10111111 and swap !
-then
+: set_flip_horizontally
+dup get-Sprite-attributes
+rot
+[
+ and #%01000000
+ ora $0200,X ; (sprite_ptr attribute_val bool)
+ inx ; (sprite_ptr new_val)
+]
+swap set-Sprite-attributes
 ;
+
+#[ ( sprite_ptr - flip_bool ) ]#
+: flip_horizontally?
+get-Sprite-attributes
+[
+asl A
+clc
+asl A
+bcs flip_hor_true
+flip_hor_false:
+lda #$00
+jmp flip_hor_end
+flip_hor_true:
+lda #$FF
+flip_hor_end:
+]
+;
+
 
 #[ ( value sprite_ptr - )
 set_priority:
   0 - in front of background
   1 - behind background
  ]#
-#[ new_val attr_ptr old_val ]#
+#[ new_val sprite_ptr old_val ]#
 : set_priority
-  get-Sprite-attributes dup @
+  dup get-Sprite-attributes
   rot
   1 =
   if
@@ -511,11 +547,11 @@ set_priority:
       and #%11011111
     ]
   then
-  swap !
+  swap set-Sprite-attributes
 ;
 
 : get_priority
-get-Sprite-attributes @
+get-Sprite-attributes
 [
 lsr A
 lsr A
@@ -528,25 +564,37 @@ and #$01
 
 
 #[ ( col_index sprite_ptr - ) ]#
-#[ new_val attr_ptr old_val  ]#
+#[ new_val sprite_ptr old_val  ]#
 : set_colour_palette
-get-Sprite-attributes dup @
+dup get-Sprite-attributes
 [
-and #%00000011
+and #%11111100
 ]
 rot
 [
 ora $0200,X
+inx
 ]
-swap !
+swap set-Sprite-attributes
 ;
 
 : get_colour_palette
-get-Sprite-attributes @
+get-Sprite-attributes
 [
 and #$03
 ]
 ;
+
+#[
+#[ (dx sprite_ptr - ) ]#
+: move_sprite_by_x
+get-Sprite-x
+;
+
+: move_sprite_by_y
+;
+
+]#
 
 
 

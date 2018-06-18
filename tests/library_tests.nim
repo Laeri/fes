@@ -60,19 +60,12 @@ suite "Engine Library Suite":
     compile_and_run("true set_intensify_blues intensify_blues?")
     check_tos(uint8_true())
 
-  test "check intensify_blues buffer":
-    compile_and_run("true set_intensify_blues ppu_control_reg_2_buffer @")
-    print_tos()
-    print_memory(0x2001, 0x2001)
-    print_memory(0x00, 0x08)
-
   test "bit set: true":
     compile_and_run("0b1000 0b1000 bit_set?")
     check_tos(uint8_true())
 
   test "bit set false":
     compile_and_run("0b1000 0b0001 bit_set?")
-    print_tos()
     check_tos(uint8_false())
 
   test "read player1 input":
@@ -135,6 +128,37 @@ player get_priority
 """)
     print_memory(0x00, 0x10)
     check_tos(1)
+
+  test "sprite: attributes of two sprites":
+    compile_and_run("""
+variable player1 Sprite
+variable player2 Sprite
+1 player1 set_priority
+2 player1 set-Sprite-x
+3 player1 set-Sprite-y
+1 player2 set_priority
+10 player2 set-Sprite-x
+11 player2 set-Sprite-y
+player1 get_priority""")
+    print_memory(0x00, 0x10)
+    check_tos(1)
+
+  test "sprite: set_flip_horizontally":
+    compile_and_run("""
+variable player Sprite
+true player set_flip_horizontally
+player flip_horizontally?
+""")
+    check_tos(uint8_true())
+
+  test "sprite: set_flip_vertically":
+    compile_and_run("""
+variable player Sprite
+true player set_flip_vertically
+player flip_vertically?""")
+    print_memory(0x00, 0x10)
+    check_tos(uint8_true())
+
 
 
 
