@@ -188,6 +188,11 @@ input1 get-Input-ByteValue""")
     check_tos(1)
     check_sos(3)
 
+  test "over":
+    compile_and_run("1 2 3 over")
+    check_tos(2)
+    check_sos(3)
+
   test "dup":
     compile_and_run("10 dup")
     check_tos(10)
