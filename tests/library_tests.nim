@@ -117,6 +117,24 @@ suite "Engine Library Suite":
     nes.run(1)
     check_tos(uint8_false())
 
+  test "sprite: set_colour_palette":
+  # sprites are indexed from 0-3 (four sprites)
+    compile_and_run("""
+variable player Sprite
+3 player set_colour_palette
+player get_colour_palette
+""")
+    check_tos(3)
+
+  test "sprite: set_priority":
+  # priority can either be 0 or 1
+    compile_and_run("""
+variable player Sprite
+1 player set_priority
+player get_priority
+""")
+    print_memory(0x00, 0x10)
+    check_tos(1)
 
 
 
