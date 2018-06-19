@@ -204,6 +204,7 @@ luigi get-Sprite-y""")
     print_memory(0x00, 0x10)
     check_tos(5)
     check_sos(10)
+    echo compiler.parser.root.str
 
 
 

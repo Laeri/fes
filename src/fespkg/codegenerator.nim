@@ -211,7 +211,7 @@ proc generate_nes_str*(generator: CodeGenerator, asm_code: seq[ASMAction], root:
     node of LoadSpriteNode).map(proc (node: ASTNode): LoadSpriteNode =
       cast[LoadSpriteNode](node))
   for lds in load_sprite_nodes:
-    result &= ".incbin " & lds.path
+    result &= ".incbin " & lds.path & "\n  "
   return result
 
 

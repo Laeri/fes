@@ -137,10 +137,22 @@ proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
 
 # Pass 
 proc pass_setup_sprites*(pass_runner: PassRunner, node: ASTNode) =
-  # transform "load_sprite <name> <path" -> "load_sprite <name> <path> variable <name> Sprite"
-  discard
   # setup sprite with tile index
+  var load_sprite_nodes = (cast[SequenceNode](node)).sequence.filter((proc (node: ASTNode): bool =
+    node of LoadSpriteNode)).map((proc (node: ASTNode): LoadSpriteNode =
+      cast[LoadSpriteNode](node)))
 
+  var tile_index = 0
+  for new_sprite in load_sprite_nodes:
+    var setup_sprite = newSequenceNode()
+    var push_tile_index = PushNumberNode(number: tile_index)
+    var name_node = OtherNode(name: new_sprite.name)
+    var set_call = OtherNode(name: "set-Sprite-tile_number")
+    setup_sprite.add(push_tile_index)
+    setup_sprite.add(name_node)
+    setup_sprite.add(set_call)
+    (cast[SequenceNode](node)).sequence.insert(setup_sprite, 0)
+    tile_index += 1
 
 
 # Pass
@@ -457,13 +469,6 @@ proc find_label_index(code: seq[ASMAction], label_name: string): int =
         return i
   return -1
 
-
-
-proc addressing_mode(call: ASMCall): OP_MODE =
-  discard # check opcode and param to determine mode
-
-proc addressing_mode_to_param_len(mode: OP_MODE): int =
-  discard # map addressing mode to parameter length
 
 
 proc byte_distance_from_branch_to_addr(code: seq[ASMAction], branch_index: int): int =
