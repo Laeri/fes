@@ -36,5 +36,9 @@ task test, "Run specified test in tests/ folder":
   if paramCount() < 2:
     quit(QuitFailure)
   else:
+    var specific_tests = ""
+    if param_count() >= 3:
+      for i in 3..paramCount():
+        specific_tests &= " " & "\"" & paramStr(i) & "\""
     var src_name = paramStr(2)
-    exec "nim c -r " & silent & " -o=bin/" & src_name & " -r tests/" & src_name
+    exec "nim c -r " & silent & " -o=bin/" & src_name & " -r tests/" & src_name & specific_tests
