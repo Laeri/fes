@@ -25,33 +25,6 @@ proc time(asm_call: ASM_Call): int =
 
 
 
-proc generate_nes_str(asm_code: seq[ASMAction]): string =
-  var num_16k_prg_banks = 1
-  var num_8k_chr_banks = 0
-  var VRM_mirroring = 1
-  var nes_mapper = 0
-  
-  var program_start = "$8000"
-
-  result = "; INES header setup\n\n"
-  result &= "  .inesprg " & $num_16k_prg_banks & "\n"
-  result &= "  .ineschr " & $num_8k_chr_banks & "\n"
-  result &= "  .inesmir " & $VRM_mirroring & "\n"
-  result &= "  .inesmap " & $nes_mapper & "\n"
-  result &= "\n"
-  result &= "  .org " & program_start & "\n"
-  result &= "  .bank 0\n\n"
-  result &= aasm_to_string(asm_code)
-  result &= "\n"
-  result &= """
-  .bank 1
-  .org $FFFA
-  .dw 0
-  .dw Start
-  .dw 0
-  """
-  return result
-
 proc extract_file_name(file_name: string): string =
   var splitted = file_name.split(r"/")
   return splitted[splitted.len - 1]
@@ -59,9 +32,13 @@ proc extract_file_name(file_name: string): string =
 proc file_ending(file_name: string, new_ending: string): string =
   return file_name.replace("\\..*$", new_ending)
 
+proc base_folder(file_path: string): string =
+  return file_path.replace(file_path.extract_file_name, "")
+
+
 proc generate_and_store(compiler: FESCompiler, asm_code: seq[ASMAction], file_path: string) =
   var fs = newFileStream(file_path, fmWrite)
-  var nes_str = generate_nes_str(asm_code)
+  var nes_str = compiler.generator.generate_nes_str(asm_code, compiler.parser.root)
   #echo compiler.parser.root.str
   fs.write(nes_str)
   fs.close
@@ -74,7 +51,8 @@ proc run_in_emu(file_path: string) =
 
 proc generate_and_assemble(compiler: FESCompiler, asm_code: seq[ASMAction], file_path: string) =
   compiler.generate_and_store(asm_code, file_path)
-  let (outp, error_code) = execCmdEx "nesasm " & file_path
+  # first navigate to the folder where the asm file is in, then assemble it
+  let (outp, error_code) = execCmdEx("cd " & file_path.base_folder & "\n" & "nesasm " & file_path.extract_file_name)
   if  error_code != 0:
     compiler.report(errAssemblyError, $error_code, outp) 
   if outp.contains("error") or compiler.show_asm_log:

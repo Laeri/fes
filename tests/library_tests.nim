@@ -19,10 +19,6 @@ template compile_and_run(src: string, seconds: float = 0.2): untyped {.dirty.} =
   nes = newNES(tmp_nes_path)
   nes.run(seconds)
 
-template compile_and_run(src: string, mod_nes: NES, seconds: float = 0.2): untyped {.dirty.} =
-  compiler.compile_test_str(src)
-  nes = mod_nes
-  nes.run(seconds)
 
 template check_sos(check_val: uint8): untyped {.dirty.} =
   var sos: uint8 = nes.cpu.mem[second_of_stack_base_addr() + nes.cpu.x]
@@ -189,6 +185,24 @@ player get-Sprite-x
 player get-Sprite-y
 """)
     check_tos(11)
+    check_sos(10)
+
+  test "load sprite":
+    compile_and_run("""
+load_sprite mario "mario.chr"
+""")
+
+  test "load and use sprite":
+    compile_and_run("""
+load_sprite mario "mario.chr"
+load_sprite luigi "mario.chr"
+1 mario set_priority
+10 mario set-Sprite-x
+5 luigi set-Sprite-y
+mario get-Sprite-x
+luigi get-Sprite-y""")
+    print_memory(0x00, 0x10)
+    check_tos(5)
     check_sos(10)
 
 

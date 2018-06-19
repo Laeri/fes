@@ -39,7 +39,6 @@ type
     current_while*: int
     code*: seq[ASMAction]
     current_address*: int
-    variables*: TableRef[string, VariableNode]
 
   ASTNode* = ref object of RootObj
     file_name*: string
@@ -76,6 +75,9 @@ type
     name*: string
     var_node*: VariableNode
 
+  LoadSpriteNode* = ref object of ASTNode
+    name*: string
+    path*: string
 
   LoadConstantNode* = ref object of ASTNode
     name*: string

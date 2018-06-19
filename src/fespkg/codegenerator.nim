@@ -1,5 +1,5 @@
 import
-  types, utils, strutils, tables, ast, asm_t
+  types, utils, strutils, tables, ast, asm_t, sequtils
 
 
 proc push_asm_node(num: int): ASMNode = 
@@ -14,7 +14,6 @@ proc newCodeGenerator*(): CodeGenerator =
   result.current_ifelse = 0
   result.current_while = 0
   result.current_address = 0
-  result.variables = newTable[string, VariableNode]()
 
 
 
@@ -164,7 +163,6 @@ proc gen*(generator: CodeGenerator, node: ASTNode) =
   generator.emit(node)
 
 
-
 proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
   result = ""
   for asm_code in asm_actions:
@@ -175,6 +173,47 @@ proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
       var label = cast[ASMLabel](asm_code)
       result &= label.asm_str & "\n"
   return result
+
+
+proc generate_nes_str*(generator: CodeGenerator, asm_code: seq[ASMAction], root: ASTNode): string =
+  var num_16k_prg_banks = 1
+  var num_8k_chr_banks = 1
+  var VRM_mirroring = 1
+  var nes_mapper = 0
+  
+  var program_start = "$8000"
+
+  result = "; INES header setup\n\n"
+  result &= "  .inesprg " & $num_16k_prg_banks & "\n"
+  result &= "  .ineschr " & $num_8k_chr_banks & "\n"
+  result &= "  .inesmir " & $VRM_mirroring & "\n"
+  result &= "  .inesmap " & $nes_mapper & "\n"
+  result &= "\n"
+  result &= "  .org " & program_start & "\n"
+  result &= "  .bank 0\n\n"
+  result &= aasm_to_string(asm_code)
+  result &= "\n"
+  result &= """
+  .bank 1
+  .org $FFFA
+  .dw 0
+  .dw Start
+  .dw 0
+
+  .bank 2
+  .org $0000
+  """
+
+  # add .incbin sprite.chr
+  # for every LoadSpriteNode we do this
+  var nodes = (cast[SequenceNode](root)).sequence
+  var load_sprite_nodes = nodes.filter(proc (node: ASTNode): bool =
+    node of LoadSpriteNode).map(proc (node: ASTNode): LoadSpriteNode =
+      cast[LoadSpriteNode](node))
+  for lds in load_sprite_nodes:
+    result &= ".incbin " & lds.path
+  return result
+
 
 
 proc code_as_string*(generator: CodeGenerator): string =

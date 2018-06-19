@@ -104,17 +104,17 @@ proc count[T](t_seq: seq[T], t_el: T): int =
       inc(result)
 
 
-# Pass No.1
+# Pass
 proc pass_group_word_defs_last*(pass_runner: PassRunner, root: SequenceNode) = 
   var partition = root.sequence.partition(is_def)
   root.sequence = partition.rejected & partition.selected
 
-# Pass No.2
+# Pass
 proc pass_group_vars_first*(pass_runner: PassRunner, root: SequenceNode) =
   var partition = root.sequence.partition(is_var)
   root.sequence = partition.selected  & partition.rejected
 
-# Pass No.3
+# Pass
 proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   var asm_node = newASMNode()
   asm_node.add(ASMLabel(label_name: "Start"))
@@ -122,7 +122,7 @@ proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   asm_node.add(ASMCall(op: TAX)) # setup stack
   root.sequence.insert(asm_node, 0)
 
-# Pass No.4
+# Pass
 proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
   var defs = collect_defs(cast[SequenceNode](node))
   var names: seq[string] = @[]
@@ -134,7 +134,16 @@ proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
       if names.count(set_name) > 1:
         pass_runner.error_handler.handle(gen_error(node, errWordAlreadyDefined, set_name))
 
-# Pass No.5
+
+# Pass 
+proc pass_setup_sprites*(pass_runner: PassRunner, node: ASTNode) =
+  # transform "load_sprite <name> <path" -> "load_sprite <name> <path> variable <name> Sprite"
+  discard
+  # setup sprite with tile index
+
+
+
+# Pass
 proc pass_set_variable_loads*(pass_runner: PassRunner, node: ASTNode) = 
   var var_table = pass_runner.var_table
   var is_var = (proc (node: ASTNode): bool = 
@@ -150,7 +159,7 @@ proc pass_set_variable_loads*(pass_runner: PassRunner, node: ASTNode) =
     return load_node)
   node.replace_n(is_var, other_to_load)
 
-# Pass No.6
+# Pass
 proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
   var def_table = pass_runner.definitions
   var is_call = (proc (node: ASTNode): bool =
@@ -167,7 +176,7 @@ proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
   root.replace_n(is_call, other_to_call)
 
 
-# Pass No.7
+# Pass
 proc pass_set_struct_var_type*(pass_runner: PassRunner, root: SequenceNode) =
   var transform_var_struct = (proc (node: ASTNode) = 
     if node of SequenceNode:
@@ -196,6 +205,7 @@ proc pass_set_struct_var_type*(pass_runner: PassRunner, root: SequenceNode) =
           i += 1)
   transform_node(root, transform_var_struct)
 
+# Pass
 proc pass_set_constants*(pass_runner: PassRunner, root: SequenceNode) =
   var const_table = pass_runner.const_table
   var is_constant = (proc (node: ASTNode): bool = 
@@ -211,7 +221,7 @@ proc pass_set_constants*(pass_runner: PassRunner, root: SequenceNode) =
     return load_node)
   root.replace_n(is_constant, other_to_const)
 
-# Pass No.8
+# Pass
 proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
 # each variable node has an index already set in the parser by the order in which they are encountered
   var sorted_vars: seq[VariableNode] = @[]
@@ -240,7 +250,9 @@ proc second_stack_item_addr_str(): string =
   return "$0200,X"
 var base_addr_addr = "$FE"
 var base_addr_addr_high_byte = "$FF"
-# Pass No.9
+
+
+# Pass
 # syntax: <player_variable> get-Player-<member_name>
 proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
   # assumes base address is on the stack
@@ -285,7 +297,7 @@ proc pass_init_list_sizes*(pass_runner: PassRunner, root: SequenceNode) =
       asm_node.add(ASMCall(op: INX))
       root.sequence.insert(asm_node, 0) # insert after start label
 
-# Pass No.10
+# Pass
 # syntax: <variable> <player_variable> set-Player-<member_name>
 # assumes stack: (var player_var - player)
 # ! pushes the player base address pointer again to the stack
@@ -313,7 +325,7 @@ proc pass_gen_setters*(pass_runner: PassRunner, root: SequenceNode) =
   for struct in pass_runner.structs.values:
     pass_runner.add_struct_setters(root, struct)
 
-# Pass No.11
+# Pass
 proc pass_set_list_var_type*(pass_runner: PassRunner, root: SequenceNode) =
   var transform_var_list = (proc (node: ASTNode) = 
     if node of SequenceNode:
@@ -339,7 +351,7 @@ proc pass_set_list_var_type*(pass_runner: PassRunner, root: SequenceNode) =
   transform_node(root, transform_var_list)
 
 
-# Pass No.12
+# Pass
 proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
   # assumed it is called in this form: <var> <index> list-get
   # replaces everything with ... var_base item]
@@ -401,7 +413,7 @@ proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
 
   
 
-# Pass No.13
+# Pass
 proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   var end_node = newASMNode()
   end_node.add(ASMLabel(label_name: "End"))

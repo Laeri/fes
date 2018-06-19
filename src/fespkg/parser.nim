@@ -361,6 +361,13 @@ proc parse_struct(parser: Parser): StructNode =
   parser.report(result, errMissingStructEnding, result.name)
  
 
+proc parse_load_sprite(parser: Parser): LoadSpriteNode =
+  result = LoadSpriteNode()
+  parser.set_begin_info(result)
+  result.name = parser.scanner.next.str_val
+  result.path = parser.scanner.next.str_val
+  parser.set_end_info(result)
+
 proc parse_const(parser: Parser): ConstNode =
   result = newConstNode()
   parser.set_begin_info(result)
@@ -411,6 +418,19 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(ifelse_node)
     elif token.str_val == "#":
       parser.scanner.skip_to_next_line()
+    elif token.str_val == "load_sprite": # every sprite gets a corresponding Sprite struct variable "variable <name> Sprite" 
+      var load_sprite_node = parser.parse_load_sprite()
+      var var_node = VariableNode()
+      var_node.size = 1
+      var_node.var_index = parser.var_index
+      parser.var_index += 1
+      var_node.name = load_sprite_node.name
+      var other_node = OtherNode()
+      other_node.name = "Sprite"
+      parser.var_table[var_node.name] = var_node
+      root.add(load_sprite_node)
+      root.add(var_node)
+      root.add(other_node)
     elif token.str_val == "struct":
       var struct_node = parser.parse_struct()
       root.add(struct_node)
@@ -495,6 +515,7 @@ proc parse_string*(parser: Parser, src: string, name: string) =
   parser.scanner.read_string(src, name)
   var root = parser.parse_sequence
   parser.root = root
+  #echo root.str
 
 proc parse_string*(parser: Parser, src: string) =
   var t = "TEST_NAME"

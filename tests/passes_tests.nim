@@ -167,6 +167,12 @@ suite "Passes Suite":
     parser.parse_string(src)
     pass_runner.pass_check_no_OtherNodes(parser.root)
     check(handler.has_error_type(errNoWordDefForName) == true)
+
+  test "load_sprite should generate variable node":
+    src = "struct Sprite { x y } load_sprite mario path/to/mario.chr"
+    parser.parse_string(src)
+    pass_runner.pass_set_struct_var_type(parser.root)
+    echo parser.root.str
     
 
 

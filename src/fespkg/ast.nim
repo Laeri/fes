@@ -166,6 +166,11 @@ method str*(node: ConstNode, prefix = ""): string =
   result &= prefix & "  name: " & node.name & "\n"
   result &= prefix & "  value: " & node.value
 
+method str*(node: LoadSpriteNode, prefix = ""): string =
+  result = prefix & "LoadSpriteNode:\n"
+  result &= prefix & "  name: " & node.name & "\n"
+  result &= prefix & "  path: " & node.path & "\n"
+
 method transform_node*(node: ASTNode, transform: proc(node: ASTNode)) {.base.} =
   transform(node)
 

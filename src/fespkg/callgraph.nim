@@ -171,8 +171,8 @@ proc inline*(root: SequenceNode, call_graph: CallGraph) =
 
   for def_node in call_graph.nodes:
     size[def_node.word_name] = def_node.size
-    echo "name: " & def_node.word_name
-    echo "size: " & $def_node.size 
+    #echo "name: " & def_node.word_name
+    #echo "size: " & $def_node.size 
   
 
 
