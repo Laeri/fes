@@ -74,6 +74,7 @@ tya
 ]
 ;
 
+
  #[ / modified to adc the divisor at the end if the result fell below 0 ]#
 : mod
 [
@@ -113,10 +114,23 @@ inx
 ]
 ;
 
+: tuck
+[
+sta $FE ; temp storage
+lda $0200,X
+dex
+sta $0200,X
+inx
+lda $FE
+sta $0200,X
+dex
+]
+;
+
 : swap
 [
-ldy $0200,X ; test
-sta $0200,X ; t2
+ldy $0200,X
+sta $0200,X
 tya
 ]
 ;

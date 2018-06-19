@@ -26,6 +26,13 @@ template check_sos(check_val: uint8): untyped {.dirty.} =
 template print_tos(): untyped {.dirty.} =
   nes.print_tos()
 
+template check_stack(stack_index: int, check_val: uint8): untyped {.dirty.} =
+  # stack index for tos = 0, for sos = -1, -2,-3....
+  if stack_index == 0:
+    check_tos(check_val)
+  var mem_index: uint16 = cast[uint16](0x0200 + cast[int](nes.cpu.x) - stack_index - 1) # tos is in A
+  check(nes.cpu.mem[mem_index] == check_val)
+
 
 
 suite "Emulation Suite":
@@ -171,12 +178,18 @@ input1 get-Input-ByteValue""")
     compile_and_run("1 2 swap")
     check_tos(1)
     check_sos(2)
-    echo compiler.parser.root.str
 
   test "nip":
     compile_and_run("1 2 3 nip")
     check_sos(1)
     check_tos(3)
+
+  test "tuck":
+    compile_and_run("1 2 3 tuck")
+    check_tos(3)
+    check_sos(2)
+    check_stack(-2, 3)
+    
 
   test "drop":
     compile_and_run("1 2 3 4 5 drop")
