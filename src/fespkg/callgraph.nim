@@ -88,6 +88,8 @@ proc remove_unused_defs*(root: SequenceNode, call_graph: CallGraph) =
       if used_defs.contains(def_node):
         return false
       else:
+        if def_node.word_name == "on_nmi":
+          return false # on_nmi is not called from the program but from the nes! (and needs rti instead of rts)
         return true
     return false)
 

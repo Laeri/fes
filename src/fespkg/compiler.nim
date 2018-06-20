@@ -38,7 +38,8 @@ proc base_folder(file_path: string): string =
 
 proc generate_and_store(compiler: FESCompiler, asm_code: seq[ASMAction], file_path: string) =
   var fs = newFileStream(file_path, fmWrite)
-  var nes_str = compiler.generator.generate_nes_str(asm_code, compiler.parser.root)
+  var on_nmi_defined = compiler.parser.definitions.contains("on_nmi")
+  var nes_str = compiler.generator.generate_nes_str(asm_code, compiler.parser.root, on_nmi_defined)
   #echo compiler.parser.root.str
   fs.write(nes_str)
   fs.close

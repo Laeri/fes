@@ -206,6 +206,16 @@ luigi get-Sprite-y""")
     check_sos(10)
     echo compiler.parser.root.str
 
+  test "tmp":
+    compile_and_run("""
+load_sprite mario "mario.chr"
+1 mario set_priority
+10 mario set-Sprite-x
+11 mario set-Sprite-y
+2 mario set-Sprite-tile_number""")
+    print_memory(0x00, 0x20)
+    echo compiler.parser.root.str
+
 
 
 

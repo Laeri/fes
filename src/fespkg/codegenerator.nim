@@ -56,7 +56,10 @@ method emit*(generator: CodeGenerator, node: CallWordNode) =
 method emit*(generator: CodeGenerator, node: DefineWordNode) =
   generator.code.add(ASMLabel(label_name: (translate_to_label_name(node.word_name))))
   generator.emit(node.definition)
-  generator.code.add(ASMCall(op: RTS))
+  if node.word_name == "on_nmi":
+    generator.code.add(ASMCall(op: RTI)) # on_nmi is an interrupt hook, so neads return from interrupt (RTI)
+  else:
+    generator.code.add(ASMCall(op: RTS))
 
 method emit*(generator: CodeGenerator, node: PushNumberNode) =
   generator.emit(push_asm_node(node.number))
@@ -175,11 +178,15 @@ proc aasm_to_string*(asm_actions: seq[ASMAction]): string =
   return result
 
 
-proc generate_nes_str*(generator: CodeGenerator, asm_code: seq[ASMAction], root: ASTNode): string =
+proc generate_nes_str*(generator: CodeGenerator, asm_code: seq[ASMAction], root: ASTNode, on_nmi_defined: bool): string =
   var num_16k_prg_banks = 1
   var num_8k_chr_banks = 1
   var VRM_mirroring = 1
   var nes_mapper = 0
+  
+  var on_nmi = "0"
+  if on_nmi_defined:
+    on_nmi = "on_nmi"
   
   var program_start = "$8000"
 
@@ -196,7 +203,7 @@ proc generate_nes_str*(generator: CodeGenerator, asm_code: seq[ASMAction], root:
   result &= """
   .bank 1
   .org $FFFA
-  .dw 0
+  .dw """ & on_nmi & "\n" & """
   .dw Start
   .dw 0
 

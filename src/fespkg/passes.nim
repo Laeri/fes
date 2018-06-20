@@ -114,6 +114,7 @@ proc pass_group_vars_first*(pass_runner: PassRunner, root: SequenceNode) =
   var partition = root.sequence.partition(is_var)
   root.sequence = partition.selected  & partition.rejected
 
+
 # Pass
 proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   var asm_node = newASMNode()
@@ -236,6 +237,7 @@ proc pass_set_constants*(pass_runner: PassRunner, root: SequenceNode) =
 # Pass
 proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
 # each variable node has an index already set in the parser by the order in which they are encountered
+  var struct_addr = 0x0300 # temporary address for structs
   var sorted_vars: seq[VariableNode] = @[]
   for var_node in pass_runner.var_table.values:
     sorted_vars.add(var_node)
@@ -244,7 +246,9 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
   for var_node in sorted_vars:
     if var_node.var_type == Struct:
       var struct_node = cast[StructNode](var_node.type_node)
+      # var_node.address = struct_addr # temporary struct address
       var_node.address = pass_runner.var_index
+      struct_addr += var_node.size
       var_node.size = struct_node.size
       pass_runner.var_index += var_node.size
     elif var_node.var_type == Number:
