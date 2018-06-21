@@ -26,7 +26,7 @@ template check_sos(check_val: uint8): untyped {.dirty.} =
 template print_tos(): untyped {.dirty.} =
   nes.print_tos()
 
-template check_stack(stack_index: int, check_val: uint8): untyped {.dirty.} =
+template check_stack(stack_index: int, check_val: uint8): untyped =
   # stack index for tos = 0, for sos = -1, -2,-3....
   if stack_index == 0:
     check_tos(check_val)
@@ -129,6 +129,15 @@ player get-Player-x
 """)
     check_tos(3)
 
+  test "struct after var":
+    compile_and_run("""
+variable test_var
+struct TestPlayer { x y }
+variable player TestPlayer
+10 player set-TestPlayer-x
+player get-TestPlayer-x""")
+    check_tos(10)
+
   test "struct settting, getting multiple times":
     compile_and_run("""
 struct Input { ByteValue }
@@ -201,6 +210,16 @@ input1 get-Input-ByteValue""")
     check_tos(1)
     check_sos(3)
 
+  test "rot with more numbers on stack":
+    compile_and_run(" 1 3 4 5 rot ")
+    check_tos(3)
+    check_sos(5)
+
+  test "rot twice":
+    compile_and_run("1 2 3 rot rot")
+    check_tos(2)
+    check_sos(1)
+
   test "over":
     compile_and_run("1 2 3 over")
     check_tos(2)
@@ -210,6 +229,38 @@ input1 get-Input-ByteValue""")
     compile_and_run("10 dup")
     check_tos(10)
     check_sos(10)
+
+  test "2dup":
+    compile_and_run("1 2 3 2dup")
+    check_tos(3)
+    check_sos(2)
+    print_memory(0x0200, 0x02FF)
+
+  test "2swap":
+    compile_and_run("1 2 3 4 2swap")
+    check_tos(2)
+    check_sos(1)
+
+  test "2over":
+    compile_and_run("1 2 3 4 2over")
+    check_tos(2)
+    check_sos(1)
+
+  test "inv_rot":
+    compile_and_run("1 2 3 inv_rot")
+    check_tos(2)
+    check_sos(1)
+
+  test "pull_fourth_up":
+    compile_and_run("1 2 3 4 pull_fourth_up")
+    check_tos(1)
+    check_sos(4)
+
+  test "pull_fifth_up":
+    compile_and_run("1 2 3 4 5 copy_fifth_up")
+    check_tos(1)
+    check_sos(5)
+
 
   test "@: load variable content":
     compile_and_run("variable player 3 player ! player @")

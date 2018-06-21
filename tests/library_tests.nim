@@ -114,6 +114,7 @@ variable player Sprite
 player get_colour_palette
 """)
     check_tos(3)
+    print_memory(0x00, 0x20)
 
   test "sprite: set_priority":
   # priority can either be 0 or 1
@@ -175,7 +176,7 @@ player get-Sprite-x
 """)
     check_tos(11)
 
-  test "sprite: move x-Direction":
+  test "sprite: move xy-Direction":
     compile_and_run("""
 variable player Sprite
 0 player set-Sprite-x
@@ -204,7 +205,6 @@ luigi get-Sprite-y""")
     print_memory(0x00, 0x10)
     check_tos(5)
     check_sos(10)
-    echo compiler.parser.root.str
 
   test "tmp":
     compile_and_run("""
@@ -214,7 +214,6 @@ load_sprite mario "mario.chr"
 11 mario set-Sprite-y
 2 mario set-Sprite-tile_number""")
     print_memory(0x00, 0x20)
-    echo compiler.parser.root.str
 
 
 
