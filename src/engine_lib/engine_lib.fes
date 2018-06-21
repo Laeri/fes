@@ -500,14 +500,14 @@ flip_vert_end:
 
 #[ ( bool sprite_ptr - ) ]#
 : set_flip_horizontally
-dup get-Sprite-attributes
-rot
+2dup get-Sprite-attributes
+pull_fourth_up
 [
  and #%01000000
  ora $0200,X ; (sprite_ptr attribute_val bool)
  inx ; (sprite_ptr new_val)
 ]
-swap set-Sprite-attributes
+inv_rot set-Sprite-attributes
 ;
 
 #[ ( sprite_ptr - flip_bool ) ]#
@@ -533,10 +533,10 @@ set_priority:
   0 - in front of background
   1 - behind background
  ]#
-#[ new_val sprite_ptr old_val ]#
+#[ new_val sprite_ptr_low sprite_ptr_high old_val ]#
 : set_priority
-  dup get-Sprite-attributes
-  rot
+  2dup get-Sprite-attributes
+  pull_fourth_up
   1 =
   if
     [
@@ -547,7 +547,7 @@ set_priority:
       and #%11011111
     ]
   then
-  swap set-Sprite-attributes
+  inv_rot set-Sprite-attributes
 ;
 
 : get_priority
@@ -564,49 +564,51 @@ and #$01
 
 
 #[ ( col_index sprite_ptr - ) ]#
-#[ new_val sprite_ptr old_val  ]#
+#[ new_val sprite_ptr_low sprite_ptr_high old_val  ]#
 : set_colour_palette
-dup get-Sprite-attributes
-[
-and #%11111100
-]
-rot
-[
-ora $0200,X
-inx
-]
-swap set-Sprite-attributes
+  2dup get-Sprite-attributes
+  [
+    and #%11111100
+  ]
+  pull_fourth_up
+  [
+  ora $0200,X
+    inx
+  ]
+  inv_rot set-Sprite-attributes
 ;
 
 : get_colour_palette
-get-Sprite-attributes
-[
-and #$03
-]
+  get-Sprite-attributes
+  [
+    and #$03
+  ]
 ;
 
 
-#[ (dx sprite_ptr - ) ]#
+#[ (dx sprite_ptr_low sprite_ptr_high - ) ]#
 : move_sprite_by_x
-dup get-Sprite-x
-rot
-+
-swap set-Sprite-x
+2dup get-Sprite-x
+pull_fourth_up 
++ 
+inv_rot set-Sprite-x
 ;
 
 #[ dy sprite_ptr - ) ]#
 : move_sprite_by_y
-dup get-Sprite-y
-rot
+2dup get-Sprite-y
+pull_fourth_up
 +
-swap set-Sprite-y
+inv_rot set-Sprite-y
 ;
 
-#[ dx dy sprite_ptr - ) ]#
+#[ dx dy sprite_ptr_low sprite_ptr_high - ) ]#
 : move_sprite_by_xy
-swap
-over
+2dup
+copy_fifth_up
+rot rot
 move_sprite_by_y
+rot drop
 move_sprite_by_x
 ;
 
