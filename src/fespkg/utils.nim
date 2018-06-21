@@ -36,6 +36,14 @@ proc num_to_hex*(number: int): string =
 proc num_to_im_hex*(number: int): string =
   return "#" & num_to_hex(number)
 
+
+proc num_to_im_hex_lower_byte*(number: int): string =
+  # $ABCD
+  result = "#$" & padded_addr_str(num_to_hex(number))[3..4]
+
+proc num_to_im_hex_higher_byte*(number: int): string =
+  result = "#$" & padded_addr_str(num_to_hex(number))[1..2]
+
 proc index_to_addr_str*(index: int): string =
   return num_to_hex(index).padded_addr_str
 

@@ -286,9 +286,11 @@ proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node
     # temporarily use location $FE,
     # indirect addressing uses 16bit addresses! Therefore $FF should contain 0, 
     # first store tos (A)
+    # (addr_low_byte addr_high_byte - val)
     asm_node.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect indexing
-    asm_node.add(ASMCall(op: LDA, param: "#$00")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
+    asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # 
     asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+    asm_node.add(ASMCall(op: INX))
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset
     asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # access base + member_offset
     get_define.word_name = get_prefix & member
@@ -325,8 +327,9 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
     var asm_node = newASMNode()
     # same magic as for gen_getters
     asm_node.add(ASMCall(op: STA, param: base_addr_addr))
-    asm_node.add(ASMCall(op: LDA, param: "#$00")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
+    asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
     asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+    asm_node.add(ASMCall(op: INX))
     asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str()))
     asm_node.add(ASMCall(op: INX))
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))

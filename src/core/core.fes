@@ -95,10 +95,66 @@ adc $FA
 ;
 
 : dup
-[
-dex
-sta $0200,X
-]
+  [
+    dex
+    sta $0200,X
+  ]
+;
+
+#[ (w0 w1 - w0 w1 w0 w1) ]#
+: 2dup
+  [
+    dex
+    sta $0200,X
+    inx
+    lda $0200,X
+    dex
+    dex
+    sta $0200,X
+    inx
+    lda $0200,X
+    dex
+  ]
+;
+
+#[ (v0 v1 w0 w1 - w0 w1 v0 v1 ) ]#
+: 2swap
+  >r
+  inv_rot
+  r>
+  inv_rot
+;
+
+#[ (a b c -- c a b) ]#
+: inv_rot
+  rot
+  rot
+;
+
+
+#[ data stack to return stack ]#
+: >r
+  [
+    pha
+  ]
+  drop
+;
+
+#[ return stack to data stack ]#
+: r>
+  [
+    dex
+    sta $0200,X
+    plp
+  ]
+;
+
+#[ (a b1 b2 b3 - b1 b2 b3 a) ]#
+: pull_fourth_up
+  2swap
+  swap
+  2swap
+  rot
 ;
 
 : drop
@@ -186,29 +242,32 @@ inx
 ;
 
 
-#[ x1 a-addr -- ]#
+#[ x1 addr_low_byte addr_high_byte -- ]#
 : !
-[
-sta $FE
-lda $0200,X
-stx $FD
-ldx $FE
-sta $00,X
-ldx $FE
-inx
-lda $0200,X
-inx
+  [
+    sta $FF ; store high byte
+    lda $0200,X
+    sta $FE ; store low byte
+    inx
+    lda $0200,X ; value to store
+    ldy #$00 ; no offset
+    sta [$FE],Y
+    inx
+    lda $0200,X ; repopulate tos
+    inx
 ]
 ;
 
+#[ (addr_low_byte addr_high_byte -- val )]#
 #[ variables begin at $00, so address can be used as offset ]#
 : @
-[
-stx $FE ; temporarily store X
-tax
-lda $00,X
-ldx $FE ; reset X
-]
+  [
+    sta $FF ; store high byte
+    lda $0200,X
+    sta $FE ; store low byte
+    ldy #$00 ; no offset
+    lda [$FE],Y
+  ]
 ;
 
 : +

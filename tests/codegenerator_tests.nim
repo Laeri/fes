@@ -30,6 +30,7 @@ suite "CodeGenerator Suite":
     check(generator.code[1] == newASMCall(STA, "$0200,X"))
     check(generator.code[2] == newASMCall(LDA, "#$01"))
 
+#[
   test "loading a variable should push its address onto the stack":
     var load_node = LoadVariableNode()
     var variable_node = VariableNode()
@@ -41,7 +42,7 @@ suite "CodeGenerator Suite":
     check(generator.code[0] == newASMCall(DEX))
     check(generator.code[1] == newASMCall(STA, "$0200,X"))
     check(generator.code[2] == newASMCall(LDA, "#$05"))
-
+]#
 #[
   test "sequence of push numbers and call words":
     src = ": name 1; : name2 ; 1 name1 2 name2"

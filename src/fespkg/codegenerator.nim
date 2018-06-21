@@ -152,9 +152,13 @@ var base_address = "$0200"
 
 
 method emit*(generator: CodeGenerator, node: LoadVariableNode) = 
+  echo node.name & " addr: " & $node.var_node.address
   generator.code.add(ASMCall(op: DEX))
   generator.code.add(ASMCall(op: STA, param: base_address & ",X"))
-  generator.code.add(ASMCall(op: LDA, param: num_to_im_hex(node.var_node.address)))
+  generator.code.add(ASMCall(op: LDA, param: num_to_im_hex_lower_byte(node.var_node.address)))
+  generator.code.add(ASMCall(op: DEX))
+  generator.code.add(ASMCall(op: STA, param: base_address & ",X"))
+  generator.code.add(ASMCall(op: LDA, param: num_to_im_hex_higher_byte(node.var_node.address)))
 
 method emit*(generator: CodeGenerator, node: LoadConstantNode) =
   var val_str = node.const_node.value

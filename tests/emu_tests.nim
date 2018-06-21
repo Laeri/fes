@@ -57,8 +57,8 @@ suite "Emulation Suite":
     compile_and_run("variable name 1 name !")
     nes = newNES(tmp_nes_path)
     nes.run(1)
-    #print_memory(0, 15)
-    check_memory(0, 1)
+    print_memory(0, 15)
+    #check_memory(0, 1)
 
   test "three variables should be stored at location $00 and $01, $02":
     compile_and_run("""
@@ -212,8 +212,9 @@ input1 get-Input-ByteValue""")
     check_sos(10)
 
   test "@: load variable content":
-    compile_and_run("variable player 3 player ! player @ ")
+    compile_and_run("variable player 3 player ! player @")
     check_tos(3)
+    print_tos()
 
   test "true":
     compile_and_run("true")

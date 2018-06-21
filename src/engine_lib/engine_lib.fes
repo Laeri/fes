@@ -469,16 +469,16 @@ x
 
 ]#
 
-#[ ( bool sprite_ptr - ) ]#
+#[ ( bool sprite_ptr_low sprite_ptr_high - ) ]#
 : set_flip_vertically
-dup get-Sprite-attributes
-rot
+  2dup get-Sprite-attributes
+  pull_fourth_up
 [
  and #%10000000
- ora $0200,X ; (sprite_ptr attribute_val bool)
- inx ; (sprite_ptr new_val)
+ ora $0200,X ; (sprite_ptr_low sprite_ptr_high attribute_val bool)
+ inx ; (sprite_ptr_low sprite_ptr_high new_val)
 ]
-swap set-Sprite-attributes
+inv_rot set-Sprite-attributes
 ;
 
 #[ ( sprite_ptr - ) ]#
