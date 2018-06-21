@@ -103,25 +103,31 @@ adc $FA
 
 #[ (w0 w1 - w0 w1 w0 w1) ]#
 : 2dup
+  dup
+  [
+    pha
+  ]
+  drop
+  over
   [
     dex
     sta $0200,X
-    inx
-    lda $0200,X
-    dex
-    dex
-    sta $0200,X
-    inx
-    lda $0200,X
-    dex
+    pla
   ]
 ;
 
 #[ (v0 v1 w0 w1 - w0 w1 v0 v1 ) ]#
 : 2swap
-  >r
+  [
+    pha
+  ]
+  drop
   inv_rot
-  r>
+  [
+    dex
+    sta $0200,X
+    pla
+  ]
   inv_rot
 ;
 
@@ -132,6 +138,7 @@ adc $FA
 ;
 
 
+#[
 #[ data stack to return stack ]#
 : >r
   [
@@ -145,9 +152,10 @@ adc $FA
   [
     dex
     sta $0200,X
-    plp
+    pla
   ]
 ;
+]#
 
 #[ (a b1 b2 b3 - b1 b2 b3 a) ]#
 : pull_fourth_up
@@ -155,6 +163,23 @@ adc $FA
   swap
   2swap
   rot
+;
+
+#[ (a b c d e- b c d e a) ]#
+: copy_fifth_up
+  [
+    dex
+    sta $0200,X
+    inx
+    inx
+    inx
+    inx
+    lda $0200,X
+    dex
+    dex
+    dex
+    dex
+  ]
 ;
 
 : drop
@@ -214,6 +239,30 @@ inx
 lda $0200,X
 dex
 ]
+;
+
+#[ (a1 a2 b1 b2 - a1 a2 b1 b2 a1 a2 ) ]#
+: 2over
+  [
+    dex
+    sta $0200,X
+    inx
+    inx
+    inx
+    lda $0200,X
+    dex
+    dex
+    dex
+    dex
+    sta $0200,X
+    inx
+    inx
+    inx
+    lda $0200,X
+    dex
+    dex
+    dex
+  ]
 ;
 
 
