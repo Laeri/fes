@@ -187,6 +187,11 @@ proc translate_name(name: string): string =
   if nes_transl_table.contains(name):
     result = nes_transl_table[name]
   result = result.replace("?", "is")
+  
+  var digits_to_str = @["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+  if result[0] in Digits:
+    result = digits_to_str[($result[0]).parseInt] & "_" & result[1..(result.len - 1)]
+
 
 proc is_empty(node: ASMNode): bool = 
   return node.asm_calls.len == 0
