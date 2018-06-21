@@ -246,11 +246,11 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
   for var_node in sorted_vars:
     if var_node.var_type == Struct:
       var struct_node = cast[StructNode](var_node.type_node)
-      # var_node.address = struct_addr # temporary struct address
-      var_node.address = pass_runner.var_index
-      struct_addr += var_node.size
+      var_node.address = struct_addr # temporary struct address
+      #var_node.address = pass_runner.var_index
+      struct_addr += struct_node.size
       var_node.size = struct_node.size
-      pass_runner.var_index += var_node.size
+      #pass_runner.var_index += var_node.size
     elif var_node.var_type == Number:
       var_node.address = pass_runner.var_index
       pass_runner.var_index += 1
@@ -287,9 +287,9 @@ proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node
     # indirect addressing uses 16bit addresses! Therefore $FF should contain 0, 
     # first store tos (A)
     # (addr_low_byte addr_high_byte - val)
-    asm_node.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect indexing
+    asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte)) # store base address for indirect indexing
     asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # 
-    asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+    asm_node.add(ASMCall(op: STA, param: base_addr_addr))
     asm_node.add(ASMCall(op: INX))
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset
     asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # access base + member_offset
@@ -326,9 +326,9 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
     var set_define = newDefineWordNode()
     var asm_node = newASMNode()
     # same magic as for gen_getters
-    asm_node.add(ASMCall(op: STA, param: base_addr_addr))
-    asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
     asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+    asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
+    asm_node.add(ASMCall(op: STA, param: base_addr_addr))
     asm_node.add(ASMCall(op: INX))
     asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str()))
     asm_node.add(ASMCall(op: INX))

@@ -42,14 +42,12 @@ suite "Passes Suite":
     src = ": name name2 ; : name2 ;"
     parser.parse_string(src)
     pass_runner.pass_set_word_calls(parser.root)
-    echo parser.root.str
     var nodes = parser.root.sequence
     check(nodes.len == 2)
     check(nodes[0] of DefineWordNode == true)
     check(nodes[1] of DefineWordNode == true)
     var def = cast[DefineWordNode](nodes[0]).definition
     check(def[0] of CallWordNode == true)
-    echo def[0].str
     var call = cast[CallWordNode](def[0])
     check(call.word_name == "name2")
 
@@ -110,8 +108,8 @@ suite "Passes Suite":
     check(seq_node[2] of VariableNode)
     var normal_var = cast[VariableNode](seq_node[2])
     var struct_var = cast[VariableNode](seq_node[1])
-    check(normal_var.address == 3)
-    check(struct_var.address == 0)
+    check(normal_var.address == 0)
+    check(struct_var.address == 0x0300)
 
   test "struct getter test":
     src = "struct Player { x y }"
@@ -172,7 +170,6 @@ suite "Passes Suite":
     src = "struct Sprite { x y } load_sprite mario path/to/mario.chr"
     parser.parse_string(src)
     pass_runner.pass_set_struct_var_type(parser.root)
-    echo parser.root.str
     
 
 

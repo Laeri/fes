@@ -98,8 +98,7 @@ struct Coord { x y }
 variable coords Coord
 3 coords set-Coord-x
 """)
-    print_memory(0, 15)
-    check_memory(0, 3)
+    check_memory(0x0300, 3)
 
   test "struct setter test of x,y":
     compile_and_run("""
@@ -108,8 +107,9 @@ variable player Player
 3 player set-Player-y
 4 player set-Player-x
 """)
-    check_memory(0x01, 3)
-    check_memory(0x00, 4)
+    print_memory(0x0300, 0x0310)
+    check_memory(0x0301, 3)
+    check_memory(0x0300, 4)
 
   test "struct getter test of y":
     compile_and_run("""
@@ -151,16 +151,17 @@ input1 get-Input-ByteValue""")
   test "several structs":
     compile_and_run("""
 struct Coords { x y }
-struct Input { ByteValue}
+struct Input { ByteValue }
 variable coords1 Coords
-variable input1 Input
+variable input_t Input
 variable coords2 Coords
-variable input2 Input
-128 input1 set-Input-ByteValue
+variable input_t2 Input
+128 input_t set-Input-ByteValue
 5 coords1 set-Coords-x
 10 coords1 set-Coords-y
-125 input2 set-Input-ByteValue
-input1 get-Input-ByteValue""")
+125 input_t2 set-Input-ByteValue
+input_t get-Input-ByteValue""")
+    print_memory(0x0300, 0x0310)
     check_tos(128)
 
   test "struct accessing with overwritten memory":
