@@ -5,12 +5,6 @@
 tos is accumulator
  ]#
 
-const BASE_ADDR "$0200"
-const TMP_0 "$FC"
-const TMP_1 "$FD"
-const TMP_2 "$FE"
-const TMP_3 "$FF"
-
 
 : true
 [

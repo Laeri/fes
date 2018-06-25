@@ -8,6 +8,15 @@ proc push_asm_node(num: int): ASMNode =
   result.add(ASMCall(op: STA, param: "$0200,X"))
   result.add(ASMCall(op: LDA, param: num_to_im_hex(num)))
 
+proc push_addr_asm_node(num: int): ASMNode =
+  result = newASMNode()
+  result.add(ASMCall(op: DEX))
+  result.add(ASMCall(op: STA, param: "$0200,X"))
+  result.add(ASMCall(op: LDA, param: num_to_im_hex_lower_byte(num)))
+  result.add(ASMCall(op: DEX))
+  result.add(ASMCall(op: STA, param: "$0200,X"))
+  result.add(ASMCall(op: LDA, param: num_to_im_hex_higher_byte(num)))
+
 proc newCodeGenerator*(): CodeGenerator =
   result = CodeGenerator()
   result.code = @[]
@@ -163,7 +172,7 @@ method emit*(generator: CodeGenerator, node: LoadVariableNode) =
 method emit*(generator: CodeGenerator, node: LoadConstantNode) =
   var val_str = node.const_node.value
   var val = val_str.parseInt
-  generator.emit(push_asm_node(val))
+  generator.emit(push_addr_asm_node(val)) # we should need to distinguish between addresses and simple numbers in constants!
   
 
 proc gen*(generator: CodeGenerator, node: ASTNode) =

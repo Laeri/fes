@@ -246,11 +246,13 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
   for var_node in sorted_vars:
     if var_node.var_type == Struct:
       var struct_node = cast[StructNode](var_node.type_node)
-      var_node.address = struct_addr # temporary struct address
-      #var_node.address = pass_runner.var_index
-      struct_addr += struct_node.size
+      if struct_node.name == "Sprite": # put sprites on 0x0300, not on zero page
+        var_node.address = struct_addr
+        struct_addr += struct_node.size
+      else:
+        var_node.address = pass_runner.var_index # temporary struct address
+        pass_runner.var_index += struct_node.size
       var_node.size = struct_node.size
-      #pass_runner.var_index += var_node.size
     elif var_node.var_type == Number:
       var_node.address = pass_runner.var_index
       pass_runner.var_index += 1
@@ -260,6 +262,9 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
       pass_runner.var_index += var_node.size + 1 # one more because size takes one field at the front
     else:
       echo "implement new variable and set its address"
+
+  for var_node in pass_runner.var_table.values:
+    echo "variable: " & var_node.name & " addr: " & $var_node.address
 
 
 proc second_stack_item_addr_str(): string = 
@@ -330,11 +335,11 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
     asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
     asm_node.add(ASMCall(op: STA, param: base_addr_addr))
     asm_node.add(ASMCall(op: INX))
-    asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str()))
+    asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
     asm_node.add(ASMCall(op: INX))
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))
     asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
-    asm_node.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # drop value from the stack after storing in struct member
+    asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # drop value from the stack after storing in struct member
     asm_node.add(ASMCall(op: INX))
     set_define.word_name = set_prefix & member
     set_define.definition.add(asm_node)

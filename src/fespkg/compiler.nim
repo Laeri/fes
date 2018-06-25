@@ -40,7 +40,6 @@ proc generate_and_store(compiler: FESCompiler, asm_code: seq[ASMAction], file_pa
   var fs = newFileStream(file_path, fmWrite)
   var on_nmi_defined = compiler.parser.definitions.contains("on_nmi")
   var nes_str = compiler.generator.generate_nes_str(asm_code, compiler.parser.root, on_nmi_defined)
-  #echo compiler.parser.root.str
   fs.write(nes_str)
   fs.close
   compiler.report(reportGeneratedASMFile, file_path)
@@ -118,7 +117,6 @@ proc compile*(compiler: FESCompiler) =
 
   compiler.do_passes()
   compiler.do_optimizations()
-  #echo compiler.parser.root.str
   compiler.generator.gen(compiler.parser.root)
   compiler.do_asm_passes(compiler.generator.code)
   var asm_calls = compiler.generator.code

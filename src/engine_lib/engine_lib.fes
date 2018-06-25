@@ -18,79 +18,79 @@ button:	 A     B  Select Start  Up   Down  Left  Right
 ]#
 
 : read_inputs
-read_inputs1
-read_inputs2
+  read_inputs1
+  read_inputs2
 ;
 
 #[ input_pointer - bool ]#
 : a_pressed?
-get-Input-ByteValue 0x80 bit_set?
+  get-Input-ByteValue 0x80 bit_set?
 ;
 
 : b_pressed?
-get-Input-ByteValue 0x40 bit_set?
+  get-Input-ByteValue 0x40 bit_set?
 ;
 
 : select_pressed?
-get-Input-ByteValue 0x20 bit_set?
+  get-Input-ByteValue 0x20 bit_set?
 ;
 
 : start_pressed?
-get-Input-ByteValue 0x10 bit_set?
+  get-Input-ByteValue 0x10 bit_set?
 ;
 
 : up_pressed?
-get-Input-ByteValue 0x08 bit_set?
+  get-Input-ByteValue 0x08 bit_set?
 ;
 
 : down_pressed?
-get-Input-ByteValue 0x04 bit_set?
+  get-Input-ByteValue 0x04 bit_set?
 ;
 
 : left_pressed?
-get-Input-ByteValue 0x02 bit_set?
+  get-Input-ByteValue 0x02 bit_set?
 ;
 
 : right_pressed?
-get-Input-ByteValue 0x01 bit_set?
+  get-Input-ByteValue 0x01 bit_set?
 ;
 
 : read_inputs1
-[
-dex
-sta $0200,X ; first store a
-lda #$01 ; set strobe bit to begin reading the register
-sta $4016
-sta $FE ; use $FE for temporary storage
-lsr a ; A := 0
-sta $4016 ; clear  strobe bit to stop reloading and begin to read all 8 buttons
-read_inputs_loop:
-lda $4016
-lsr a
-rol $FE
-bcc read_inputs_loop
-lda $FE ; put button values into tos
-]
-input1 set-Input-ByteValue
+  [
+    dex
+    sta $0200,X ; first store a
+    lda #$01 ; set strobe bit to begin reading the register
+    sta $4016
+    sta $FE ; use $FE for temporary storage
+    lsr a ; A := 0
+    sta $4016 ; clear  strobe bit to stop reloading and begin to read all 8 buttons
+    read_inputs_loop:
+    lda $4016
+    lsr a
+    rol $FE
+    bcc read_inputs_loop
+    lda $FE ; put button values into tos
+  ]
+  input1 set-Input-ByteValue
 ;
 
 : read_inputs2
-[
-dex
-sta $0200,X ; first store a
-lda #$01 ; set strobe bit to begin reading the register
-sta $4017
-sta $FE ; use $FE for temporary storage
-lsr a ; A := 0
-sta $4017 ; clear  strobe bit to stop reloading and begin to read all 8 buttons
-read_inputs_loop2:
-lda $4017
-lsr a
-rol $FE
-bcc read_inputs_loop2
-lda $FE ; put button values into tos
-]
-input2 set-Input-ByteValue
+  [
+    dex
+    sta $0200,X ; first store a
+    lda #$01 ; set strobe bit to begin reading the register
+    sta $4017
+    sta $FE ; use $FE for temporary storage
+    lsr a ; A := 0
+    sta $4017 ; clear  strobe bit to stop reloading and begin to read all 8 buttons
+    read_inputs_loop2:
+    lda $4017
+    lsr a
+    rol $FE
+    bcc read_inputs_loop2
+    lda $FE ; put button values into tos
+  ]
+  input2 set-Input-ByteValue
 ;
 
 
@@ -114,15 +114,6 @@ struct Palette {
 
 
 
-const screen_width 256
-const screen_height 240
-const tile_width 8
-const tile_height 8
-const block_width 16
-const block_height 16
-
-
-
 const ppu_control_reg_1 0x2000
 variable ppu_control_reg_1_buffer
 
@@ -136,216 +127,215 @@ const ppu_io_rw_reg 0x2007
 
 #[ (value bit_in_binary - bool) use $FD for temporary storage ]#
 : bit_set?
-swap
-[
-sta $FD ; store temporarily because bit can only use zero page or absolute addressing modes
-]
-swap
-[
-bit $FD
-beq bit_set_false
-bit_set_true:
-lda #$FF
-jmp bit_set_done
-bit_set_false:
-lda #$00
-bit_set_done:
-INX ; pop value from stack and just leave true/false in tos (accumulator)
-]
+  swap
+  [
+    sta $FD ; store temporarily because bit can only use zero page or absolute addressing modes
+  ]
+  swap
+  [
+    bit $FD
+    beq bit_set_false
+    bit_set_true:
+    lda #$FF
+    jmp bit_set_done
+    bit_set_false:
+    lda #$00
+    bit_set_done:
+    INX ; pop value from stack and just leave true/false in tos (accumulator)
+  ]
 ;
 
 
-#[ ]#
 : set_intensify_blues
-if
-ppu_control_reg_2_buffer @
-0b10000000
-or
-else
-ppu_control_reg_2_buffer @
-0b01111111
-and
-then
-[
-sta $2001
-]
-ppu_control_reg_2_buffer !
+  if
+    ppu_control_reg_2_buffer @
+    0b10000000
+    or
+  else
+    ppu_control_reg_2_buffer @
+    0b01111111
+    and
+  then
+  [
+    sta $2001
+  ]
+  ppu_control_reg_2_buffer !
 ;
 
 #[ bit 7 = 0b10000000 ]# 
 : intensify_blues?
-ppu_control_reg_2_buffer @
-0b10000000 bit_set?
+  ppu_control_reg_2_buffer @
+  0b10000000 bit_set?
 ;
 
 : set_intensify_greens
-if
-ppu_control_reg_2_buffer @
-0b01000000
-or
-else
-ppu_control_reg_2_buffer @
-0b10111111
-and
-then
-[
-sta $2001
-]
-ppu_control_reg_2_buffer !
+  if
+    ppu_control_reg_2_buffer @
+    0b01000000
+    or
+  else
+    ppu_control_reg_2_buffer @
+    0b10111111
+    and
+  then
+  [
+    sta $2001
+  ]
+  ppu_control_reg_2_buffer !
 ;
 
 : intensify_greens?
-ppu_control_reg_2_buffer @
-0b01000000 bit_set?
+  ppu_control_reg_2_buffer @
+  0b01000000 bit_set?
 ;
 
 : set_intensify_reds
-if
-ppu_control_reg_2_buffer @
-0b00100000
-or
-else
-ppu_control_reg_2_buffer @
-0b11011111
-and
-then
-[
-sta $2001
-]
-ppu_control_reg_2_buffer !
+  if
+    ppu_control_reg_2_buffer @
+    0b00100000
+    or
+  else
+    ppu_control_reg_2_buffer @
+    0b11011111
+    and
+  then
+  [
+    sta $2001
+  ]
+  ppu_control_reg_2_buffer !
 ;
 
 : intensify_reds?
-ppu_control_reg_2_buffer @
-0b00100000 bit_set?
+  ppu_control_reg_2_buffer @
+  0b00100000 bit_set?
 ;
 
 : set_show_sprites
-if
-ppu_control_reg_2_buffer @
-0b00010000
-or
-else
-ppu_control_reg_2_buffer @
-0b11101111
-and
-then
-[
-sta $2001
-]
-ppu_control_reg_2_buffer !
+  if
+    ppu_control_reg_2_buffer @
+    0b00010000
+    or
+  else
+    ppu_control_reg_2_buffer @
+    0b11101111
+    and
+  then
+  [
+    sta $2001
+  ]
+  ppu_control_reg_2_buffer !
 ;
 
 
 
 
 : set_show_background
-if
-ppu_control_reg_2_buffer @
-0b00001000
-or
-else
-ppu_control_reg_2_buffer @
-0b11110111
-and
-then
-[
-sta $2001
-]
-ppu_control_reg_2_buffer !
+  if
+    ppu_control_reg_2_buffer @
+    0b00001000
+    or
+  else
+    ppu_control_reg_2_buffer @
+    0b11110111
+    and
+  then
+  [
+    sta $2001
+  ]
+  ppu_control_reg_2_buffer !
 ;
 
 : set_show_sprites_leftmost_eight
-if
-ppu_control_reg_2_buffer @
-0b00000100
-or
-else
-ppu_control_reg_2_buffer @
-0b11111011
-and
-then
-[
-sta $2001
-]
-ppu_control_reg_2_buffer !
+  if
+    ppu_control_reg_2_buffer @
+    0b00000100
+    or
+  else
+    ppu_control_reg_2_buffer @
+    0b11111011
+    and
+  then
+  [
+    sta $2001
+  ]
+  ppu_control_reg_2_buffer !
 ;
 
 : set_show_background_leftmost_eight
-if
-ppu_control_reg_2_buffer @
-0b00000010
-or
-else
-ppu_control_reg_2_buffer @
-0b11111101
-and
-then
-[
-sta $2001
-]
-ppu_control_reg_2_buffer !
+  if
+    ppu_control_reg_2_buffer @
+    0b00000010
+    or
+  else
+    ppu_control_reg_2_buffer @
+    0b11111101
+    and
+  then
+  [
+    sta $2001
+  ]
+  ppu_control_reg_2_buffer !
 ;
 
 : set_greyscale
-if
-ppu_control_reg_2_buffer @
-0b00000001
-or
-else
-ppu_control_reg_2_buffer @
-0b11111110
-and
-then
-[
-sta $2001
-]
-ppu_control_reg_2_buffer !
+  if
+    ppu_control_reg_2_buffer @
+    0b00000001
+    or
+  else
+    ppu_control_reg_2_buffer @
+    0b11111110
+    and
+  then
+  [
+    sta $2001
+  ]
+  ppu_control_reg_2_buffer !
 ;
 
 
 : show_sprites?
-ppu_control_reg_2_buffer @
-0b00001000 bit_set?
+  ppu_control_reg_2_buffer @
+  0b00001000 bit_set?
 ;
 
 : show_background?
-ppu_control_reg_2_buffer @
-0b00010000 bit_set?
+  ppu_control_reg_2_buffer @
+  0b00010000 bit_set?
 ;
 
 : show_sprites_leftmost_eight?
-ppu_control_reg_2_buffer @
-0b00000100 bit_set?
+  ppu_control_reg_2_buffer @
+  0b00000100 bit_set?
 ;
 
 : show_background_leftmost_eight?
-ppu_control_reg_2_buffer @
-0b00000010 bit_set?
+  ppu_control_reg_2_buffer @
+  0b00000010 bit_set?
 ;
 
 : greyscale?
-ppu_control_reg_2_buffer @
-0b00000001 bit_set?
+  ppu_control_reg_2_buffer @
+  0b00000001 bit_set?
 ;
 
 
 #[ PPUSTATUS, $2002 ]#
 
 : in_vblank?
-ppu_status_reg @
-0b10000000 bit_set?
+  ppu_status_reg @
+  0b10000000 bit_set?
 ;
 
 : sprite0_hit?
-ppu_status_reg @
-0b01000000 bit_set?
+  ppu_status_reg @
+  0b01000000 bit_set?
 ;
 
 
 : sprite_overflow?
-ppu_status_reg @
-0b00100000 bit_set?
+  ppu_status_reg @
+  0b00100000 bit_set?
 ;
 
 
@@ -355,95 +345,83 @@ const sprite_palette_start_addr_high 0x3F
 const sprite_palette_start_addr_low 0x10
 
 
-#[ (high_byte low_byte - ) write high_byte / low_byte to start transfer ]#
-: start_dma_transfer
-[
-sta $2003
-lda $0200,X
-sta $4014
-inx
-lda $0200,X
-inx
-]
-;
-
 
 : set_generate_nmi
-if
-ppu_control_reg_1_buffer @
-0b10000000
-or
-else
-ppu_control_reg_1_buffer @
-0b01111111
-and
-then
-[
-sta $2000
-]
-ppu_control_reg_1_buffer !
+  if
+    ppu_control_reg_1_buffer @
+    0b10000000
+    or
+  else
+    ppu_control_reg_1_buffer @
+    0b01111111
+    and
+  then
+  [
+    sta $2000
+  ]
+  ppu_control_reg_1_buffer !
 ;
 
 : set_sprite_size_8x8
-not
-if
-ppu_control_reg_1_buffer @
-0b01000000
-or
-else
-ppu_control_reg_1_buffer @
-0b10111111
-and
-then
-[
-sta $2000
-]
-ppu_control_reg_1_buffer !
+  not
+  if
+    ppu_control_reg_1_buffer @
+    0b01000000
+    or
+  else
+    ppu_control_reg_1_buffer @
+    0b10111111
+    and
+  then
+  [
+    sta $2000
+  ]
+  ppu_control_reg_1_buffer !
 ;
 
 : set_sprite_size_8x16
-if
-ppu_control_reg_1_buffer @
-0b01000000
-or
-else
-ppu_control_reg_1_buffer @
-0b10111111
-and
-then
-[
-sta $2000
-]
-ppu_control_reg_1_buffer !
+  if
+    ppu_control_reg_1_buffer @
+    0b01000000
+    or
+  else
+    ppu_control_reg_1_buffer @
+    0b10111111
+    and
+  then
+  [
+    sta $2000
+  ]
+  ppu_control_reg_1_buffer !
 ;
 
 
 
 #[ assumes pointer to PaletteData struct is on stack ]#
 : load_palette_data
-dup get-PaletteData-bg0 load_palette
-dup get-PaletteData-bg1 load_palette
-dup get-PaletteData-bg2 load_palette
-dup get-PaletteData-bg3 load_palette
-dup get-PaletteData-sp0 load_palette
-dup get-PaletteData-sp1 load_palette
-dup get-PaletteData-sp2 load_palette
-dup get-PaletteData-sp3 load_palette
+  dup get-PaletteData-bg0 load_palette
+  dup get-PaletteData-bg1 load_palette
+  dup get-PaletteData-bg2 load_palette
+  dup get-PaletteData-bg3 load_palette
+  dup get-PaletteData-sp0 load_palette
+  dup get-PaletteData-sp1 load_palette
+  dup get-PaletteData-sp2 load_palette
+  dup get-PaletteData-sp3 load_palette
 ;
 
 #[ assumes pointer to Palette struct is on stack ]#
 : load_palette
-dup get-Palette-col0 store_colour
-dup get-Palette-col1 store_colour
-get-Palette-col2 store_colour
+  dup get-Palette-col0 store_colour
+  dup get-Palette-col1 store_colour
+  get-Palette-col2 store_colour
 ;
 
 #[ ]#
 : store_colour
-[
-sta $2007
-]
-drop
+  [
+    sta $2007
+  ]
+  drop
 ;
 
 
@@ -473,58 +451,58 @@ x
 : set_flip_vertically
   2dup get-Sprite-attributes
   pull_fourth_up
-[
- and #%10000000
- ora $0200,X ; (sprite_ptr_low sprite_ptr_high attribute_val bool)
- inx ; (sprite_ptr_low sprite_ptr_high new_val)
-]
-inv_rot set-Sprite-attributes
+  [
+   and #%10000000
+   ora $0200,X ; (sprite_ptr_low sprite_ptr_high attribute_val bool)
+   inx ; (sprite_ptr_low sprite_ptr_high new_val)
+  ]
+  inv_rot set-Sprite-attributes
 ;
 
 #[ ( sprite_ptr - ) ]#
 : flip_vertically?
-get-Sprite-attributes
-[
-CLC
-asl A
-bcs flip_vert_true
-flip_vert_false:
-lda #$00
-jmp flip_vert_end
-flip_vert_true:
-lda #$FF
-flip_vert_end:
-]
+  get-Sprite-attributes
+  [
+    CLC
+    asl A
+    bcs flip_vert_true
+    flip_vert_false:
+    lda #$00
+    jmp flip_vert_end
+    flip_vert_true:
+    lda #$FF
+    flip_vert_end:
+  ]
 ;
 
 
 #[ ( bool sprite_ptr - ) ]#
 : set_flip_horizontally
-2dup get-Sprite-attributes
-pull_fourth_up
-[
- and #%01000000
- ora $0200,X ; (sprite_ptr attribute_val bool)
- inx ; (sprite_ptr new_val)
-]
-inv_rot set-Sprite-attributes
+  2dup get-Sprite-attributes
+  pull_fourth_up
+  [
+    and #%01000000
+    ora $0200,X ; (sprite_ptr attribute_val bool)
+    inx ; (sprite_ptr new_val)
+  ]
+  inv_rot set-Sprite-attributes
 ;
 
 #[ ( sprite_ptr - flip_bool ) ]#
 : flip_horizontally?
-get-Sprite-attributes
-[
-asl A
-clc
-asl A
-bcs flip_hor_true
-flip_hor_false:
-lda #$00
-jmp flip_hor_end
-flip_hor_true:
-lda #$FF
-flip_hor_end:
-]
+  get-Sprite-attributes
+  [
+    asl A
+    clc
+    asl A
+    bcs flip_hor_true
+    flip_hor_false:
+    lda #$00
+    jmp flip_hor_end
+    flip_hor_true:
+    lda #$FF
+    flip_hor_end:
+  ]
 ;
 
 
@@ -551,15 +529,15 @@ set_priority:
 ;
 
 : get_priority
-get-Sprite-attributes
-[
-lsr A
-lsr A
-lsr A
-lsr A
-lsr A
-and #$01
-]
+  get-Sprite-attributes
+  [
+    lsr A
+    lsr A
+    lsr A
+    lsr A
+    lsr A
+    and #$01
+  ]
 ;
 
 
@@ -588,28 +566,28 @@ and #$01
 
 #[ (dx sprite_ptr_low sprite_ptr_high - ) ]#
 : move_sprite_by_x
-2dup get-Sprite-x
-pull_fourth_up 
-+ 
-inv_rot set-Sprite-x
+  2dup get-Sprite-x
+  pull_fourth_up 
+  + 
+  inv_rot set-Sprite-x
 ;
 
 #[ dy sprite_ptr - ) ]#
 : move_sprite_by_y
-2dup get-Sprite-y
-pull_fourth_up
-+
-inv_rot set-Sprite-y
+  2dup get-Sprite-y
+  pull_fourth_up
+  +
+  inv_rot set-Sprite-y
 ;
 
 #[ dx dy sprite_ptr_low sprite_ptr_high - ) ]#
 : move_sprite_by_xy
-2dup
-copy_fifth_up
-rot rot
-move_sprite_by_y
-rot drop
-move_sprite_by_x
+  2dup
+  copy_fifth_up
+  rot rot
+  move_sprite_by_y
+  rot drop
+  move_sprite_by_x
 ;
 
 

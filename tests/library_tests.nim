@@ -64,6 +64,7 @@ suite "Engine Library Suite":
     compile_and_run("0b1000 0b0001 bit_set?")
     check_tos(uint8_false())
 
+
   test "read player1 input":
     compiler.compile_test_str("read_inputs input1 get-Input-ByteValue")
     nes = newNES(tmp_nes_path)
@@ -214,6 +215,22 @@ load_sprite mario "mario.chr"
 11 mario set-Sprite-y
 2 mario set-Sprite-tile_number""")
     print_memory(0x00, 0x20)
+
+  test "store and load ppucntrl buffers":
+    compile_and_run("""
+0xFE ppu_control_reg_2_buffer !
+1 2 3
+ppu_control_reg_2_buffer @""")
+    check_tos(0xFE)
+    check_sos(3)
+
+  test "store and load ppumask buffers":
+    compile_and_run("""
+0xFE ppu_control_reg_1_buffer !
+1 2 3
+ppu_control_reg_1_buffer @""")
+    check_tos(0xFE)
+    check_sos(3)
 
 
 

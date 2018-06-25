@@ -19,6 +19,7 @@ proc padded_addr_str*(str: string): string =
     result &= str[1 .. str.len - 1]
 
 
+
 proc num_to_hex*(number: int): string =
   var hex: string = ""
   var n = number
