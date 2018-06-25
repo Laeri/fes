@@ -98,7 +98,7 @@ struct Coord { x y }
 variable coords Coord
 3 coords set-Coord-x
 """)
-    check_memory(0x0300, 3)
+    check_memory(0x0000, 3)
 
   test "struct setter test of x,y":
     compile_and_run("""
@@ -107,9 +107,8 @@ variable player Player
 3 player set-Player-y
 4 player set-Player-x
 """)
-    print_memory(0x0300, 0x0310)
-    check_memory(0x0301, 3)
-    check_memory(0x0300, 4)
+    check_memory(0x0001, 3)
+    check_memory(0x0000, 4)
 
   test "struct getter test of y":
     compile_and_run("""
@@ -267,6 +266,10 @@ input_t get-Input-ByteValue""")
     compile_and_run("variable player 3 player ! player @")
     check_tos(3)
     print_tos()
+
+  test "@: correct data stack pointer (X) after load. Bug was present which only popped high_byte of address":
+    compile_and_run("0 0 @")
+    check(nes.cpu.x == 0xFE)
 
   test "true":
     compile_and_run("true")
@@ -478,6 +481,15 @@ lst 0 list-get
     compile_and_run("5 false if 2 then")
     check_tos(5)
 
+  test "if: true should remove condition bool from stack":
+    compile_and_run("false true if 1 else 2 then drop")
+    check_tos(uint8_false())
+
+  test "if: false should remove condition bool from stack":
+    compile_and_run("true false if 1 else 2 then drop")
+    check_tos(uint8_true())
+    print_memory(0x0200, 0x02FF)
+
   test "while: countdown":
     compile_and_run("10 begin dup 1 != while 1 - end")
     check_tos(1)
@@ -501,6 +513,7 @@ lst 0 list-get
   test "push hex number 0x2001":
     compile_and_run("0x11")
     check_tos(0x11)
+
 
 
 

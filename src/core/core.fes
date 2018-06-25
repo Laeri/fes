@@ -316,6 +316,7 @@ inx
     sta $FE ; store low byte
     ldy #$00 ; no offset
     lda [$FE],Y
+    inx
   ]
 ;
 
