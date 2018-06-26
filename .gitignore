@@ -7,3 +7,4 @@ tests/tmp/*
 examples/*/*.nes
 examples/*/*.fns
 examples/*/*.asm
+examples/*/*.chr

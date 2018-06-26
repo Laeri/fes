@@ -9,12 +9,13 @@ begin true while
   read_inputs
   input1 right_pressed?
   if
-    0x80 mario set-Sprite-x
+    0x01 mario move_sprite_by_x
   else
   then
-  input2 left_pressed?
+
+  input1 up_pressed?
   if
-    0xA0 mario set-Sprite-x
+    0x01 mario move_sprite_by_y
   else
   then
 end
@@ -22,14 +23,14 @@ end
 : on_nmi
 [
   dex
-  sta $0200,X ; store tos
+  sta $0200,X
   ;
   lda #$00
   STA $2003
-  lda #$03
+  lda #$03 
   sta $4014
   ;
-  lda $0200,X ; reload tos
+  lda $0200,X
   inx
 ]
 ;

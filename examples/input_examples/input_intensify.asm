@@ -1,7 +1,7 @@
 ; INES header setup
 
   .inesprg 1
-  .ineschr 0
+  .ineschr 1
   .inesmir 1
   .inesmap 0
 
@@ -23,13 +23,22 @@ begin_then_while0:
   DEX
   STA $0200,X
   LDA #$00
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR b_pressedis
   JSR set_intensify_reds
   DEX
   STA $0200,X
   LDA #$00
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR a_pressedis
   JSR set_intensify_greens
+  DEX
+  STA $0200,X
+  LDA #$00
   DEX
   STA $0200,X
   LDA #$00
@@ -59,21 +68,24 @@ or:
   INX
   RTS
 store_var:
-  STA $FE
+  STA $FF
   LDA $0200,X
-  STX $FD
-  LDX $FE
-  STA $00,X
-  LDX $FE
+  STA $FE
+  INX
+  LDA $0200,X
+  LDY #$00
+  STA [$FE],Y
   INX
   LDA $0200,X
   INX
   RTS
 load_var:
-  STX $FE
-  TAX
-  LDA $00,X
-  LDX $FE
+  STA $FF
+  LDA $0200,X
+  STA $FE
+  LDY #$00
+  LDA [$FE],Y
+  INX
   RTS
 read_inputs:
   JSR read_inputs1
@@ -117,6 +129,9 @@ read_inputs_loop:
   DEX
   STA $0200,X
   LDA #$00
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR set_Input_ByteValue
   RTS
 read_inputs2:
@@ -136,6 +151,9 @@ read_inputs_loop2:
   DEX
   STA $0200,X
   LDA #$01
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR set_Input_ByteValue
   RTS
 bit_setis:
@@ -163,6 +181,9 @@ begin_then0:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR load_var
   DEX
   STA $0200,X
@@ -175,6 +196,9 @@ begin_else0:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR load_var
   DEX
   STA $0200,X
@@ -185,6 +209,9 @@ end_if0:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR store_var
   RTS
 set_intensify_greens:
@@ -198,6 +225,9 @@ begin_then1:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR load_var
   DEX
   STA $0200,X
@@ -210,6 +240,9 @@ begin_else1:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR load_var
   DEX
   STA $0200,X
@@ -220,6 +253,9 @@ end_if1:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR store_var
   RTS
 set_intensify_reds:
@@ -233,6 +269,9 @@ begin_then2:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR load_var
   DEX
   STA $0200,X
@@ -245,6 +284,9 @@ begin_else2:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR load_var
   DEX
   STA $0200,X
@@ -255,19 +297,24 @@ end_if2:
   DEX
   STA $0200,X
   LDA #$03
+  DEX
+  STA $0200,X
+  LDA #$00
   JSR store_var
   RTS
 get_Input_ByteValue:
-  STA $FE
-  LDA #$00
   STA $FF
+  LDA $0200,X
+  STA $FE
+  INX
   LDY #$00
   LDA [$FE],Y
   RTS
 set_Input_ByteValue:
-  STA $FE
-  LDA #$00
   STA $FF
+  LDA $0200,X
+  STA $FE
+  INX
   LDA $0200,X
   INX
   LDY #$00
@@ -283,4 +330,7 @@ End:
   .dw 0
   .dw Start
   .dw 0
+
+  .bank 2
+  .org $0000
   
