@@ -514,7 +514,33 @@ lst 0 list-get
     compile_and_run("0x11")
     check_tos(0x11)
 
+  test "-1":
+    compile_and_run("-1")
+    check_tos(0xFF)
 
+  test "-5":
+    compile_and_run("-5")
+    check_tos(0xFB)
+
+  test "1 + -1":
+    compile_and_run("1 -1 +")
+    check_tos(0)
+
+  test "-5 + 5":
+    compile_and_run("-5 5 +")
+    check_tos(0)
+
+  test "1 - (-1)":
+    compile_and_run("1 -1 -")
+    check_tos(2)
+
+  test "0 1 -":
+    compile_and_run("0 1 -")
+    check_tos(0xFF)
+
+  test "0 -10 + ":
+    compile_and_run("0 -10 +")
+    check_tos(0xF6)
 
 
 

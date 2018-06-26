@@ -1,0 +1,48 @@
+load_sprite mario "./mario.chr"
+
+10 mario set-Sprite-x
+10 mario set-Sprite-y
+true set_generate_nmi
+true set_show_sprites
+
+begin true while
+  read_inputs
+  input1 right_pressed?
+  if
+    0x01 mario move_sprite_by_x
+  else
+  then
+
+  input1 left_pressed?
+  if
+    -1 mario move_sprite_by_x
+  else
+  then
+
+  input1 up_pressed?
+  if
+    0x01 mario move_sprite_by_y
+  else
+  then
+
+  input1 down_pressed?
+  if
+    -1 mario move_sprite_by_y
+  else
+  then
+end
+
+: on_nmi
+[
+  dex
+  sta $0200,X
+  ;
+  lda #$00
+  STA $2003
+  lda #$03 
+  sta $4014
+  ;
+  lda $0200,X
+  inx
+]
+;

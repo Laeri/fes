@@ -1,5 +1,5 @@
 import
-  strutils, sequtils
+  strutils, sequtils, math
 
 
 
@@ -18,8 +18,6 @@ proc padded_addr_str*(str: string): string =
       result &= "0"
     result &= str[1 .. str.len - 1]
 
-
-
 proc num_to_hex*(number: int): string =
   var hex: string = ""
   var n = number
@@ -34,8 +32,14 @@ proc num_to_hex*(number: int): string =
     hex = "0" & hex
   return "$" & hex
 
+proc twos_complement_num*(num: int): int =
+  result = 2^8 - abs(num)
+
 proc num_to_im_hex*(number: int): string =
-  return "#" & num_to_hex(number)
+  var num = number
+  if number < 0:
+    num = twos_complement_num(number)
+  return "#" & num_to_hex(num)
 
 
 proc num_to_im_hex_lower_byte*(number: int): string =
