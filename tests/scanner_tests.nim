@@ -138,4 +138,17 @@ suite "Scanner Suite":
     scanner.read_string("  if")
     check(scanner.current_word_range.low == 2)
     check(scanner.current_word_range.high == 3)
+
+  test "has_next_on_same_line":
+    scanner.read_string("tmp and more")
+    discard scanner.next()
+    check(scanner.has_next_on_same_line == true)
+    discard scanner.next()
+    check(scanner.has_next_on_same_line == true)
+    discard scanner.next()
+    check(scanner.has_next_on_same_line == false)
+
+
+
+
     

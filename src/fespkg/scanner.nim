@@ -214,6 +214,14 @@ proc backtrack*(scanner: Scanner, times = 1) =
     back -= 1
   scanner.set_accurate_count()
 
+proc has_next_on_same_line*(scanner: Scanner): bool =
+  if not(scanner.has_next):
+    return false
+  var current_line = scanner.line
+  scanner.backtrack(1)
+  var last_line = scanner.line
+  scanner.advance
+  return current_line == last_line
 
 proc upto_next_line*(scanner: Scanner): seq[Token] =  
   var line_tokens = scanner.columns[scanner.column .. (scanner.columns.len - 1)]
