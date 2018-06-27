@@ -29,6 +29,10 @@ proc newASMNode*(calls: seq[ASMAction]): ASMNode =
 proc newASMCall*(): ASMCall =
   result = ASMCall()
 
+proc newInitStructValuesNode*(): InitStructValuesNode =
+  result = InitStructValuesNode()
+  result.members = @[]
+
 proc newStructNode*(): StructNode =
   result = StructNode()
   result.members = @[]
@@ -137,6 +141,11 @@ method str*(action: ASMAction, prefix = ""): string =
   echo $(action of ASMLabel)
   echo $(action of ASMCall)
   return "!!!!!"
+
+method str*(node: InitStructValuesNode, prefix = ""): string =
+  result = prefix & "InitStructValuesNode: " & "\n"
+  for member in node.members:
+    result &= prefix & "member: " & member.name & " default: " & member.default_str_val & "\n"
 
 method str*(node: OtherNode, prefix = ""): string =
   return prefix & "OtherNode: " & node.name & "\n"

@@ -562,7 +562,24 @@ variable test_struct TestStruct
 test_struct get-TestStruct-tmp @
 """)
     check_tos(3)
+    echo compiler.parser.root.str
 
+  test "struct init list":
+    compile_and_run("""
+struct TestStruct {
+  a
+  b
+  c
+}
+variable tmp TestStruct { a = 10 b = 11 }
+tmp get-TestStruct-a
+tmp get-TestStruct-b
+""")
+    check_tos(11)
+    check_sos(10)
+    #echo compiler.parser.root.str
+    
+    
 
 
 

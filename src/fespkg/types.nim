@@ -68,6 +68,9 @@ type
   VariableType* = enum
     Struct, List, Number
 
+  InitStructValuesNode* = ref object of ASTNode
+    members*: seq[StructMember]
+
   VariableNode* = ref object of ASTNode
     name*: string
     var_index*: int

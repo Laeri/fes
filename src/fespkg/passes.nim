@@ -329,6 +329,42 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
     else:
       echo "implement new variable and set its address"
 
+proc parse_init_val*(pass_runner: PassRunner, member: StructMember, var_node: VariableNode): SequenceNode =
+  result = newSequenceNode()
+  if member.default_str_val.is_valid_number_str: # 0xXY, #$ABCD should also be parsed
+    var push_val = PushNumberNode()
+    push_val.number = member.default_str_val.parse_to_integer
+    result.add(push_val)
+  else: # it is an address?
+    var corresponding_variables: seq[VariableNode] =  @[]
+    for tmp in pass_runner.var_table.values:
+      if tmp.name == member.default_str_val:
+        corresponding_variables.add(tmp)
+    if corresponding_variables.len == 1: # we have found a corresponding variable and it should only be one variable with the given name in the var_table
+      var load_var_addr = LoadVariableNode()
+      load_var_addr.name = corresponding_variables[0].name
+      load_var_addr.var_node = corresponding_variables[0]
+      result.add(load_var_addr)
+    else:
+      echo "Error in pass pass_init_struct_default_values"
+  var push_struct_var_addr = LoadVariableNode(name: cast[StructNode](var_node.type_node).name, var_node: var_node)
+  var call_setter = OtherNode(name: setter_name(cast[StructNode](var_node.type_node), member)) # OtherNode -> CallWordNode is done by pass: pass_set_word_calls
+  result.add(push_struct_var_addr)
+  result.add(call_setter)
+
+
+# Pass
+proc pass_init_struct_variable_values*(pass_runner: PassRunner, root: ASTNode) =
+  var root_seq = (cast[SequenceNode](root)).sequence
+  var init_seqs: seq[SequenceNode] = @[]
+  for i in 0..(root_seq.len - 1):
+    if root_seq[i] of InitStructValuesNode:
+      var init_node = cast[InitStructValuesNode](root_seq[i])
+      var var_node = cast[VariableNode](root_seq[i - 1]) # assumes AST now hast the form "VariableNode InitStructVariableNode"
+      for member in init_node.members:
+        init_seqs.add(pass_runner.parse_init_val(member, var_node))
+  for tmp in init_seqs:
+    (cast[SequenceNode](root)).sequence.insert(tmp, 0)
 
 # Pass
 proc pass_init_struct_default_values*(pass_runner: PassRunner, root: ASTNode) =
@@ -364,6 +400,10 @@ proc pass_init_struct_default_values*(pass_runner: PassRunner, root: ASTNode) =
           init_seq.add(call_setter)
           var root_seq = cast[SequenceNode](root)
           root_seq.sequence.insert(init_seq, 0)
+
+
+
+
 
 # Pass
 proc pass_group_vars_first*(pass_runner: PassRunner, root: SequenceNode) =

@@ -70,6 +70,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_set_list_var_type(compiler.parser.root)
   pass_runner.pass_set_variable_loads(compiler.parser.root)
   pass_runner.pass_set_variable_addresses(compiler.parser.root)
+  pass_runner.pass_init_struct_variable_values(compiler.parser.root) # next pass should check if no member init list is present, otherwise we just overwrite the default struct values
   pass_runner.pass_init_struct_default_values(compiler.parser.root)
   pass_runner.pass_group_vars_first(compiler.parser.root)
   pass_runner.pass_init_list_sizes(compiler.parser.root)
@@ -78,7 +79,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_add_start_label(compiler.parser.root)
   pass_runner.pass_add_end_label(compiler.parser.root)
   pass_runner.pass_check_no_OtherNodes(compiler.parser.root)
-
+  #echo compiler.parser.root.str
   
 
 proc do_asm_passes(compiler: FESCompiler, code: var seq[ASMAction]) =

@@ -379,6 +379,21 @@ proc parse_const(parser: Parser): ConstNode =
   parser.set_end_info(result)
   parser.const_table.add(result.name, result)
 
+proc parse_init_struct_values(parser: Parser): InitStructValuesNode =
+  result = newInitStructValuesNode()
+  parser.set_begin_info(result)
+  var ret = false
+  while parser.scanner.has_next: # no checks, malformed InitList should be reported!
+    var name = parser.scanner.next.str_val
+    if name == "}":
+      return
+    var eq = parser.scanner.next.str_val
+    var default_val = parser.scanner.next.str_val
+    var member = newStructMember()
+    member.name = name
+    member.set_default(default_val)
+    result.members.add(member)
+
 proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()
   parser.set_begin_info(root, false)
@@ -457,6 +472,9 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(const_node)
     elif token.str_val.contains("#["):
       parser.parse_comment()
+    elif token.str_val == "{":
+      var init_struct_val_node = parser.parse_init_struct_values()
+      root.add(init_struct_val_node)
     elif token.str_val.is_valid_number_str:
       var node = PushNumberNode()
       parser.set_begin_info(node)
