@@ -1,5 +1,5 @@
 import
-  types, strutils
+  utils, types, strutils
 
 type
   TokenKind = enum
@@ -40,13 +40,6 @@ proc token_str_vals*(tokens: seq[Token]): seq[string] =
   result = @[]
   for token in tokens:
     result.add(token.str_val)
-
-proc isInteger*(str: string): bool =
-  try:
-    let f = parseInt str
-  except ValueError:
-     return false
-  return true
 
 proc column_position*(scanner: Scanner): int =
   return scanner.column_accurate

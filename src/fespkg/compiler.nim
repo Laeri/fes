@@ -70,6 +70,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_set_list_var_type(compiler.parser.root)
   pass_runner.pass_set_variable_loads(compiler.parser.root)
   pass_runner.pass_set_variable_addresses(compiler.parser.root)
+  pass_runner.pass_init_struct_default_values(compiler.parser.root)
   pass_runner.pass_group_vars_first(compiler.parser.root)
   pass_runner.pass_init_list_sizes(compiler.parser.root)
   pass_runner.pass_gen_list_methods(compiler.parser.root)

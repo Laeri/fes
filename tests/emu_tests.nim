@@ -542,6 +542,15 @@ lst 0 list-get
     compile_and_run("0 -10 +")
     check_tos(0xF6)
 
+  test "default struct values of numbers":
+    compile_and_run("""struct TestStruct {a = 10 b = 0xB }
+variable tmp TestStruct
+tmp get-TestStruct-a
+tmp get-TestStruct-b""")
+    check_tos(11)
+    check_sos(10)
+
+
 
 
 
