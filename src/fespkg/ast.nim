@@ -33,6 +33,14 @@ proc newStructNode*(): StructNode =
   result = StructNode()
   result.members = @[]
 
+proc newStructMember*(): StructMember =
+  result = StructMember()
+  result.has_default = false
+
+proc set_default*(struct_member: StructMember, val: string) =
+  struct_member.has_default = true
+  struct_member.default_str_val = val
+
 proc newConstNode*(): ConstNode =
   result = ConstNode()
 
@@ -83,7 +91,10 @@ method str*(node: ListNode, prefix = ""): string =
 method str*(node: StructNode, prefix = ""): string = 
   var str: string = prefix & "StructNode: " & node.name & " {\n"
   for member in node.members:
-    str &= prefix & "  " & member & "\n"
+    str &= prefix & "  " & member.name
+    if member.has_default:
+      str &= " = " & member.default_str_val
+    str &= "\n"
   str &= prefix & "}"
   return str
 

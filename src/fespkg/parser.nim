@@ -333,7 +333,16 @@ proc finish_struct(parser: Parser, node: StructNode): StructNode =
   parser.set_end_info(result)
   parser.structs[result.name] = result
 
+#[
+struct Palette {
+  col0 0x0F
+  col1 0xAB
+  col2 0xBE
+}
 
+variable tmp_lst {1 2 3 4}
+
+]#
 proc parse_struct(parser: Parser): StructNode =
   result = newStructNode()
   parser.set_begin_infO(result)
@@ -347,7 +356,18 @@ proc parse_struct(parser: Parser): StructNode =
     var token = parser.scanner.next.str_val
     if token[0] == '{' and token.len > 1:
       token = token[1 .. token.len - 1]
-      result.members.add(token)
+      var struct_member = newStructMember()
+      struct_member.name = token
+      if parser.scanner.has_next_on_same_line():
+        if parser.scanner.next.str_val == "=":
+          if not(parser.scanner.has_next):
+            parser.report(result, errMalformedStruct)
+          else:
+            var default_str_val = parser.scanner.next().str_val
+            struct_member.set_default(default_str_val)
+        else:
+          parser.scanner.backtrack(1)        
+      result.members.add(struct_member)
     elif token != "{":
       parser.report(result, errMalformedStruct)
   else:
@@ -359,10 +379,32 @@ proc parse_struct(parser: Parser): StructNode =
       return parser.finish_struct(result)
     elif token[token.len - 1] == '}':
       token = token[0 .. token.len - 2]
-      result.members.add(token)
+      var struct_member = newStructMember()
+      struct_member.name = token
+      if parser.scanner.has_next_on_same_line():
+        if parser.scanner.next.str_val == "=":
+          if not(parser.scanner.has_next):
+            parser.report(result, errMalformedStruct)
+          else:
+            var default_str_val = parser.scanner.next().str_val
+            struct_member.set_default(default_str_val)
+        else:
+          parser.scanner.backtrack(1)   
+      result.members.add(struct_member)
       return parser.finish_struct(result)
     else:
-      result.members.add(token)
+      var struct_member = newStructMember()
+      struct_member.name = token
+      if parser.scanner.has_next_on_same_line():
+        if parser.scanner.next.str_val == "=":
+          if not(parser.scanner.has_next):
+            parser.report(result, errMalformedStruct)
+          else:
+            var default_str_val = parser.scanner.next().str_val
+            struct_member.set_default(default_str_val)
+        else:
+          parser.scanner.backtrack(1)   
+      result.members.add(struct_member)
   parser.report(result, errMissingStructEnding, result.name)
  
 

@@ -54,8 +54,13 @@ type
 
   StructNode* = ref object of ASTNode
     name*: string
-    members*: seq[string]
+    members*: seq[StructMember]
     address*: int
+
+  StructMember* = ref object of ASTNode
+    name*: string
+    has_default*: bool
+    default_str_val*: string
 
   ListNode* = ref object of ASTNode
     size*: int

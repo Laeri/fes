@@ -34,15 +34,16 @@ suite  "Parser Suite":
     check(node_seq[2] of OtherNode)
 
   test "struct with closing brackets directly at members":
-    src = "struct Player {x y} z"
+    src = """struct Player {x
+y} z"""
     parser.parse_string(src)
     var node_seq = parser.root.sequence
     check(node_seq.len == 2)
     check(node_seq[0] of StructNode)
     var struct_node = cast[StructNode](node_seq[0])
     check(struct_node.members.len == 2)
-    check(struct_node.members[0] == "x")
-    check(struct_node.members[1] == "y")
+    check(struct_node.members[0].name == "x")
+    check(struct_node.members[1].name == "y")
 
   test "errNestedWordDef: defining a word twice should be reported":
     src = ": name : name2 ;"
@@ -170,35 +171,44 @@ suite  "Parser Suite":
     parser.parse_additional_src(src2, "SRC2")
 
   test "parse struct":
-    src = "struct test_name { a b c }"
+    src = """struct test_name { 
+  a
+  b
+  c }"""
     parser.parse_string(src)
     check(parser.root.sequence.len == 1)
     check(parser.root.sequence[0] of StructNode)
     var node: StructNode = cast[StructNode](parser.root.sequence[0])
     check(node.members.len == 3)
-    check(node.members[0] == "a")
-    check(node.members[1] == "b")
-    check(node.members[2] == "c")
+    check(node.members[0].name == "a")
+    check(node.members[1].name == "b")
+    check(node.members[2].name == "c")
 
-    src = "struct test_name {a b c }"
+    src = """struct test_name {a
+b
+c
+}"""
     parser.parse_string(src)
     check(parser.root.sequence.len == 1)
     check(parser.root.sequence[0] of StructNode)
     node = cast[StructNode](parser.root.sequence[0])
     check(node.members.len == 3)
-    check(node.members[0] == "a")
-    check(node.members[1] == "b")
-    check(node.members[2] == "c")
+    check(node.members[0].name == "a")
+    check(node.members[1].name == "b")
+    check(node.members[2].name == "c")
 
-    src = "struct test_name { a b c}"
+    src = """struct test_name { 
+a
+b
+c}"""
     parser.parse_string(src)
     check(parser.root.sequence.len == 1)
     check(parser.root.sequence[0] of StructNode)
     node = cast[StructNode](parser.root.sequence[0])
     check(node.members.len == 3)
-    check(node.members[0] == "a")
-    check(node.members[1] == "b")
-    check(node.members[2] == "c")
+    check(node.members[0].name == "a")
+    check(node.members[1].name == "b")
+    check(node.members[2].name == "c")
 
   test "warnMissingStructBody: empty struct body should be reported":
     src = "struct test_name { }"
@@ -244,8 +254,24 @@ suite  "Parser Suite":
   test "parse constant":
     src = "const name $2000"
     parser.parse_string(src)
-    echo parser.root.str
+    check(parser.root.sequence.len == 1)
+    check(parser.root.sequence[0] of ConstNode)
+    var const_node = cast[ConstNode](parser.root.sequence[0])
+    check(const_node.name == "name")
+    check(const_node.value == "$2000")
 
+  test "parse struct default member values":
+    src = """struct Player {a = 10
+  b = 11
+  c = 12 }"""
+    parser.parse_string(src)
+    check(parser.root.sequence.len == 1)
+    check(parser.root.sequence[0] of StructNode)
+    var struct_node = cast[StructNode](parser.root.sequence[0])
+    check(struct_node.members.len == 3)
+    check(struct_node.members[0].default_str_val == "10")
+    check(struct_node.members[1].default_str_val == "11")
+    check(struct_node.members[2].default_str_val == "12")
 
 
   

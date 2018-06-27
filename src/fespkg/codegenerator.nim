@@ -160,7 +160,7 @@ var base_address = "$0200"
 
 
 
-method emit*(generator: CodeGenerator, node: LoadVariableNode) = 
+method emit*(generator: CodeGenerator, node: LoadVariableNode) =
   echo node.name & " addr: " & $node.var_node.address
   generator.code.add(ASMCall(op: DEX))
   generator.code.add(ASMCall(op: STA, param: base_address & ",X"))

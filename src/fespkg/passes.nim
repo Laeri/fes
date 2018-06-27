@@ -298,7 +298,7 @@ proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node
     asm_node.add(ASMCall(op: INX))
     asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset
     asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # access base + member_offset
-    get_define.word_name = get_prefix & member
+    get_define.word_name = get_prefix & member.name
     get_define.definition.add(asm_node)
     pass_runner.definitions[get_define.word_name] = get_define
     root.add(get_define) 
@@ -341,7 +341,7 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
     asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
     asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # drop value from the stack after storing in struct member
     asm_node.add(ASMCall(op: INX))
-    set_define.word_name = set_prefix & member
+    set_define.word_name = set_prefix & member.name
     set_define.definition.add(asm_node)
     pass_runner.definitions[set_define.word_name] = set_define
     root.add(set_define)
