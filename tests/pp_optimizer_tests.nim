@@ -10,7 +10,7 @@ template do_rule_test(): untyped =
   check(asm_result.aasm_to_string == asm_calls.aasm_to_string)
 
 
-suite "JSR_RTS":
+suite "Peephole Optimizer Suite":
 
   setup:
     var parser = newParser()
