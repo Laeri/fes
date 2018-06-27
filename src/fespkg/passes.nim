@@ -1,7 +1,6 @@
 import
   types, asm_t, utils, ast, sets, msgs, typetraits, tables, strutils, parser, codegenerator, algorithm, sequtils
 
-
 proc newPassRunner*(): PassRunner =
   result = PassRunner()
 
@@ -336,20 +335,31 @@ proc pass_init_struct_default_values*(pass_runner: PassRunner, root: ASTNode) =
   for struct_node in pass_runner.structs.values:
     var struct_variables: seq[VariableNode] = @[]
     for var_node in pass_runner.var_table.values:
-      echo "check var " & var_node.name
       if (var_node.var_type == Struct) and (var_node.type_node == struct_node):
         struct_variables.add(var_node)
     for member in struct_node.members:
       if member.has_default:
-        echo "member has default"
         for struct_var in struct_variables:
           var init_seq = newSequenceNode()
-          var push_val = PushNumberNode()
           if member.default_str_val.is_valid_number_str: # 0xXY, #$ABCD should also be parsed
+            var push_val = PushNumberNode()
             push_val.number = member.default_str_val.parse_to_integer
+            init_seq.add(push_val)
+          else: # it is an address?
+            var corresponding_variables: seq[VariableNode] =  @[]
+            for tmp in pass_runner.var_table.values:
+              if tmp.name == member.default_str_val:
+                corresponding_variables.add(tmp)
+            if corresponding_variables.len == 1: # we have found a corresponding variable and it should only be one variable with the given name in the var_table
+              var load_var_addr = LoadVariableNode()
+              load_var_addr.name = corresponding_variables[0].name
+              load_var_addr.var_node = corresponding_variables[0]
+              init_seq.add(load_var_addr)
+            else:
+              echo "Error in pass pass_init_struct_default_values"
           var push_struct_var_addr = LoadVariableNode(name: struct_var.name, var_node: struct_var)
           var call_setter = OtherNode(name: setter_name(struct_node, member)) # OtherNode -> CallWordNode is done by pass: pass_set_word_calls
-          init_seq.add(push_val)
+
           init_seq.add(push_struct_var_addr)
           init_seq.add(call_setter)
           var root_seq = cast[SequenceNode](root)

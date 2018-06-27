@@ -550,10 +550,18 @@ tmp get-TestStruct-b""")
     check_tos(11)
     check_sos(10)
 
-
-
-
-
+  test "default struct values of addresses":
+    compile_and_run("""
+variable tmp_var
+3 tmp_var !
+struct TestStruct {
+  tmp = tmp_var
+  tmp_other = 2
+}
+variable test_struct TestStruct
+test_struct get-TestStruct-tmp @
+""")
+    check_tos(3)
 
 
 
