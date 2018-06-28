@@ -232,6 +232,52 @@ ppu_control_reg_1_buffer @""")
     check_tos(0xFE)
     check_sos(3)
 
+  test "palette colour access 0":
+    compile_and_run("""
+variable sp_palette0 Palette { col0 = 0x0F col1 = 0x31 col2 = 0x32 col3 = 0x33 }
+1
+sp_palette0 get-Palette-col0
+""")
+    check_tos(0x0F)
+    check_sos(1)
+
+  test "palette colour access 1":
+    compile_and_run("""
+variable sp_palette0 Palette { col0 = 0x0F col1 = 0x31 col2 = 0x32 col3 = 0x33 }
+1
+sp_palette0 get-Palette-col0
+""")
+    check_tos(0x31)
+    check_sos(1)
+
+  test "palette_data palette access sprite":
+    compile_and_run("""
+variable sp_palette0 Palette { col0 = 0x0F col1 = 0x31 col2 = 0x32 col3 = 0x33 }
+variable sp_palette1 Palette { col0 = 0x0F col1 = 0x35 col2 = 0x36 col3 = 0x37 } 
+variable sp_palette2 Palette { col0 = 0x0F col1 = 0x39 col2 = 0x3A col3 = 0x3B }
+variable sp_palette3 Palette { col0 = 0x0F col1 = 0x3D col2 = 0x3E col3 = 0x0F }
+
+variable bg_palette0 Palette { col0 = 0x0F col1 = 0x1C col2 = 0x15 col3 = 0x14 }
+variable bg_palette1 Palette { col0 = 0x0F col1 = 0x02 col2 = 0x38 col3 = 0x3C } 
+variable bg_palette2 Palette { col0 = 0x0F col1 = 0x1C col2 = 0x15 col3 = 0x14 }
+variable bg_palette3 Palette { col0 = 0x0F col1 = 0x02 col2 = 0x38 col3 = 0x3C }
+
+variable palette_data PaletteData {
+  bg0 = bg_palette0
+  bg1 = bg_palette1
+  bg2 = bg_palette2
+  bg3 = bg_palette3
+  sp0 = sp_palette0
+  sp1 = sp_palette1
+  sp2 = sp_palette2
+  sp3 = sp_palette3
+}
+1
+palette_data get-PaletteData-sp0 get-Palette-col2
+""")
+    check_tos(0x32)
+    check_sos(1)
+
 
 
 

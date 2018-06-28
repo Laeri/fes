@@ -110,6 +110,7 @@ struct Palette {
   col0
   col1
   col2
+  col3
 }
 
 
@@ -399,21 +400,33 @@ const sprite_palette_start_addr_low 0x10
 
 #[ assumes pointer to PaletteData struct is on stack ]#
 : load_palette_data
-  dup get-PaletteData-bg0 load_palette
-  dup get-PaletteData-bg1 load_palette
-  dup get-PaletteData-bg2 load_palette
-  dup get-PaletteData-bg3 load_palette
-  dup get-PaletteData-sp0 load_palette
-  dup get-PaletteData-sp1 load_palette
-  dup get-PaletteData-sp2 load_palette
-  dup get-PaletteData-sp3 load_palette
+  [
+    dex
+    sta $0200,X
+    lda $2002
+    lda #$3F
+    sta $2006
+    lda #$00
+    sta $2006
+    lda $0200,X
+    inx
+  ]
+  2dup get-PaletteData-sp0 load_palette
+  2dup get-PaletteData-sp1 load_palette
+  2dup get-PaletteData-sp2 load_palette
+  2dup get-PaletteData-sp3 load_palette
+  2dup get-PaletteData-bg0 load_palette
+  2dup get-PaletteData-bg1 load_palette
+  2dup get-PaletteData-bg2 load_palette
+  get-PaletteData-bg3 load_palette
 ;
 
 #[ assumes pointer to Palette struct is on stack ]#
 : load_palette
-  dup get-Palette-col0 store_colour
-  dup get-Palette-col1 store_colour
-  get-Palette-col2 store_colour
+  2dup get-Palette-col0 store_colour
+  2dup get-Palette-col1 store_colour
+  2dup get-Palette-col2 store_colour
+  get-Palette-col3 store_colour
 ;
 
 #[ ]#
