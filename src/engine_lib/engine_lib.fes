@@ -95,22 +95,22 @@ button:	 A     B  Select Start  Up   Down  Left  Right
 
 
 struct PaletteData {
-  bg0
-  bg1
-  bg2
-  bg3
-  sp0
-  sp1
-  sp2
-  sp3
+  bg0 Palette
+  bg1 Palette
+  bg2 Palette
+  bg3 Palette
+  sp0 Palette
+  sp1 Palette
+  sp2 Palette
+  sp3 Palette
 }
 
 
 struct Palette {
-  col0
-  col1
-  col2
-  col3
+  col0 Number
+  col1 Number
+  col2 Number
+  col3 Number
 }
 
 
@@ -442,9 +442,9 @@ const sprite_palette_start_addr_low 0x10
 #[ SPRITES ]#
 #[ order is important, because memory is aligned in the same order ]#
 struct Sprite {
-y
-tile_number
-attributes
+y            Number
+tile_number  Number
+attributes   Number
 x
 }
 

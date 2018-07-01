@@ -94,7 +94,10 @@ name2 @""")
 
   test "struct access":
     compile_and_run("""
-struct Coord { x y }
+struct Coord {
+  x
+  y
+}
 variable coords Coord
 3 coords set-Coord-x
 """)
@@ -102,7 +105,10 @@ variable coords Coord
 
   test "struct setter test of x,y":
     compile_and_run("""
-struct Player { x y }
+struct Player {
+  x
+  y
+}
 variable player Player
 3 player set-Player-y
 4 player set-Player-x
@@ -112,7 +118,10 @@ variable player Player
 
   test "struct getter test of y":
     compile_and_run("""
-struct Player { x y }
+struct Player {
+  x
+  y
+}
 variable player Player
 3 player set-Player-y
 player get-Player-y
@@ -121,7 +130,10 @@ player get-Player-y
     
   test "struct getter test of x":
     compile_and_run("""
-struct Player { x y }
+struct Player {
+  x
+  y
+}
 variable player Player
 3 player set-Player-x
 player get-Player-x
@@ -131,7 +143,10 @@ player get-Player-x
   test "struct after var":
     compile_and_run("""
 variable test_var
-struct TestPlayer { x y }
+struct TestPlayer {
+  x
+  y
+}
 variable player TestPlayer
 10 player set-TestPlayer-x
 player get-TestPlayer-x""")
@@ -139,7 +154,9 @@ player get-TestPlayer-x""")
 
   test "struct settting, getting multiple times":
     compile_and_run("""
-struct Input { ByteValue }
+struct Input {
+  ByteValue
+}
 variable input1 Input
 128 input1 set-Input-ByteValue
 10 input1 set-Input-ByteValue
@@ -149,8 +166,13 @@ input1 get-Input-ByteValue""")
 
   test "several structs":
     compile_and_run("""
-struct Coords { x y }
-struct Input { ByteValue }
+struct Coords {
+  x
+  y
+}
+struct Input {
+  ByteValue
+}
 variable coords1 Coords
 variable input_t Input
 variable coords2 Coords
@@ -164,7 +186,9 @@ input_t get-Input-ByteValue""")
     check_tos(128)
 
   test "struct accessing with overwritten memory":
-    compiler.compile_test_str("struct Input { ByteValue } variable input Input 3 input set-Input-ByteValue input get-Input-ByteValue")
+    compiler.compile_test_str("""struct Input {
+  ByteValue
+} variable input Input 3 input set-Input-ByteValue input get-Input-ByteValue""")
     nes = newNES(tmp_nes_path)
     for i in 0..0x02FF:
       nes.cpu.mem[cast[uint16](i)] = cast[uint8](0xFF) # overwrite all memory locations
@@ -543,7 +567,10 @@ lst 0 list-get
     check_tos(0xF6)
 
   test "default struct values of numbers":
-    compile_and_run("""struct TestStruct {a = 10 b = 0xB }
+    compile_and_run("""struct TestStruct {
+  a = 10
+  b = 0xB
+}
 variable tmp TestStruct
 tmp get-TestStruct-a
 tmp get-TestStruct-b""")
@@ -562,7 +589,6 @@ variable test_struct TestStruct
 test_struct get-TestStruct-tmp @
 """)
     check_tos(3)
-    echo compiler.parser.root.str
 
   test "struct init list":
     compile_and_run("""
@@ -571,13 +597,15 @@ struct TestStruct {
   b
   c
 }
-variable tmp TestStruct { a = 10 b = 11 }
+variable tmp TestStruct {
+  a = 10
+  b = 11
+}
 tmp get-TestStruct-a
 tmp get-TestStruct-b
 """)
     check_tos(11)
     check_sos(10)
-    #echo compiler.parser.root.str
     
     
 

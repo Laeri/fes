@@ -245,7 +245,7 @@ sp_palette0 get-Palette-col0
     compile_and_run("""
 variable sp_palette0 Palette { col0 = 0x0F col1 = 0x31 col2 = 0x32 col3 = 0x33 }
 1
-sp_palette0 get-Palette-col0
+sp_palette0 get-Palette-col1
 """)
     check_tos(0x31)
     check_sos(1)

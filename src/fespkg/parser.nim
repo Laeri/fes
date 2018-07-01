@@ -301,65 +301,47 @@ proc parse_struct(parser: Parser): StructNode =
   result = newStructNode()
   parser.set_begin_infO(result)
   var first = false
-
+  var struct_finished = false
   if parser.scanner.has_next:
     result.name = parser.scanner.next.str_val
   else:
     parser.report(result, errMalformedStruct)
-  if parser.scanner.has_next: # skip opening {
-    var token = parser.scanner.next.str_val
-    if token[0] == '{' and token.len > 1:
-      token = token[1 .. token.len - 1]
-      var struct_member = newStructMember()
-      struct_member.name = token
-      if parser.scanner.has_next_on_same_line():
-        if parser.scanner.next.str_val == "=":
-          if not(parser.scanner.has_next):
-            parser.report(result, errMalformedStruct)
-          else:
-            var default_str_val = parser.scanner.next().str_val
-            struct_member.set_default(default_str_val)
-        else:
-          parser.scanner.backtrack(1)        
-      result.members.add(struct_member)
-    elif token != "{":
-      parser.report(result, errMalformedStruct)
-  else:
-    parser.report(result, errMalformedStruct)
-
   while parser.scanner.has_next:
+    if struct_finished:
+      return parser.finish_struct(result)
     var token = parser.scanner.next.str_val
     if token == "}":
       return parser.finish_struct(result)
-    elif token[token.len - 1] == '}':
-      token = token[0 .. token.len - 2]
-      var struct_member = newStructMember()
-      struct_member.name = token
-      if parser.scanner.has_next_on_same_line():
-        if parser.scanner.next.str_val == "=":
-          if not(parser.scanner.has_next):
-            parser.report(result, errMalformedStruct)
-          else:
-            var default_str_val = parser.scanner.next().str_val
-            struct_member.set_default(default_str_val)
-        else:
-          parser.scanner.backtrack(1)   
-      result.members.add(struct_member)
-      return parser.finish_struct(result)
+    elif token.contains("}"):
+      if not(token[token.len - 1] == '}'):
+        parser.report(result,errMalformedStruct)
+      token = token.replace("}", "")
+      struct_finished = true
+    elif token.contains("{"):
+      if not(token[0] == '{'):
+        parser.report(result, errMalformedStruct)
+      token = token.replace("{", "")
     else:
+      discard
+    if token.len > 0:
       var struct_member = newStructMember()
       struct_member.name = token
       if parser.scanner.has_next_on_same_line():
         if parser.scanner.next.str_val == "=":
-          if not(parser.scanner.has_next):
-            parser.report(result, errMalformedStruct)
-          else:
+          var default_str_val = parser.scanner.next().str_val
+          struct_member.set_default(default_str_val) 
+        else:
+          if token == $VariableType.Number: # No List type added yet, only Number and Struct
+            struct_member.member_type = Number
+          else: 
+            # If the token is not a Number, it is a Struct, which kind of Struct is not defined here, just a struct
+            # maybe store also struct name in member and then in a pass add the corresponding struct type info to each struct member
+            struct_member.member_type = Struct
+          if parser.scanner.has_next_on_same_line() and parser.scanner.next.str_val == "=":
             var default_str_val = parser.scanner.next().str_val
             struct_member.set_default(default_str_val)
-        else:
-          parser.scanner.backtrack(1)   
       result.members.add(struct_member)
-  parser.report(result, errMissingStructEnding, result.name)
+  parser.report(result, errMissingStructEnding)
  
 
 proc parse_load_sprite(parser: Parser): LoadSpriteNode =

@@ -73,7 +73,11 @@ suite "Passes Suite":
     check(any_true(parser.root, is_other) == false)
 
   test "variable <name> <Type> should input its type into VariableNode":
-    src = "struct Player {x y z} variable player Player"
+    src = """struct Player {
+  x
+  y
+  z}
+variable player Player"""
     parser.parse_string(src)
     pass_runner.pass_set_struct_var_type(parser.root)
     var seq_node = parser.root.sequence
@@ -84,7 +88,14 @@ suite "Passes Suite":
     check(var_node.var_type == Struct)
 
   test "size after pass_set_variable_addresses(compiler.parser.root)":
-    src = "variable name struct Player {x y z} variable player Player"
+    src = """
+variable name
+struct Player {
+  x
+  y
+  z
+}
+variable player Player"""
     parser.parse_string(src)
     pass_runner.pass_set_struct_var_type(parser.root)
     pass_runner.pass_set_variable_addresses(parser.root)
@@ -96,24 +107,13 @@ suite "Passes Suite":
     var struct_var = cast[VariableNode](seq_node[2])
     check(normal_var.size == 1)
     check(struct_var.size == 3)
-#[
-  test "address after pass_set_variable_addresses(compiler.parser.root)":
-    src = "struct Player {x y z} variable player Player variable name"
-    parser.parse_string(src)
-    pass_runner.pass_set_struct_var_type(parser.root)
-    pass_runner.pass_set_variable_addresses(parser.root)
-    var seq_node = parser.root.sequence
-    check(seq_node[0] of StructNode)
-    check(seq_node[1] of VariableNode)
-    check(seq_node[2] of VariableNode)
-    var normal_var = cast[VariableNode](seq_node[2])
-    var struct_var = cast[VariableNode](seq_node[1])
-    check(normal_var.address == 0)
-    check(struct_var.address == 0) # only sprites get put on 0x0300
-]#
+
 
   test "struct getter test":
-    src = "struct Player { x y }"
+    src = """struct Player {
+      x
+      y
+    }"""
     parser.parse_string(src)
     pass_runner.pass_gen_getters(parser.root)
     var seq_node = parser.root
@@ -124,7 +124,10 @@ suite "Passes Suite":
     check(get_y.word_name == "get-Player-y")
 
   test "struct setter test":
-    src = "struct Player { x y }"
+    src = """struct Player {
+               x
+               y
+             }"""
     parser.parse_string(src)
     pass_runner.pass_gen_setters(parser.root)
     var seq_node = parser.root
@@ -168,7 +171,10 @@ suite "Passes Suite":
     check(handler.has_error_type(errNoWordDefForName) == true)
 
   test "load_sprite should generate variable node":
-    src = "struct Sprite { x y } load_sprite mario path/to/mario.chr"
+    src = """struct Sprite {
+                x
+                y
+             } load_sprite mario path/to/mario.chr"""
     parser.parse_string(src)
     pass_runner.pass_set_struct_var_type(parser.root)
     

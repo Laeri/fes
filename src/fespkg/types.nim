@@ -61,15 +61,18 @@ type
     name*: string
     has_default*: bool
     default_str_val*: string
+    member_type*: VariableType
 
   ListNode* = ref object of ASTNode
     size*: int
 
   VariableType* = enum
-    Struct, List, Number
+    Struct, List, Number, Untyped
 
   InitStructValuesNode* = ref object of ASTNode
     members*: seq[StructMember]
+    names*: seq[string]
+    str_values*: seq[string]
 
   VariableNode* = ref object of ASTNode
     name*: string

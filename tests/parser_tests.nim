@@ -25,25 +25,16 @@ suite  "Parser Suite":
     check(other_n.name == "name")
 
   test "struct reference before passes is OtherNode":
-    src = "struct Player { x y } variable player Player"
+    src = """struct Player {
+               x
+               y
+             } variable player Player"""
     parser.parse_string(src)
     var node_seq = parser.root.sequence
     check(node_seq.len == 3) # StructNode, VariableNode, OtherNode
     check(node_seq[0] of StructNode)
     check(node_seq[1] of VariableNode)
     check(node_seq[2] of OtherNode)
-
-  test "struct with closing brackets directly at members":
-    src = """struct Player {x
-y} z"""
-    parser.parse_string(src)
-    var node_seq = parser.root.sequence
-    check(node_seq.len == 2)
-    check(node_seq[0] of StructNode)
-    var struct_node = cast[StructNode](node_seq[0])
-    check(struct_node.members.len == 2)
-    check(struct_node.members[0].name == "x")
-    check(struct_node.members[1].name == "y")
 
   test "errNestedWordDef: defining a word twice should be reported":
     src = ": name : name2 ;"
