@@ -55,7 +55,6 @@ type
   StructNode* = ref object of ASTNode
     name*: string
     members*: seq[StructMember]
-    address*: int
 
   StructMember* = ref object of ASTNode
     name*: string

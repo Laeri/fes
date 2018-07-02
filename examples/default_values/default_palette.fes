@@ -1,22 +1,22 @@
-variable sp_palette0 Palette { col0 = 0x0F col1 = 0x31 col2 = 0x32 col3 = 0x33 }
-variable sp_palette1 Palette { col0 = 0x0F col1 = 0x35 col2 = 0x36 col3 = 0x37 } 
-variable sp_palette2 Palette { col0 = 0x0F col1 = 0x39 col2 = 0x3A col3 = 0x3B }
-variable sp_palette3 Palette { col0 = 0x0F col1 = 0x3D col2 = 0x3E col3 = 0x0F }
+variable bg_palette0 Palette { col0 = 0x0F col1 = 0x31 col2 = 0x32 col3 = 0x33 }
+variable bg_palette1 Palette { col0 = 0x0F col1 = 0x35 col2 = 0x36 col3 = 0x37 } 
+variable bg_palette2 Palette { col0 = 0x0F col1 = 0x39 col2 = 0x3A col3 = 0x3B }
+variable bg_palette3 Palette { col0 = 0x0F col1 = 0x3D col2 = 0x3E col3 = 0x0F }
 
-variable bg_palette0 Palette { col0 = 0x0F col1 = 0x1C col2 = 0x15 col3 = 0x14 }
-variable bg_palette1 Palette { col0 = 0x0F col1 = 0x02 col2 = 0x38 col3 = 0x3C } 
-variable bg_palette2 Palette { col0 = 0x0F col1 = 0x1C col2 = 0x15 col3 = 0x14 }
-variable bg_palette3 Palette { col0 = 0x0F col1 = 0x02 col2 = 0x38 col3 = 0x3C }
+variable sp_palette0 Palette { col0 = 0x0F col1 = 0x1C col2 = 0x15 col3 = 0x14 }
+variable sp_palette1 Palette { col0 = 0x0F col1 = 0x02 col2 = 0x38 col3 = 0x3C } 
+variable sp_palette2 Palette { col0 = 0x0F col1 = 0x1C col2 = 0x15 col3 = 0x14 }
+variable sp_palette3 Palette { col0 = 0x0F col1 = 0x02 col2 = 0x38 col3 = 0x3C }
 
 variable palette_data PaletteData {
-  bg0 = bg_palette0
-  bg1 = bg_palette1
-  bg2 = bg_palette2
-  bg3 = bg_palette3
   sp0 = sp_palette0
   sp1 = sp_palette1
   sp2 = sp_palette2
   sp3 = sp_palette3
+  bg0 = bg_palette0
+  bg1 = bg_palette1
+  bg2 = bg_palette2
+  bg3 = bg_palette3
 }
 
 palette_data load_palette_data

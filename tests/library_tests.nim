@@ -11,6 +11,12 @@ template print_memory(from_addr: int, to_addr: int = from_addr): untyped =
     var addr_uint16 = cast[uint16](i)
     echo "addr: " & $addr_uint16 & " val: " & $nes.cpu.mem[addr_uint16]
 
+template print_memory_hex(from_addr: int, to_addr: int = from_addr): untyped =
+  for i in from_addr .. to_addr:
+    var addr_uint16 = cast[uint16](i)
+    var num = cast[int](nes.cpu.mem[addr_uint16])
+    echo "addr: " & num_to_hex(cast[int](addr_uint16)) & " val: " & num_to_hex(num)
+
 template check_tos(check_val: uint8): untyped =
   check(tos(nes) == check_val)
 
@@ -251,8 +257,33 @@ sp_palette0 get-Palette-col1
     check_tos(0x31)
     check_sos(1)
 
+  test "palette loading":
+    compile_and_run("""
+variable sp_palette0 Palette { col0 = 0x0F col1 = 0x31 col2 = 0x32 col3 = 0x33 }
+variable sp_palette1 Palette { col0 = 0x0F col1 = 0x35 col2 = 0x36 col3 = 0x37 } 
+variable sp_palette2 Palette { col0 = 0x0F col1 = 0x39 col2 = 0x3A col3 = 0x3B }
+variable sp_palette3 Palette { col0 = 0x0F col1 = 0x3D col2 = 0x3E col3 = 0x0F }
 
+variable bg_palette0 Palette { col0 = 0x0F col1 = 0x1C col2 = 0x15 col3 = 0x14 }
+variable bg_palette1 Palette { col0 = 0x0F col1 = 0x02 col2 = 0x38 col3 = 0x3C } 
+variable bg_palette2 Palette { col0 = 0x0F col1 = 0x1C col2 = 0x15 col3 = 0x14 }
+variable bg_palette3 Palette { col0 = 0x0F col1 = 0x02 col2 = 0x38 col3 = 0x3C }
 
+variable palette_data PaletteData {
+  bg0 = bg_palette0
+  bg1 = bg_palette1
+  bg2 = bg_palette2
+  bg3 = bg_palette3
+  sp0 = sp_palette0
+  sp1 = sp_palette1
+  sp2 = sp_palette2
+  sp3 = sp_palette3
+}
+palette_data get-PaletteData-sp0 get-Palette-col2
+palette_data get-PaletteData-bg3 get-Palette-col3
+""")
+    check_tos(0x3C)
+    check_sos(0x32)
 
 
 

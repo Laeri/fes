@@ -411,14 +411,14 @@ const sprite_palette_start_addr_low 0x10
     lda $0200,X
     inx
   ]
-  2dup get-PaletteData-sp0 load_palette
-  2dup get-PaletteData-sp1 load_palette
-  2dup get-PaletteData-sp2 load_palette
-  2dup get-PaletteData-sp3 load_palette
   2dup get-PaletteData-bg0 load_palette
   2dup get-PaletteData-bg1 load_palette
   2dup get-PaletteData-bg2 load_palette
-  get-PaletteData-bg3 load_palette
+  2dup get-PaletteData-bg3 load_palette
+  2dup get-PaletteData-sp0 load_palette
+  2dup get-PaletteData-sp1 load_palette
+  2dup get-PaletteData-sp2 load_palette
+  get-PaletteData-sp3 load_palette
 ;
 
 #[ assumes pointer to Palette struct is on stack ]#
