@@ -372,9 +372,10 @@ proc pass_init_struct_variable_values*(pass_runner: PassRunner, root: ASTNode) =
           push_val.number = init_node.str_values[i].parse_to_integer
           current_init.add(push_val)
         else:
-          var other_node = OtherNode()
-          other_node.name = init_node.str_values[i]
-          current_init.add(other_node) # this will be transformed into LoadVariable in a later pass
+          var load_param_addr = LoadVariableNode()
+          load_param_addr.name = init_node.str_values[i]
+          load_param_addr.var_node = pass_runner.var_table[load_param_addr.name]
+          current_init.add(load_param_addr)
         var load_node = LoadVariableNode()
         load_node.name = var_node.name
         load_node.var_node = pass_runner.var_table[load_node.name]

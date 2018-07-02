@@ -78,9 +78,10 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_set_word_calls(compiler.parser.root)
   pass_runner.pass_add_start_label(compiler.parser.root)
   pass_runner.pass_add_end_label(compiler.parser.root)
-  pass_runner.pass_check_no_OtherNodes(compiler.parser.root)
-  #echo compiler.parser.root.str
+  echo compiler.parser.root.str
   
+  pass_runner.pass_check_no_OtherNodes(compiler.parser.root)
+
 
 proc do_asm_passes(compiler: FESCompiler, code: var seq[ASMAction]) =
   asm_pass_fix_branch_addr_too_far(code)

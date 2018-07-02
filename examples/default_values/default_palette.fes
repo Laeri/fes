@@ -19,7 +19,7 @@ variable palette_data PaletteData {
   sp3 = sp_palette3
 }
 
-sp_palette0 load_palette
+palette_data load_palette_data
 load_sprite mario "./mario.chr"
 
 100 mario set-Sprite-x
