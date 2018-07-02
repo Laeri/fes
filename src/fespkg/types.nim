@@ -61,16 +61,19 @@ type
     name*: string
     has_default*: bool
     default_str_val*: string
-    member_type*: VariableType
+    type_data*: TypeData
 
   ListNode* = ref object of ASTNode
     size*: int
 
-  VariableType* = enum
-    Struct, List, Number, Untyped
+  TypeData* = ref object of RootObj
+    fes_type*: FESType
+    name*: string
+
+  FESType* = enum
+    Struct, List, Number, Struct_ptr, Untyped
 
   InitStructValuesNode* = ref object of ASTNode
-    members*: seq[StructMember]
     names*: seq[string]
     str_values*: seq[string]
 
@@ -79,7 +82,7 @@ type
     var_index*: int
     address*: int
     size*: int # in bytes
-    var_type*: VariableType
+    var_type*: FESType
     type_node*: ASTNode
 
   LoadVariableNode* = ref object of ASTNode

@@ -327,16 +327,18 @@ proc parse_struct(parser: Parser): StructNode =
       var struct_member = newStructMember()
       struct_member.name = token
       if parser.scanner.has_next_on_same_line():
-        if parser.scanner.next.str_val == "=":
+        var next = parser.scanner.next.str_val
+        if next == "=":
           var default_str_val = parser.scanner.next().str_val
           struct_member.set_default(default_str_val) 
         else:
-          if token == $VariableType.Number: # No List type added yet, only Number and Struct
-            struct_member.member_type = Number
+          if next == $FESType.Number: # No List type added yet, only Number and Struct
+            struct_member.type_data.fes_type = Number
           else: 
             # If the token is not a Number, it is a Struct, which kind of Struct is not defined here, just a struct
             # maybe store also struct name in member and then in a pass add the corresponding struct type info to each struct member
-            struct_member.member_type = Struct
+            struct_member.type_data.fes_type = Struct_ptr
+            struct_member.type_data.name = next
           if parser.scanner.has_next_on_same_line() and parser.scanner.next.str_val == "=":
             var default_str_val = parser.scanner.next().str_val
             struct_member.set_default(default_str_val)
@@ -371,10 +373,8 @@ proc parse_init_struct_values(parser: Parser): InitStructValuesNode =
       return
     var eq = parser.scanner.next.str_val
     var default_val = parser.scanner.next.str_val
-    var member = newStructMember()
-    member.name = name
-    member.set_default(default_val)
-    result.members.add(member)
+    result.names.add(name)
+    result.str_values.add(default_val)
 
 proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()

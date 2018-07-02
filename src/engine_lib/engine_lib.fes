@@ -1,7 +1,7 @@
 
 
 struct Input {
-  ByteValue
+  ByteValue Number
 }
 
 variable input1 Input
@@ -52,7 +52,7 @@ button:	 A     B  Select Start  Up   Down  Left  Right
 ;
 
 : right_pressed?
-  get-Input-ByteValue 0x01 bit_set?
+  get-Input-ByteValue @ 0x01 bit_set?
 ;
 
 : read_inputs1
@@ -445,7 +445,7 @@ struct Sprite {
 y            Number
 tile_number  Number
 attributes   Number
-x
+x            Number
 }
 
 #[ Attributes: nintendoage.com/forum/messageview.cfm?catid=22&threadid=6082

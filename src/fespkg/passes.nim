@@ -197,6 +197,7 @@ proc getter_name*(struct_node: StructNode, member: StructMember): string =
 
 # Pass
 # syntax: <player_variable> get-Player-<member_name>
+# low_byte high_byte
 proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node: StructNode) =
   # assumes base address is on the stack
   # removes base address and puts value of the member variable onto the stack
@@ -204,21 +205,27 @@ proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node
     var member = struct_node.members[i]
     var get_define = newDefineWordNode()
     var asm_node = newASMNode()
-    # use indirect indexed address fetching with y register
-    # for example "lda ($01), Y" loads value at address $01 (the base address of the struct) and
-    # then applies the offset Y (to each member variable in the struct
-    # the base value is assumed to be TOS (in register A) and has to be stored at a memory location
-    # to perform this magic
-    # temporarily use location $FE,
-    # indirect addressing uses 16bit addresses! Therefore $FF should contain 0, 
-    # first store tos (A)
-    # (addr_low_byte addr_high_byte - val)
-    asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte)) # store base address for indirect indexing
-    asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # 
-    asm_node.add(ASMCall(op: STA, param: base_addr_addr))
-    asm_node.add(ASMCall(op: INX))
-    asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset
-    asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # access base + member_offset
+    #echo "member: " & member.name & " type: " & $member.type_data.fes_type & " specific: " & member.type_data.name
+    if member.type_data.fes_type == Number:
+      asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: STA, param: base_addr_addr))
+      asm_node.add(ASMCall(op: INX))
+      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i)))
+      asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y"))
+    elif member.type_data.fes_type == Struct_ptr:
+      asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: STA, param: base_addr_addr))
+      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i)))
+      asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # loaded low_byte of ptr_value
+      asm_node.add(ASMCall(op: STA, param: "$0200,X")) # store low_byte on stack and make room for high_byte
+      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i+1))) # high byte is one cell further (low_byte high_byte)
+      asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # we end up with low_byte, high_byte on the stack
+    else:
+      echo "no getter for type: " & $member.type_data.fes_type
+
+ 
     get_define.word_name = getter_name(struct_node, member)
     get_define.definition.add(asm_node)
     pass_runner.definitions[get_define.word_name] = get_define
@@ -238,16 +245,35 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
     var set_define = newDefineWordNode()
     var asm_node = newASMNode()
     # same magic as for gen_getters
-    asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-    asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
-    asm_node.add(ASMCall(op: STA, param: base_addr_addr))
-    asm_node.add(ASMCall(op: INX))
-    asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-    asm_node.add(ASMCall(op: INX))
-    asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))
-    asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
-    asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # drop value from the stack after storing in struct member
-    asm_node.add(ASMCall(op: INX))
+    if member.type_data.fes_type == Number:
+      asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
+      asm_node.add(ASMCall(op: STA, param: base_addr_addr))
+      asm_node.add(ASMCall(op: INX))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: INX))
+      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # load struct member offset))
+      asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # drop value from the stack after storing in struct member
+      asm_node.add(ASMCall(op: INX))
+    elif member.type_data.fes_type == Struct_ptr:
+      asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: STA, param: base_addr_addr))
+      asm_node.add(ASMCall(op: INX))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: INX))
+      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i + 1))) # high byte is first in stack and comes second in struct
+      asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: INX))
+      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(i))) # low byte is second ins tack and comes first in struct
+      asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
+      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
+      asm_node.add(ASMCall(op: INX))
+    else:
+      echo "Implement setter for other type " & $member.type_data.fes_type
+    
     set_define.word_name = setter_name(struct_node, member)
     set_define.definition.add(asm_node)
     pass_runner.definitions[set_define.word_name] = set_define
@@ -329,40 +355,35 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
     else:
       echo "implement new variable and set its address"
 
-proc parse_init_val*(pass_runner: PassRunner, member: StructMember, var_node: VariableNode): SequenceNode =
-  result = newSequenceNode()
-  if member.default_str_val.is_valid_number_str: # 0xXY, #$ABCD should also be parsed
-    var push_val = PushNumberNode()
-    push_val.number = member.default_str_val.parse_to_integer
-    result.add(push_val)
-  else: # it is an address?
-    var corresponding_variables: seq[VariableNode] =  @[]
-    for tmp in pass_runner.var_table.values:
-      if tmp.name == member.default_str_val:
-        corresponding_variables.add(tmp)
-    if corresponding_variables.len == 1: # we have found a corresponding variable and it should only be one variable with the given name in the var_table
-      var load_var_addr = LoadVariableNode()
-      load_var_addr.name = corresponding_variables[0].name
-      load_var_addr.var_node = corresponding_variables[0]
-      result.add(load_var_addr)
-    else:
-      echo "Error in pass pass_init_struct_default_values"
-  var push_struct_var_addr = LoadVariableNode(name: cast[StructNode](var_node.type_node).name, var_node: var_node)
-  var call_setter = OtherNode(name: setter_name(cast[StructNode](var_node.type_node), member)) # OtherNode -> CallWordNode is done by pass: pass_set_word_calls
-  result.add(push_struct_var_addr)
-  result.add(call_setter)
-
 
 # Pass
 proc pass_init_struct_variable_values*(pass_runner: PassRunner, root: ASTNode) =
   var root_seq = (cast[SequenceNode](root)).sequence
-  var init_seqs: seq[SequenceNode] = @[]
-  for i in 0..(root_seq.len - 1):
-    if root_seq[i] of InitStructValuesNode:
-      var init_node = cast[InitStructValuesNode](root_seq[i])
-      var var_node = cast[VariableNode](root_seq[i - 1]) # assumes AST now hast the form "VariableNode InitStructVariableNode"
-      for member in init_node.members:
-        init_seqs.add(pass_runner.parse_init_val(member, var_node))
+  var init_seqs: seq[ASTNode] = @[]
+  for j in 0..(root_seq.len - 1):
+    if root_seq[j] of InitStructValuesNode:
+      var init_node = cast[InitStructValuesNode](root_seq[j])
+      var var_node = cast[VariableNode](root_seq[j - 1]) # assumes AST now hast the form "VariableNode InitStructVariableNode"
+      for i in 0..(init_node.names.len - 1):
+        var current_init = newSequenceNode()
+        echo "init_member: " & init_node.names[i] & " value: " & init_node.str_values[i]
+        if init_node.str_values[i].is_valid_number_str:
+          var push_val = PushNumberNode()
+          push_val.number = init_node.str_values[i].parse_to_integer
+          current_init.add(push_val)
+        else:
+          var other_node = OtherNode()
+          other_node.name = init_node.str_values[i]
+          current_init.add(other_node) # this will be transformed into LoadVariable in a later pass
+        var load_node = LoadVariableNode()
+        load_node.name = var_node.name
+        load_node.var_node = pass_runner.var_table[load_node.name]
+        current_init.add(load_node)
+        var setter = OtherNode()
+        setter.name = "set-" & (cast[StructNode]((cast[VariableNode](root_seq[j - 1])).type_node)).name & "-" & init_node.names[i]
+        current_init.add(setter)
+        init_seqs.add(current_init)
+
   for tmp in init_seqs:
     (cast[SequenceNode](root)).sequence.insert(tmp, 0)
 

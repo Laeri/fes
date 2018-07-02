@@ -53,12 +53,6 @@ suite "Emulation Suite":
   teardown:
     nes = nil
   
-  test "variable should be stored at location $00":
-    compile_and_run("variable name 1 name !")
-    nes = newNES(tmp_nes_path)
-    nes.run(1)
-    print_memory(0, 15)
-    #check_memory(0, 1)
 
   test "three variables should be stored at location $00 and $01, $02":
     compile_and_run("""
@@ -95,8 +89,8 @@ name2 @""")
   test "struct access":
     compile_and_run("""
 struct Coord {
-  x
-  y
+  x Number
+  y Number
 }
 variable coords Coord
 3 coords set-Coord-x
@@ -106,8 +100,8 @@ variable coords Coord
   test "struct setter test of x,y":
     compile_and_run("""
 struct Player {
-  x
-  y
+  x Number
+  y Number
 }
 variable player Player
 3 player set-Player-y
@@ -119,8 +113,8 @@ variable player Player
   test "struct getter test of y":
     compile_and_run("""
 struct Player {
-  x
-  y
+  x Number
+  y Number
 }
 variable player Player
 3 player set-Player-y
@@ -131,8 +125,8 @@ player get-Player-y
   test "struct getter test of x":
     compile_and_run("""
 struct Player {
-  x
-  y
+  x Number
+  y Number
 }
 variable player Player
 3 player set-Player-x
@@ -144,8 +138,8 @@ player get-Player-x
     compile_and_run("""
 variable test_var
 struct TestPlayer {
-  x
-  y
+  x Number
+  y Number
 }
 variable player TestPlayer
 10 player set-TestPlayer-x
@@ -155,7 +149,7 @@ player get-TestPlayer-x""")
   test "struct settting, getting multiple times":
     compile_and_run("""
 struct Input {
-  ByteValue
+  ByteValue Number
 }
 variable input1 Input
 128 input1 set-Input-ByteValue
@@ -167,11 +161,11 @@ input1 get-Input-ByteValue""")
   test "several structs":
     compile_and_run("""
 struct Coords {
-  x
-  y
+  x Number
+  y Number
 }
 struct Input {
-  ByteValue
+  ByteValue Number
 }
 variable coords1 Coords
 variable input_t Input
@@ -181,14 +175,13 @@ variable input_t2 Input
 5 coords1 set-Coords-x
 10 coords1 set-Coords-y
 125 input_t2 set-Input-ByteValue
-input_t get-Input-ByteValue""")
-    print_memory(0x0300, 0x0310)
+input_t get-Input-ByteValue """)
     check_tos(128)
 
   test "struct accessing with overwritten memory":
     compiler.compile_test_str("""struct Input {
-  ByteValue
-} variable input Input 3 input set-Input-ByteValue input get-Input-ByteValue""")
+  ByteValue Number
+} variable input Input 3 input set-Input-ByteValue input get-Input-ByteValue """)
     nes = newNES(tmp_nes_path)
     for i in 0..0x02FF:
       nes.cpu.mem[cast[uint16](i)] = cast[uint8](0xFF) # overwrite all memory locations
@@ -258,7 +251,6 @@ input_t get-Input-ByteValue""")
     compile_and_run("1 2 3 2dup")
     check_tos(3)
     check_sos(2)
-    print_memory(0x0200, 0x02FF)
 
   test "2swap":
     compile_and_run("1 2 3 4 2swap")
@@ -465,12 +457,10 @@ lst 0 list-get
 
   test "8 / 2":
     compile_and_run("8 2 /")
-    print_memory(0xFA, 0xFD)
     check_tos(4)
 
   test "16 / 4":
     compile_and_run("16 4 /")
-    print_memory(0xFA, 0xFD)
     check_tos(4)
 
   test "7 / 3":
@@ -512,7 +502,6 @@ lst 0 list-get
   test "if: false should remove condition bool from stack":
     compile_and_run("true false if 1 else 2 then drop")
     check_tos(uint8_true())
-    print_memory(0x0200, 0x02FF)
 
   test "while: countdown":
     compile_and_run("10 begin dup 1 != while 1 - end")
@@ -568,8 +557,8 @@ lst 0 list-get
 
   test "default struct values of numbers":
     compile_and_run("""struct TestStruct {
-  a = 10
-  b = 0xB
+  a Number = 10
+  b Number = 0xB
 }
 variable tmp TestStruct
 tmp get-TestStruct-a
@@ -577,6 +566,8 @@ tmp get-TestStruct-b""")
     check_tos(11)
     check_sos(10)
 
+# ptr to numbers is going to be added later
+#[
   test "default struct values of addresses":
     compile_and_run("""
 variable tmp_var
@@ -586,16 +577,17 @@ struct TestStruct {
   tmp_other = 2
 }
 variable test_struct TestStruct
-test_struct get-TestStruct-tmp @
+test_struct get-TestStruct-tmp @ @
 """)
     check_tos(3)
+]#
 
   test "struct init list":
     compile_and_run("""
 struct TestStruct {
-  a
-  b
-  c
+  a Number
+  b Number
+  c Number
 }
 variable tmp TestStruct {
   a = 10
@@ -606,6 +598,47 @@ tmp get-TestStruct-b
 """)
     check_tos(11)
     check_sos(10)
+
+
+  test "struct_ptr getter":
+    compile_and_run("""
+      variable t
+      struct AStruct {
+        a Number = 10
+      }
+      struct BStruct {
+        b AStruct
+      }
+      variable a_struct AStruct
+      variable b_struct BStruct
+      a_struct b_struct set-BStruct-b
+      b_struct get-BStruct-b get-AStruct-a
+    """)
+
+    echo compiler.parser.root.str
+    print_tos()
+    nes.print_sos()
+    print_memory(0x00, 0x10)
+
+  test "struct_ptr setter":
+    compile_and_run("""
+      struct OneStruct {
+        a Number = 10 
+      }
+      variable one_struct OneStruct
+      11 one_struct set-OneStruct-a
+      variable other_struct OneStruct
+      struct TestStruct {
+        a_struct OneStruct
+      }
+      variable test_struct TestStruct
+      one_struct test_struct set-TestStruct-a_struct
+      other_struct test_struct set-TestStruct-a_struct
+      test_struct get-TestStruct-a_struct get-OneStruct-a
+      """)
+    check_tos(10)
+    echo compiler.parser.root.str
+        
     
     
 

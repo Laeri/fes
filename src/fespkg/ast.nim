@@ -31,16 +31,23 @@ proc newASMCall*(): ASMCall =
 
 proc newInitStructValuesNode*(): InitStructValuesNode =
   result = InitStructValuesNode()
-  result.members = @[]
+  result.names = @[]
+  result.str_values = @[]
 
 proc newStructNode*(): StructNode =
   result = StructNode()
   result.members = @[]
 
+proc newTypeData*(): TypeData =
+  result = TypeData()
+  result.name = "No TypeData Name"
+  result.fes_type = Number
+
 proc newStructMember*(): StructMember =
   result = StructMember()
   result.has_default = false
-  result.member_type = Untyped
+  result.type_data = newTypeData()
+  result.type_data.fes_type = Untyped
 
 proc set_default*(struct_member: StructMember, val: string) =
   struct_member.has_default = true
@@ -145,8 +152,8 @@ method str*(action: ASMAction, prefix = ""): string =
 
 method str*(node: InitStructValuesNode, prefix = ""): string =
   result = prefix & "InitStructValuesNode: " & "\n"
-  for member in node.members:
-    result &= prefix & "member: " & member.name & " default: " & member.default_str_val & "\n"
+  for i in 0..(node.names.len - 1):
+    result &= prefix & "member: " & node.names[i] & " default: " & node.str_values[i] & "\n"
 
 method str*(node: OtherNode, prefix = ""): string =
   return prefix & "OtherNode: " & node.name & "\n"
