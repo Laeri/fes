@@ -1,38 +1,5 @@
 import
-  types, msgs, compiler, utils, ast, unittest, strutils, nimes_integration, ../lib/nimes/src/nes, ../lib/nimes/src/nes/mem, utils
-
-template check_memory(mem_addr: int, check_val: int): untyped =
-  var addr_uint16 = cast[uint16](mem_addr)
-  var val_uint8 = cast[uint8](check_val)
-  check(nes.cpu.mem[addr_uint16] == val_uint8)
-
-template print_memory(from_addr: int, to_addr: int = from_addr): untyped =
-  for i in from_addr .. to_addr:
-    var addr_uint16 = cast[uint16](i)
-    echo "addr: " & $addr_uint16 & " val: " & $nes.cpu.mem[addr_uint16]
-
-template check_tos(check_val: uint8): untyped =
-  check(tos(nes) == check_val)
-
-template compile_and_run(src: string, seconds: float = 0.2): untyped {.dirty.} =
-  compiler.compile_test_str(src)
-  nes = newNES(tmp_nes_path)
-  nes.run(seconds)
-
-template check_sos(check_val: uint8): untyped {.dirty.} =
-  var sos: uint8 = nes.cpu.mem[second_of_stack_base_addr() + nes.cpu.x]
-  check(sos == check_val)
-
-template print_tos(): untyped {.dirty.} =
-  nes.print_tos()
-
-template check_stack(stack_index: int, check_val: uint8): untyped =
-  # stack index for tos = 0, for sos = -1, -2,-3....
-  if stack_index == 0:
-    check_tos(check_val)
-  var mem_index: uint16 = cast[uint16](0x0200 + cast[int](nes.cpu.x) - stack_index - 1) # tos is in A
-  check(nes.cpu.mem[mem_index] == check_val)
-
+  types, msgs, nimes_integration, compiler, utils, ast, unittest, strutils, nimes_integration, ../lib/nimes/src/nes, ../lib/nimes/src/nes/mem, utils
 
 
 suite "Emulation Suite":
@@ -268,12 +235,12 @@ input_t get-Input-ByteValue """)
     check_sos(1)
 
   test "pull_fourth_up":
-    compile_and_run("1 2 3 4 pull_fourth_up")
+    compile_and_run("10 1 2 3 4 pull_fourth_up")
     check_tos(1)
     check_sos(4)
 
   test "pull_fifth_up":
-    compile_and_run("1 2 3 4 5 copy_fifth_up")
+    compile_and_run("10 1 2 3 4 5 copy_fifth_up")
     check_tos(1)
     check_sos(5)
 

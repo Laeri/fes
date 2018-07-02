@@ -52,7 +52,7 @@ button:	 A     B  Select Start  Up   Down  Left  Right
 ;
 
 : right_pressed?
-  get-Input-ByteValue @ 0x01 bit_set?
+  get-Input-ByteValue 0x01 bit_set?
 ;
 
 : read_inputs1
@@ -585,7 +585,7 @@ set_priority:
   inv_rot set-Sprite-x
 ;
 
-#[ dy sprite_ptr - ) ]#
+#[ dy low high - ) ]#
 : move_sprite_by_y
   2dup get-Sprite-y
   pull_fourth_up
@@ -596,7 +596,7 @@ set_priority:
 #[ dx dy sprite_ptr_low sprite_ptr_high - ) ]#
 : move_sprite_by_xy
   2dup
-  copy_fifth_up
+  copy_fifth_up # dx dy l h l h dy
   rot rot
   move_sprite_by_y
   rot drop

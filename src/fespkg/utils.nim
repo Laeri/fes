@@ -9,6 +9,12 @@ proc isInteger*(str: string): bool =
      return false
   return true
 
+proc twos_complement_8bit*(num: int): int =
+  if num >= 0:
+    result = num
+  else:
+    result = (2^8) - abs(num)
+
 proc is_binary_str*(str: string): bool =
   if str.len <= 2: 
     return false
