@@ -337,7 +337,7 @@ proc parse_struct(parser: Parser): StructNode =
           else: 
             # If the token is not a Number, it is a Struct, which kind of Struct is not defined here, just a struct
             # maybe store also struct name in member and then in a pass add the corresponding struct type info to each struct member
-            struct_member.type_data.fes_type = Struct_ptr
+            struct_member.type_data.fes_type = Untyped_ptr
             struct_member.type_data.name = next
           if parser.scanner.has_next_on_same_line() and parser.scanner.next.str_val == "=":
             var default_str_val = parser.scanner.next().str_val

@@ -62,6 +62,7 @@ proc do_passes(compiler: FESCompiler) =
   var pass_runner = compiler.pass_runner
   pass_runner.pass_group_word_defs_last(compiler.parser.root)
   pass_runner.pass_check_multiple_defs(compiler.parser.root)
+  pass_runner.pass_set_member_ptr_types(compiler.parser.root)
   pass_runner.pass_setup_sprites(compiler.parser.root)
   pass_runner.pass_set_constants(compiler.parser.root)
   pass_runner.pass_set_struct_var_type(compiler.parser.root)

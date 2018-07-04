@@ -68,9 +68,10 @@ type
   TypeData* = ref object of RootObj
     fes_type*: FESType
     name*: string
+    type_node*: ASTNode
 
   FESType* = enum
-    Struct, List, Number, Struct_ptr, Untyped
+    Struct, List, Number, Struct_ptr, List_ptr, Untyped_ptr, Untyped
 
   InitStructValuesNode* = ref object of ASTNode
     names*: seq[string]

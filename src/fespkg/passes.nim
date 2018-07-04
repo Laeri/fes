@@ -124,6 +124,28 @@ proc pass_check_multiple_defs*(pass_runner: PassRunner, node: ASTNode) =
       if names.count(set_name) > 1:
         pass_runner.error_handler.handle(gen_error(node, errWordAlreadyDefined, set_name))
 
+proc exists_with_name(structs: seq[StructNode], name: string): bool =
+  for struct in structs:
+    if struct.name == name:
+      return true
+  return false
+
+proc get_with_name(structs: seq[StructNode], name: string): StructNode =
+  for struct in structs:
+    if struct.name == name:
+      return struct
+
+# Pass
+proc pass_set_member_ptr_types*(pass_runner: PassRunner, node: ASTNode) =
+  var structs = toSeq(pass_runner.structs.values) # values is an iterator, toSeq transforms any iterator to a sequence
+  for struct in structs:
+    for member in struct.members:
+      if member.type_data.fes_type == Untyped_ptr:
+        if structs.exists_with_name(member.type_data.name):
+          member.type_data.fes_type = Struct_ptr
+        else: # if not a struct it has to be a pointer to a list
+          member.type_data.fes_type = List_ptr
+
 # Pass 
 proc pass_setup_sprites*(pass_runner: PassRunner, node: ASTNode) =
   # setup sprite with tile index
@@ -215,7 +237,7 @@ proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node
       asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(relative_address)))
       asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y"))
       relative_address += 1
-    elif member.type_data.fes_type == Struct_ptr:
+    elif (member.type_data.fes_type == Struct_ptr) or (member.type_data.fes_type == List_ptr):
       asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
       asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
       asm_node.add(ASMCall(op: STA, param: base_addr_addr))
@@ -261,7 +283,7 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
       asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # drop value from the stack after storing in struct member
       asm_node.add(ASMCall(op: INX))
       relative_address += 1
-    elif member.type_data.fes_type == Struct_ptr:
+    elif (member.type_data.fes_type == Struct_ptr) or (member.type_data.fes_type == List_ptr):
       asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
       asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
       asm_node.add(ASMCall(op: STA, param: base_addr_addr))
