@@ -77,6 +77,9 @@ type
     names*: seq[string]
     str_values*: seq[string]
 
+  InitListValuesNode* = ref object of ASTNode
+    str_values*: seq[string]
+
   VariableNode* = ref object of ASTNode
     name*: string
     var_index*: int

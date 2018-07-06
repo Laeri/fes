@@ -366,7 +366,6 @@ proc parse_const(parser: Parser): ConstNode =
 proc parse_init_struct_values(parser: Parser): InitStructValuesNode =
   result = newInitStructValuesNode()
   parser.set_begin_info(result)
-  var ret = false
   while parser.scanner.has_next: # no checks, malformed InitList should be reported!
     var name = parser.scanner.next.str_val
     if name == "}":
@@ -375,6 +374,15 @@ proc parse_init_struct_values(parser: Parser): InitStructValuesNode =
     var default_val = parser.scanner.next.str_val
     result.names.add(name)
     result.str_values.add(default_val)
+
+proc parse_init_list_values(parser: Parser): InitListValuesNode =
+  result = newInitListValuesNode()
+  parser.set_begin_info(result)
+  while parser.scanner.has_next:
+    var next = parser.scanner.next.str_val
+    if next == "}":
+      return
+    result.str_values.add(next)
 
 proc parse_sequence(parser: Parser): SequenceNode = 
   var root = newSequenceNode()
@@ -411,6 +419,11 @@ proc parse_sequence(parser: Parser): SequenceNode =
       list_node.size = size_str.parseInt
       parser.set_info(list_node)
       root.add(list_node)
+      if parser.scanner.peek.str_val == "{":
+        discard parser.scanner.next # discard opening {
+        var init_list_node = parser.parse_init_list_values()
+        parser.set_end_info(init_list_node)
+        root.add(init_list_node)
     elif token.str_val == "if":
       var ifelse_node = parser.parse_ifelse()
       root.add(ifelse_node)

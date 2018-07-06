@@ -452,7 +452,41 @@ proc pass_init_struct_default_values*(pass_runner: PassRunner, root: ASTNode) =
           root_seq.sequence.insert(init_seq, 0)
 
 
+# Pass
+proc pass_init_list_values*(pass_runner: PassRunner, root: ASTNode) =
+  var root_seq = (cast[SequenceNode](root)).sequence
+  var init_seqs: seq[ASTNode] = @[]
+  for j in 0..(root_seq.len - 1):
+    if root_seq[j] of InitListValuesNode:
+      var index_in_list = 1 # first byte stores size
+      var init_node = cast[InitListValuesNode](root_seq[j])
+      var var_node = cast[VariableNode](root_seq[j - 1]) # assumes AST now hast the form "VariableNode InitListValuesNode"
+      for i in 0..(init_node.str_values.len - 1):
+        var current_init = newSequenceNode()
+        var load_node = LoadVariableNode() # list addr is currently before the params, might be changed in later iteration, then this needs to be moved after the value and index
+        load_node.name = var_node.name
+        load_node.var_node = pass_runner.var_table[load_node.name]
+        current_init.add(load_node)
+        var size_increase_of_index: int
 
+        if init_node.str_values[i].is_valid_number_str:
+          var push_val = PushNumberNode()
+          push_val.number = init_node.str_values[i].parse_to_integer
+          current_init.add(push_val)
+          size_increase_of_index = 1 # number is 1 byte long
+        else:
+          var load_param_addr = LoadVariableNode()
+          load_param_addr.name = init_node.str_values[i]
+          load_param_addr.var_node = pass_runner.var_table[load_param_addr.name]
+          current_init.add(load_param_addr)
+          size_increase_of_index = 2 # addr is 2 bytes long
+        # value is on the stack, now index parameter has to be moved onto the stack
+        var push_index = PushNumberNode()
+        push_index.number = index_in_list    
+        var setter = OtherNode()
+        setter.name = "List-set"
+        current_init.add(setter)
+        init_seqs.add(current_init) 
 
 
 # Pass

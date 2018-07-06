@@ -34,6 +34,10 @@ proc newInitStructValuesNode*(): InitStructValuesNode =
   result.names = @[]
   result.str_values = @[]
 
+proc newInitListValuesNode*(): InitListValuesNode =
+  result = InitListValuesNode()
+  result.str_values = @[]
+
 proc newStructNode*(): StructNode =
   result = StructNode()
   result.members = @[]
