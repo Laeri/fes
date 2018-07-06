@@ -51,6 +51,26 @@ template check_sos*(check_val: uint8): untyped {.dirty.} =
 template print_tos*(): untyped {.dirty.} =
   nes.print_tos()
 
+template print_sos*(): untyped {.dirty.} =
+  nes.print_sos()
+
+template print_sos_addr*(): untyped {.dirty.} =
+  nes.print_sos_addr()
+
+template print_x*(): untyped {.dirty.} =
+  echo "reg x: " & $nes.cpu.x
+
+template print_y*(): untyped {.dirty.} =
+  echo "reg y: " & $nes.cpu.y
+
+template print_a*(): untyped {.dirty.} =
+  echo "reg a: " & $nes.cpu.a
+
+template print_sp*(): untyped {.dirty.} =
+  echo "reg sp: " & $nes.cpu.sp
+
+
+
 template check_stack*(stack_index: int, check_val: uint8): untyped =
   # stack index for tos = 0, for sos = -1, -2,-3....
   if stack_index == 0:
