@@ -10,12 +10,12 @@ proc push_asm_node(num: int): ASMNode =
 
 proc push_addr_asm_node(num: int): ASMNode =
   result = newASMNode()
-  result.add(ASMCall(op: DEX))
-  result.add(ASMCall(op: STA, param: "$0200,X"))
-  result.add(ASMCall(op: LDA, param: num_to_im_hex_lower_byte(num)))
-  result.add(ASMCall(op: DEX))
-  result.add(ASMCall(op: STA, param: "$0200,X"))
-  result.add(ASMCall(op: LDA, param: num_to_im_hex_higher_byte(num)))
+  result.add(DEX)
+  result.add(STA, "$0200,X")
+  result.add(LDA, num_to_im_hex_lower_byte(num))
+  result.add(DEX)
+  result.add(STA, "$0200,X")
+  result.add(LDA, num_to_im_hex_higher_byte(num))
 
 proc newCodeGenerator*(): CodeGenerator =
   result = CodeGenerator()
@@ -110,17 +110,17 @@ method emit*(generator: CodeGenerator, node: IfElseNode) =
   var then_block = node.then_block
   var else_block = node.else_block
   generator.code.add(generator.begin_if_label(current_ifelse_index))
-  generator.code.add(ASMCall(op: CLC))
-  generator.code.add(ASMCall(op: ASL, param: "A"))
-  generator.code.add(ASMCall(op: BCC, param: generator.begin_else_label_name(current_ifelse_index)))
+  generator.code.add(CLC)
+  generator.code.add(ASL, "A")
+  generator.code.add(BCC, generator.begin_else_label_name(current_ifelse_index))
   generator.code.add(generator.begin_then_label(current_ifelse_index))
-  generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop condition
-  generator.code.add(ASMCall(op: INX))
+  generator.code.add(LDA, "$0200,X") # pop condition
+  generator.code.add(INX)
   generator.emit(then_block)
-  generator.code.add(ASMCall(op: JMP, param: generator.end_if_label_name(current_ifelse_index)))
+  generator.code.add(JMP, generator.end_if_label_name(current_ifelse_index))
   generator.code.add(generator.begin_else_label(current_ifelse_index))
-  generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop condition
-  generator.code.add(ASMCall(op: INX))
+  generator.code.add(LDA, "$0200,X") # pop condition
+  generator.code.add(INX)
   generator.emit(else_block)
   generator.code.add(generator.end_if_label(current_ifelse_index))
 
@@ -144,17 +144,17 @@ method emit*(generator: CodeGenerator, node: WhileNode) =
   var then_block = node.then_block
   generator.code.add(generator.begin_while_label(current_while_index))
   generator.emit(condition_block)
-  generator.code.add(ASMCall(op: CLC))
-  generator.code.add(ASMCall(op: ASL, param: "A"))
-  generator.code.add(ASMCall(op: BCC, param: generator.end_while_name(current_while_index)))
-  generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop computed flag of the stack
-  generator.code.add(ASMCall(op: INX))
+  generator.code.add(CLC)
+  generator.code.add(ASL, "A")
+  generator.code.add(BCC, generator.end_while_name(current_while_index))
+  generator.code.add(LDA, "$0200,X") # pop computed flag of the stack
+  generator.code.add(INX)
   generator.code.add(generator.then_while_label(current_while_index))
   generator.emit(then_block)
-  generator.code.add(ASMCall(op: JMP, param: generator.begin_while_name(current_while_index)))
+  generator.code.add(JMP, generator.begin_while_name(current_while_index))
   generator.code.add(generator.end_while_label(current_while_index))
-  generator.code.add(ASMCall(op: LDA, param: "$0200,X")) # pop computed flag of the stack
-  generator.code.add(ASMCall(op: INX))
+  generator.code.add(LDA, "$0200,X") # pop computed flag of the stack
+  generator.code.add(INX)
 
 var base_address = "$0200"
 
@@ -162,12 +162,12 @@ var base_address = "$0200"
 
 method emit*(generator: CodeGenerator, node: LoadVariableNode) =
   echo node.name & " addr: " & $node.var_node.address
-  generator.code.add(ASMCall(op: DEX))
-  generator.code.add(ASMCall(op: STA, param: base_address & ",X"))
-  generator.code.add(ASMCall(op: LDA, param: num_to_im_hex_lower_byte(node.var_node.address)))
-  generator.code.add(ASMCall(op: DEX))
-  generator.code.add(ASMCall(op: STA, param: base_address & ",X"))
-  generator.code.add(ASMCall(op: LDA, param: num_to_im_hex_higher_byte(node.var_node.address)))
+  generator.code.add(DEX)
+  generator.code.add(STA, base_address & ",X")
+  generator.code.add(LDA, num_to_im_hex_lower_byte(node.var_node.address))
+  generator.code.add(DEX)
+  generator.code.add(STA, base_address & ",X")
+  generator.code.add(LDA, num_to_im_hex_higher_byte(node.var_node.address))
 
 method emit*(generator: CodeGenerator, node: LoadConstantNode) =
   var val_str = node.const_node.value

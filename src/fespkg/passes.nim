@@ -237,22 +237,22 @@ proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node
     var asm_node = newASMNode()
     #echo "member: " & member.name & " type: " & $member.type_data.fes_type & " specific: " & member.type_data.name
     if member.type_data.fes_type == Number:
-      asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: STA, param: base_addr_addr))
-      asm_node.add(ASMCall(op: INX))
-      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(relative_address)))
-      asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y"))
+      asm_node.add(STA, base_addr_addr_high_byte)
+      asm_node.add(LDA, "$0200,X")
+      asm_node.add(STA, base_addr_addr)
+      asm_node.add(INX)
+      asm_node.add(LDY, num_to_im_hex(relative_address))
+      asm_node.add(LDA, "[" & base_addr_addr & "],Y")
       relative_address += 1
     elif (member.type_data.fes_type == Struct_ptr) or (member.type_data.fes_type == List_ptr):
-      asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: STA, param: base_addr_addr))
-      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(relative_address)))
-      asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # loaded low_byte of ptr_value
-      asm_node.add(ASMCall(op: STA, param: "$0200,X")) # store low_byte on stack and make room for high_byte
-      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(relative_address+1))) # high byte is one cell further (low_byte high_byte)
-      asm_node.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # we end up with low_byte, high_byte on the stack
+      asm_node.add(STA, base_addr_addr_high_byte)
+      asm_node.add(LDA, "$0200,X")
+      asm_node.add(STA, base_addr_addr)
+      asm_node.add(LDY, num_to_im_hex(relative_address))
+      asm_node.add(LDA, "[" & base_addr_addr & "],Y") # loaded low_byte of ptr_value
+      asm_node.add(STA, "$0200,X") # store low_byte on stack and make room for high_byte
+      asm_node.add(LDY, num_to_im_hex(relative_address+1)) # high byte is one cell further (low_byte high_byte)
+      asm_node.add(LDA, "[" & base_addr_addr & "],Y") # we end up with low_byte, high_byte on the stack
       relative_address += 2 
     else:
       echo "no getter for type: " & $member.type_data.fes_type
@@ -279,32 +279,32 @@ proc add_struct_setters(pass_runner: PassRunner, root: SequenceNode, struct_node
     var asm_node = newASMNode()
     # same magic as for gen_getters
     if member.type_data.fes_type == Number:
-      asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
-      asm_node.add(ASMCall(op: STA, param: base_addr_addr))
-      asm_node.add(ASMCall(op: INX))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: INX))
-      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(relative_address))) # load struct member offset))
-      asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X")) # drop value from the stack after storing in struct member
-      asm_node.add(ASMCall(op: INX))
+      asm_node.add(STA, base_addr_addr_high_byte)
+      asm_node.add(LDA, "$0200,X") # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
+      asm_node.add(STA, base_addr_addr)
+      asm_node.add(INX)
+      asm_node.add(LDA, "$0200,X")
+      asm_node.add(INX)
+      asm_node.add(LDY, num_to_im_hex(relative_address)) # load struct member offset))
+      asm_node.add(STA, "[" & base_addr_addr & "],Y")
+      asm_node.add(LDA, "$0200,X") # drop value from the stack after storing in struct member
+      asm_node.add(INX)
       relative_address += 1
     elif (member.type_data.fes_type == Struct_ptr) or (member.type_data.fes_type == List_ptr):
-      asm_node.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: STA, param: base_addr_addr))
-      asm_node.add(ASMCall(op: INX))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: INX))
-      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(relative_address + 1))) # high byte is first in stack and comes second in struct
-      asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: INX))
-      asm_node.add(ASMCall(op: LDY, param: num_to_im_hex(relative_address))) # low byte is second ins tack and comes first in struct
-      asm_node.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y"))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: INX))
+      asm_node.add(STA, base_addr_addr_high_byte)
+      asm_node.add(LDA, "$0200,X")
+      asm_node.add(STA, base_addr_addr)
+      asm_node.add(INX)
+      asm_node.add(LDA, "$0200,X")
+      asm_node.add(INX)
+      asm_node.add(LDY, num_to_im_hex(relative_address + 1)) # high byte is first in stack and comes second in struct
+      asm_node.add(STA, "[" & base_addr_addr & "],Y")
+      asm_node.add(LDA, "$0200,X")
+      asm_node.add(INX)
+      asm_node.add(LDY, num_to_im_hex(relative_address)) # low byte is second ins tack and comes first in struct
+      asm_node.add(STA, "[" & base_addr_addr & "],Y")
+      asm_node.add(LDA, "$0200,X")
+      asm_node.add(INX)
       relative_address += 2
     else:
       echo "Implement setter for other type " & $member.type_data.fes_type
@@ -520,12 +520,12 @@ proc pass_init_list_sizes*(pass_runner: PassRunner, root: SequenceNode) =
   for variable in pass_runner.var_table.values:
     if variable.var_type == List:
       var asm_node = newASMNode()
-      asm_node.add(ASMCall(op: DEX))
-      asm_node.add(ASMCall(op: STA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: LDA, param: num_to_im_hex(variable.size)))
-      asm_node.add(ASMCall(op: STA, param: num_to_hex(variable.address)))
-      asm_node.add(ASMCall(op: LDA, param: "$0200,X"))
-      asm_node.add(ASMCall(op: INX))
+      asm_node.add(DEX)
+      asm_node.add(STA, "$0200,X")
+      asm_node.add(LDA, num_to_im_hex(variable.size))
+      asm_node.add(STA, num_to_hex(variable.address))
+      asm_node.add(LDA, "$0200,X")
+      asm_node.add(INX)
       root.sequence.insert(asm_node, 0) # insert after start label
 
 proc indirect_with_y(addrs: string): string =
@@ -679,19 +679,19 @@ proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =
 proc pass_add_start_label*(pass_runner: PassRunner, root: SequenceNode) =
   var asm_node = newASMNode()
   asm_node.add(ASMLabel(label_name: "Start"))
-  asm_node.add(ASMCall(op: LDA , param: "#$FF"))
-  asm_node.add(ASMCall(op: TAX)) # setup stack
+  asm_node.add(LDA, "#$FF")
+  asm_node.add(TAX) # setup stack
   root.sequence.insert(asm_node, 0)
 
 # Pass
 proc pass_add_end_label*(pass_runner: PassRunner, root: SequenceNode) =
   var end_node = newASMNode()
   end_node.add(ASMLabel(label_name: "End"))
-  end_node.add(ASMCall(op: JMP, param: "End")) # endless cycle
+  end_node.add(JMP, "End") # endless cycle
   root.sequence.add(end_node)
   var first_def_index = find_index(root.sequence, is_def)
   var jmp_node = newASMNode()
-  jmp_node.add(ASMCall(op: JMP, param: "End"))
+  jmp_node.add(JMP, "End")
   root.sequence.insert(jmp_node, first_def_index)
 
 # Pass - Check no OtherNode's present

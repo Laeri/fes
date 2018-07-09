@@ -95,6 +95,10 @@ method add*(node: ASMNode, asm_action: ASMAction) {.base.} =
 proc add*(asm_node: ASMNode, op_code: OPCODE, param_str: string = nil) =
   asm_node.add(ASMCall(op: op_code, param: param_str))
 
+proc add*(asm_code: var seq[ASMAction], op_code: OPCODE, param_str: string = nil) =
+  var call = ASMCall(op: op_code, param: param_str)
+  asm_code.add(call)
+
 proc is_def*(node: ASTNode): bool =
   return (node of DefineWordNode)
 
