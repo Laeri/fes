@@ -371,19 +371,25 @@ input_t get-Input-ByteValue """)
   test "list: set one value":
     compile_and_run("""
 variable lst List-Number-5
-lst 3 0 List-set""")
-    check_memory(0x01, 3) # first element of a list holds its size
-    check_memory(0x00, 5)
+3 4 lst List-set
+10 3 lst List-get""")
+    check_tos(4)
+    check_sos(10)
     
+  test "list: list size":
+    compile_and_run("""
+variable lst List-Number-5
+lst List-size""")
+    check_tos(5)
 
   test "list: set multiple values":
     compile_and_run("""
 variable lst List-Number-5
-lst 3 0 List-set
-lst 4 1 List-set
-lst 5 2 List-set
-lst 6 3 List-set
-lst 7 4 List-set""")
+0 3 lst List-set
+1 4 lst List-set
+2 5 lst List-set
+3 6 lst List-set
+4 7 lst List-set""")
     check_memory(0x01, 3) # first element of a list holds its size
     check_memory(0x02, 4)
     check_memory(0x03, 5)
@@ -405,8 +411,8 @@ variable lst4 List-Number-4""")
   test "list: get one value":
     compile_and_run("""
 variable lst List-Number-1
-lst 10 0 List-set
-lst 0 List-get
+1 10 lst  List-set
+0 lst List-get
 """)
     check_tos(10)
 

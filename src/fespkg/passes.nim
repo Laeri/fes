@@ -103,6 +103,13 @@ proc collect_other_nodes(node: ASTNode, name: string): seq[OtherNode] =
   node.accept(visitor)
   return visitor.collected
 
+proc find_parent_of(root: ASTNode, child: ASTNode): ASTNode =
+  var is_parent = (proc (node: ASTNode): bool =
+    return node.has_child(child))
+  var visitor: CollectVisitor[ASTNode] = newCollectVisitor[ASTNode](is_parent)
+  root.accept(visitor)
+  return visitor.collected[0]
+
 proc count[T](t_seq: seq[T], t_el: T): int =
   result = 0
   for seq_el in t_seq:
@@ -235,7 +242,6 @@ proc add_struct_getters(pass_runner: PassRunner, root: SequenceNode, struct_node
     var member = struct_node.members[i]
     var get_define = newDefineWordNode()
     var asm_node = newASMNode()
-    #echo "member: " & member.name & " type: " & $member.type_data.fes_type & " specific: " & member.type_data.name
     if member.type_data.fes_type == Number:
       asm_node.add(STA, base_addr_addr_high_byte)
       asm_node.add(LDA, "$0200,X")
@@ -400,8 +406,28 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
 proc pass_static_list_get_set_polymorphism*(pass_runner: PassRunner, root: ASTNode) =
   var list_getters = collect_other_nodes(root, "List-get")
   var list_setters = collect_other_nodes(root, "List-set")
-  echo "getters: " & $list_getters.len
-  echo "setters: " & $list_setters.len
+  for list_get in list_getters:
+    var parent = cast[SequenceNode](root.find_parent_of(list_get))
+    var node_seq = parent.sequence
+    var index = node_seq.find(list_get)
+    var prev_node = cast[LoadVariableNode](node_seq[index - 1]).var_node
+    var list = cast[ListNode](prev_node.type_node)
+    if list.element_type_data.fes_type == Number:
+      list_get.name = "List-get_8"
+    else:
+      list_get.name = "List-get_16"
+    
+  for list_set in list_setters:
+    var parent = cast[SequenceNode](root.find_parent_of(list_set))
+    var node_seq = parent.sequence
+    var index = node_seq.find(list_set)
+    var prev_node = cast[LoadVariableNode](node_seq[index - 1]).var_node
+    var list = cast[ListNode](prev_node.type_node)
+    if list.element_type_data.fes_type == Number:
+      list_set.name = "List-set_8"
+    else:
+      list_set.name = "List-set_16"
+
 
 
 # Pass
@@ -414,7 +440,6 @@ proc pass_init_struct_variable_values*(pass_runner: PassRunner, root: ASTNode) =
       var var_node = cast[VariableNode](root_seq[j - 1]) # assumes AST now hast the form "VariableNode InitStructVariableNode"
       for i in 0..(init_node.names.len - 1):
         var current_init = newSequenceNode()
-        echo "init_member: " & init_node.names[i] & " value: " & init_node.str_values[i]
         if init_node.str_values[i].is_valid_number_str:
           var push_val = PushNumberNode()
           push_val.number = init_node.str_values[i].parse_to_integer
@@ -523,7 +548,7 @@ proc pass_init_list_sizes*(pass_runner: PassRunner, root: SequenceNode) =
       asm_node.add(DEX)
       asm_node.add(STA, "$0200,X")
       asm_node.add(LDA, num_to_im_hex(variable.size))
-      asm_node.add(STA, num_to_hex(variable.address))
+      asm_node.add(STA, index_to_addr_str(variable.address))
       asm_node.add(LDA, "$0200,X")
       asm_node.add(INX)
       root.sequence.insert(asm_node, 0) # insert after start label
@@ -546,44 +571,44 @@ proc gen_list_set(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
   set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
   set_asm.add(ASMCall(op: STA, param: base_addr_addr))
   if el_size == 2:
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: LDA, param: "$0200,X")) # index in tos
-    set_asm.add(ASMCall(op: CLC))
-    set_asm.add(ASMCall(op: ADC, param: "$0200,X")) # if element size is 2 we have to double the index
+    set_asm.add(INX)
+    set_asm.add(INX)
+    set_asm.add(INX)
+    set_asm.add(LDA, "$0200,X") # index in tos
+    set_asm.add(CLC)
+    set_asm.add(ADC, "$0200,X") # if element size is 2 we have to double the index
+    set_asm.add(SEC)
+    set_asm.add(SBC, "#$01")
   else:
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
-  set_asm.add(ASMCall(op: CLC))
-  set_asm.add(ASMCall(op: ADC, param: "#$01")) # index offset by one, first byte is list size
-  set_asm.add(ASMCall(op: TAY))
+    set_asm.add(INX)
+    set_asm.add(INX)
+    set_asm.add(LDA, "$0200,X")
+  set_asm.add(TAY)
   if el_size == 2:
-    set_asm.add(ASMCall(op: DEX))
-    set_asm.add(ASMCall(op: DEX)) # point to low byte of element
-    set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
-    set_asm.add(ASMCall(op: STA, param: indirect_with_y(base_addr_addr)))
-    set_asm.add(ASMCall(op: DEX))
-    set_asm.add(ASMCall(op: TYA))
-    set_asm.add(ASMCall(op: CLC))
-    set_asm.add(ASMCall(op: ADC, param: "#$01"))
-    set_asm.add(ASMCall(op: TYA))
-    set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
-    set_asm.add(ASMCall(op: STA, param: indirect_with_y(base_addr_addr)))
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: LDA)) # repopulate tos
-    set_asm.add(ASMCall(op: INX))
+    set_asm.add(DEX)
+    set_asm.add(DEX) # point to low byte of element
+    set_asm.add(LDA, "$0200,X")
+    set_asm.add(STA, indirect_with_y(base_addr_addr))
+    set_asm.add(DEX)
+    set_asm.add(TYA)
+    set_asm.add(CLC)
+    set_asm.add(ADC, "#$01")
+    set_asm.add(TYA)
+    set_asm.add(LDA, "$0200,X")
+    set_asm.add(STA, indirect_with_y(base_addr_addr))
+    set_asm.add(INX)
+    set_asm.add(INX)
+    set_asm.add(INX)
+    set_asm.add(LDA) # repopulate tos
+    set_asm.add(INX)
   else:
-    set_asm.add(ASMCall(op: DEX)) # point to element
-    set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
-    set_asm.add(ASMCall(op: STA, param: indirect_with_y(base_addr_addr)))
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: INX))
-    set_asm.add(ASMCall(op: LDA, param: "$0200,X")) # repopulate tos
-    set_asm.add(ASMCall(op: INX))
+    set_asm.add(DEX) # point to element
+    set_asm.add(LDA, "$0200,X")
+    set_asm.add(STA, indirect_with_y(base_addr_addr))
+    set_asm.add(INX)
+    set_asm.add(INX)
+    set_asm.add(LDA, "$0200,X") # repopulate tos
+    set_asm.add(INX)
   list_set.definition.add(set_asm)
 
   list_set.definition.add(set_asm)
@@ -611,8 +636,9 @@ proc gen_list_get(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
   if el_size == 2:
     get_asm.add(CLC)
     get_asm.add(ADC, "$0200,X")
-    get_asm.add(CLC)
-    get_asm.add(ADC, "#$01")
+    get_asm.add(INX)
+    get_asm.add(SEC)
+    get_asm.add(SBC, "#$01")
     get_asm.add(TAY)
     get_asm.add(LDA, indirect_with_y(base_addr_addr))
     get_asm.add(STA, "$0200,X")
@@ -622,26 +648,25 @@ proc gen_list_get(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
     get_asm.add(TAY)
     get_asm.add(LDA, indirect_with_y(base_addr_addr))
   else:
-    get_asm.add(CLC)
-    get_asm.add(ADC, "#$01")
     get_asm.add(TAY)
     get_asm.add(LDA, indirect_with_y(base_addr_addr))
+    get_asm.add(INX)
   list_get.definition.add(get_asm)
   pass_runner.definitions[list_get.word_name] = list_get
   root.add(list_get)
 
 proc gen_list_size(pass_runner: PassRunner, root: SequenceNode) =
-  # <var_name> List-size
+  # ptr_low ptr_high List-size
   # tos (A) holds the base address, which contains the size directly
   # assumed first byte of list holds its size
   var list_size = newDefineWordNode()
   list_size.word_name = "List-size"
   var size_asm = newASMNode()
-  size_asm.add(ASMCall(op: LDY, param: "#$00")) # set Y to 0 because indirect addressing is used with no offset
-  size_asm.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect addressing
-  size_asm.add(ASMCall(op: LDA, param: "#$00")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
-  size_asm.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-  size_asm.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # replace tos with value (length) at first byte
+  size_asm.add(STA, base_addr_addr_high_byte) # store base address for indirect addressing
+  size_asm.add(LDA, "$0200,X")
+  size_asm.add(STA, base_addr_addr)
+  size_asm.add(LDY, "#$00") # set Y to 0 because indirect addressing is used with no offset
+  size_asm.add(LDA, "[" & base_addr_addr & "],Y") # replace tos with value (length) at first byte
   list_size.definition.add(size_asm)
   pass_runner.definitions[list_size.word_name] = list_size
   root.add(list_size)

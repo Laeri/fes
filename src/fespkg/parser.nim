@@ -391,7 +391,7 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(asm_node)
       if asm_node.is_empty:
         parser.report(asm_node, warnMissingASMBody)
-    elif token.str_val.len >= 6 and token.str_val[0..4] == "List-" and not(token.str_val.contains("List-get")) and not(token.str_val.contains("List-set")):
+    elif token.str_val.len >= 6 and token.str_val[0..4] == "List-" and not(token.str_val.contains("List-get")) and not(token.str_val.contains("List-set")) and not(token.str_val.contains("List-size")):
       var type_and_size = token.str_val[5..(token.str_val.len - 1)].split("-")
       var el_type_str = type_and_size[0]
       var size_str: string = type_and_size[1]
@@ -422,6 +422,7 @@ proc parse_sequence(parser: Parser): SequenceNode =
       var_node.name = load_sprite_node.name
       var other_node = OtherNode()
       other_node.name = "Sprite"
+      parser.set_info(other_node)
       parser.var_table[var_node.name] = var_node
       root.add(load_sprite_node)
       root.add(var_node)
