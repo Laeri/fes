@@ -412,7 +412,7 @@ variable lst4 List-Number-4""")
     compile_and_run("""
 variable lst List-Number-1
 1 10 lst  List-set
-0 lst List-get
+1 lst List-get
 """)
     check_tos(10)
 
@@ -425,10 +425,19 @@ variable lst List-Number-1
       variable coords1 Coords
       variable coords2 Coords
       3 coords1 set-Coords-x
-      4 coords2 set-Coords-x
+      4 coords1 set-Coords-y
+      7 coords2 set-Coords-x
+      8 coords2 set-Coords-y
       variable coord_list List-Coords-5
-      3 coord_list
+      2 coords2 coord_list List-set
+      1 coords1 coord_list List-set
+      13
+      1 coord_list List-get get-Coords-x
+      2 coord_list List-get get-Coords-x
       """)
+    print_memory(0x00, 0x10)
+    check_tos(7)
+    check_sos(3)
       
 
   test "mul: 2 * 3":
@@ -603,10 +612,6 @@ tmp get-TestStruct-b
       b_struct get-BStruct-b get-AStruct-a
     """)
 
-    echo compiler.parser.root.str
-    print_tos()
-    nes.print_sos()
-    print_memory(0x00, 0x10)
 
   test "struct_ptr setter":
     compile_and_run("""
@@ -625,7 +630,6 @@ tmp get-TestStruct-b
       test_struct get-TestStruct-a_struct get-OneStruct-a
       """)
     check_tos(10)
-    echo compiler.parser.root.str
         
     
     

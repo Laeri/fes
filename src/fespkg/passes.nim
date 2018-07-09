@@ -593,13 +593,13 @@ proc gen_list_set(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
     set_asm.add(TYA)
     set_asm.add(CLC)
     set_asm.add(ADC, "#$01")
-    set_asm.add(TYA)
+    set_asm.add(TAY)
     set_asm.add(LDA, "$0200,X")
     set_asm.add(STA, indirect_with_y(base_addr_addr))
     set_asm.add(INX)
     set_asm.add(INX)
     set_asm.add(INX)
-    set_asm.add(LDA) # repopulate tos
+    set_asm.add(LDA, "$0200,X") # repopulate tos
     set_asm.add(INX)
   else:
     set_asm.add(DEX) # point to element
@@ -626,6 +626,7 @@ proc gen_list_get(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
     list_get.word_name = "List-get_16"
   var get_asm = newASMNode()
   # <index> <list_low> <list_high>
+
   get_asm.add(STA, base_addr_addr_high_byte)
   get_asm.add(LDA, "$0200,X")
   get_asm.add(STA, base_addr_addr)
@@ -634,7 +635,6 @@ proc gen_list_get(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
   if el_size == 2:
     get_asm.add(CLC)
     get_asm.add(ADC, "$0200,X")
-    get_asm.add(INX)
     get_asm.add(SEC)
     get_asm.add(SBC, "#$01")
     get_asm.add(TAY)
