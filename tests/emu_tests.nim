@@ -421,6 +421,7 @@ lst 0 List-get
       3 coords1 set-Coords-x
       4 coords2 set-Coords-x
       variable coord_list List-Coords-5
+      3 coord_list
       """)
       
 

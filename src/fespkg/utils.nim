@@ -1,5 +1,32 @@
 import
-  math, sequtils, strutils
+  math, sequtils, strutils, tables
+
+
+var nes_transl_table*: Table[string, string] =
+  {
+    "+": "add",
+    "-": "sub",
+    "*": "mul",
+    "/": "div",
+    "!": "store",
+    "<": "smaller",
+    ">": "greater",
+    "<=": "smaller_or_equal",
+    ">=": "greater_or_equal",
+    "=": "equal",
+    "!=": "not_equal",
+    "!": "store_var",
+    "@": "load_var"
+  }.toTable
+
+proc translate_name*(name: string): string =
+  result = name
+  if nes_transl_table.contains(name):
+    result = nes_transl_table[name]
+  result = result.replace("?", "is")
+  var digits_to_str = @["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
+  if result[0] in Digits:
+    result = digits_to_str[($result[0]).parseInt] & "_" & result[1..(result.len - 1)]
 
 
 proc isInteger*(str: string): bool =

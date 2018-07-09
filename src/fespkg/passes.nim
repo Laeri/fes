@@ -322,6 +322,8 @@ proc pass_set_list_var_type*(pass_runner: PassRunner, root: SequenceNode) =
         var seq_el = seq_node.sequence[i]
         if (seq_el of ListNode) and last_var_node:
           var list_node = cast[ListNode](seq_node.sequence[i])
+          # also set element type of list_node which is still only a string in the name field
+          # ...
           var var_node = cast[VariableNode](seq_node.sequence[i - 1])
           var_node.var_type = List
           var_node.size = list_node.size
@@ -379,6 +381,10 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
       var_node.size = 1
     elif var_node.var_type == List:
       var_node.address = pass_runner.var_index
+      var element_size = 1
+      var list_node = cast[ListNode](var_node.type_node)
+      if list_node.element_type_data.fes_type != Number:
+        element_size = 2
       pass_runner.var_index += var_node.size + 1 # one more because size takes one field at the front
     else:
       echo "implement new variable and set its address"
@@ -508,55 +514,114 @@ proc pass_init_list_sizes*(pass_runner: PassRunner, root: SequenceNode) =
       asm_node.add(ASMCall(op: INX))
       root.sequence.insert(asm_node, 0) # insert after start label
 
+proc indirect_with_y(addrs: string): string =
+  result = "[" & addrs & "],Y"
 
-# Pass
-proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
+
+proc gen_list_set(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
+  # <list> <value> <index> List-set
+  # <index> <element> <list_low> <list_high>
+  # <index> <element_low> <element_high> <list_low> <list_high>
+  var list_set = newDefineWordNode()
+  if el_size == 1:
+    list_set.word_name = "List-set_8"
+  else:
+    list_set.word_name = "List-set_16"
+  var set_asm = newASMNode()
+  set_asm.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
+  set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
+  set_asm.add(ASMCall(op: STA, param: base_addr_addr))
+  if el_size == 2:
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: LDA, param: "$0200,X")) # index in tos
+    set_asm.add(ASMCall(op: CLC))
+    set_asm.add(ASMCall(op: ADC, param: "$0200,X")) # if element size is 2 we have to double the index
+  else:
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
+  set_asm.add(ASMCall(op: CLC))
+  set_asm.add(ASMCall(op: ADC, param: "#$01")) # index offset by one, first byte is list size
+  set_asm.add(ASMCall(op: TAY))
+  if el_size == 2:
+    set_asm.add(ASMCall(op: DEX))
+    set_asm.add(ASMCall(op: DEX)) # point to low byte of element
+    set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
+    set_asm.add(ASMCall(op: STA, param: indirect_with_y(base_addr_addr)))
+    set_asm.add(ASMCall(op: DEX))
+    set_asm.add(ASMCall(op: TYA))
+    set_asm.add(ASMCall(op: CLC))
+    set_asm.add(ASMCall(op: ADC, param: "#$01"))
+    set_asm.add(ASMCall(op: TYA))
+    set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
+    set_asm.add(ASMCall(op: STA, param: indirect_with_y(base_addr_addr)))
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: LDA)) # repopulate tos
+    set_asm.add(ASMCall(op: INX))
+  else:
+    set_asm.add(ASMCall(op: DEX)) # point to element
+    set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
+    set_asm.add(ASMCall(op: STA, param: indirect_with_y(base_addr_addr)))
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: INX))
+    set_asm.add(ASMCall(op: LDA, param: "$0200,X")) # repopulate tos
+    set_asm.add(ASMCall(op: INX))
+  list_set.definition.add(set_asm)
+
+  list_set.definition.add(set_asm)
+  pass_runner.definitions[list_set.word_name] = list_set
+  root.add(list_set)
+
+
+proc gen_list_get(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
   # assumed it is called in this form: <var> <index> List-get
   # replaces everything with ... var_base item]
   # which means stack is: ... var_base index] where index is in register A
   # we can use some indirect addressing mode as for structure member variable access
   var list_get = newDefineWordNode()
-  list_get.word_name = "List-get"
+  if el_size == 1:
+    list_get.word_name = "List-get_8"
+  else:
+    list_get.word_name = "List-get_16"
   var get_asm = newASMNode()
-  get_asm.add(ASMCall(op: CLC))
-  get_asm.add(ASMCall(op: ADC, param: "#$01"))
-  get_asm.add(ASMCall(op: TAY)) # offset is already TOS in A, but we have to add one to it because first element
-  # at base address holds the lists length
-  get_asm.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # put base address TOS
-  get_asm.add(ASMCall(op: STA, param: base_addr_addr)) # store base_addr for indirect addressing
-  get_asm.add(ASMCall(op: LDA, param: "#$00")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
-  get_asm.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-  get_asm.add(ASMCall(op: LDA, param: "[" & base_addr_addr & "],Y")) # do indirect addressing with offset in Y
+  # <index> <list_low> <list_high>
+  get_asm.add(STA, base_addr_addr_high_byte)
+  get_asm.add(LDA, "$0200,X")
+  get_asm.add(STA, base_addr_addr)
+  get_asm.add(INX)
+  get_asm.add(LDA, "$0200,X")
+  if el_size == 2:
+    get_asm.add(CLC)
+    get_asm.add(ADC, "$0200,X")
+    get_asm.add(CLC)
+    get_asm.add(ADC, "#$01")
+    get_asm.add(TAY)
+    get_asm.add(LDA, indirect_with_y(base_addr_addr))
+    get_asm.add(STA, "$0200,X")
+    get_asm.add(TYA)
+    get_asm.add(CLC)
+    get_asm.add(ADC, "#$01")
+    get_asm.add(TAY)
+    get_asm.add(LDA, indirect_with_y(base_addr_addr))
+  else:
+    get_asm.add(CLC)
+    get_asm.add(ADC, "#$01")
+    get_asm.add(TAY)
+    get_asm.add(LDA, indirect_with_y(base_addr_addr))
   list_get.definition.add(get_asm)
   pass_runner.definitions[list_get.word_name] = list_get
   root.add(list_get)
-  # <list> <value> <index> List-set
-  var list_set = newDefineWordNode()
-  list_set.word_name = "List-set"
-  var set_asm = newASMNode()
-  set_asm.add(ASMCall(op: CLC))
-  set_asm.add(ASMCall(op: ADC, param: "#$01"))
-  set_asm.add(ASMCall(op: TAY)) # move index to Y, but first add 1 because first byte specifies the size
-  # then put base address onto tos (onto A)
-  # to do this decrease (increase in this case) the stack pointer X
-  set_asm.add(ASMCall(op: INX))
-  set_asm.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # base address is now in A
-  set_asm.add(ASMCall(op: STA, param: base_addr_addr)) # same trick as with struct
-  set_asm.add(ASMCall(op: LDA, param: "#$00")) # base_addr_addr is addressed indirectly as 2 byte value! store #$00 to $FF
-  set_asm.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-  set_asm.add(ASMCall(op: DEX)) # move stack pointer up again so it SOS onto value
-  set_asm.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # load the vlaue onto A
-  set_asm.add(ASMCall(op: STA, param: "[" & base_addr_addr & "],Y")) # do indirect addressing
-  set_asm.add(ASMCall(op: LDA, param: second_stack_item_addr_str())) # now move base address onto the stack again
-  set_asm.add(ASMCall(op: INX))
-  list_set.definition.add(set_asm)
-  pass_runner.definitions[list_set.word_name] = list_set
-  root.add(list_set)
-  # <var_name> list-size
+
+proc gen_list_size(pass_runner: PassRunner, root: SequenceNode) =
+  # <var_name> List-size
   # tos (A) holds the base address, which contains the size directly
   # assumed first byte of list holds its size
   var list_size = newDefineWordNode()
-  list_size.word_name = "list-size"
+  list_size.word_name = "List-size"
   var size_asm = newASMNode()
   size_asm.add(ASMCall(op: LDY, param: "#$00")) # set Y to 0 because indirect addressing is used with no offset
   size_asm.add(ASMCall(op: STA, param: base_addr_addr)) # store base address for indirect addressing
@@ -566,6 +631,18 @@ proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
   list_size.definition.add(size_asm)
   pass_runner.definitions[list_size.word_name] = list_size
   root.add(list_size)
+
+# Pass
+proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
+  gen_list_get(pass_runner, root, el_size)
+  gen_list_set(pass_runner, root, el_size)
+
+proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
+  pass_runner.gen_list_size(root)
+  pass_runner.pass_gen_list_methods(root, 1)
+  pass_runner.pass_gen_list_methods(root, 2)
+
+
 
 # Pass
 proc pass_set_word_calls*(pass_runner: PassRunner, root: SequenceNode) =

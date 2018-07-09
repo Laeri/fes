@@ -212,7 +212,7 @@ c}"""
     check(handler.has_error_type(errMissingStructEnding))
 
   test "parse list":
-    src = "list-3"
+    src = "List-Number-3"
     parser.parse_string(src)
     check(parser.root.sequence.len == 1)
     check(parser.root.sequence[0] of ListNode)

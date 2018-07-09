@@ -17,24 +17,8 @@ proc newParser*(handler: ErrorHandler): Parser =
   result = newParser()
   result.error_handler = handler
   handler.scanner = result.scanner
-  result.var_table = newTable[string, VariableNode]() 
+  result.var_table = newTable[string, VariableNode]()
 
-var nes_transl_table: Table[string, string] =
-  {
-    "+": "add",
-    "-": "sub",
-    "*": "mul",
-    "/": "div",
-    "!": "store",
-    "<": "smaller",
-    ">": "greater",
-    "<=": "smaller_or_equal",
-    ">=": "greater_or_equal",
-    "=": "equal",
-    "!=": "not_equal",
-    "!": "store_var",
-    "@": "load_var"
-  }.toTable
 
 const
   invalid_names = @[":", ";", "[", "]"]
@@ -182,15 +166,9 @@ proc parse_asm_block(parser: Parser, asm_node: ASMNode) =
         parser.report(asm_node, errMissingASMEnding)
         return
 
-proc translate_name(name: string): string =
-  result = name
-  if nes_transl_table.contains(name):
-    result = nes_transl_table[name]
-  result = result.replace("?", "is")
+
   
-  var digits_to_str = @["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
-  if result[0] in Digits:
-    result = digits_to_str[($result[0]).parseInt] & "_" & result[1..(result.len - 1)]
+
 
 
 proc is_empty(node: ASMNode): bool = 

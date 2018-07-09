@@ -138,7 +138,7 @@ variable player Player"""
     check(get_y.word_name == "set-Player-y")
 
   test "input List type into variable":
-    src = "variable items list-5"
+    src = "variable items List-Number-5"
     parser.parse_string(src)
     pass_runner.pass_set_list_var_type(parser.root)
     check(parser.root.len == 1)
@@ -148,11 +148,11 @@ variable player Player"""
     check(var_node.name == "items")
 
   test "gen list methods pass":
-    src = "variable items list-5"
+    src = "variable items List-Number-5"
     parser.parse_string(src)
     pass_runner.pass_set_list_var_type(parser.root)
     pass_runner.pass_gen_list_methods(parser.root)
-    check(parser.root.len == 4)
+    check(parser.root.len == 6)
     check(parser.root[0] of VariableNode)
     check(parser.root[1] of DefineWordNode)
     check(parser.root[2] of DefineWordNode)
@@ -160,9 +160,13 @@ variable player Player"""
     var def_get = cast[DefineWordNode](parser.root[1])
     var def_set = cast[DefineWordNode](parser.root[2])
     var def_size = cast[DefineWordNode](parser.root[3])
-    check(def_get.word_name == "list-get")
-    check(def_set.word_name == "list-set")
-    check(def_size.word_name == "list-size")
+    var def_get_16 = cast[DefineWordNode](parser.root[4])
+    var def_set_16 = cast[DefineWordNode](parser.root[5])
+    check(def_get.word_name == "List-size")
+    check(def_set.word_name == "List-get_8")
+    check(def_size.word_name == "List-set_8")
+    check(def_get_16.word_name == "List-get_16")
+    check(def_set_16.word_name == "List-set_16")
 
   test "check no OtherNode present":
     src = "no_valid_word_call"
