@@ -71,6 +71,7 @@ proc do_passes(compiler: FESCompiler) =
   pass_runner.pass_set_list_var_type(compiler.parser.root)
   pass_runner.pass_set_variable_loads(compiler.parser.root)
   pass_runner.pass_set_variable_addresses(compiler.parser.root)
+  pass_runner.pass_static_list_get_set_polymorphism(compiler.parser.root)
   pass_runner.pass_init_struct_variable_values(compiler.parser.root) # next pass should check if no member init list is present, otherwise we just overwrite the default struct values
   pass_runner.pass_init_struct_default_values(compiler.parser.root)
   pass_runner.pass_init_list_values(compiler.parser.root)

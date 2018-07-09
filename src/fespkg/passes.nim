@@ -96,6 +96,13 @@ proc collect_defs(node: ASTNode): seq[DefineWordNode] =
   node.accept(visitor)
   return visitor.collected
 
+proc collect_other_nodes(node: ASTNode, name: string): seq[OtherNode] =
+  var has_name = (proc (node: ASTNode): bool =
+    return (node of OtherNode) and ((cast[OtherNode](node)).name == name))
+  var visitor: CollectVisitor[OtherNode] = newCollectVisitor[OtherNode](has_name)
+  node.accept(visitor)
+  return visitor.collected
+
 proc count[T](t_seq: seq[T], t_el: T): int =
   result = 0
   for seq_el in t_seq:
@@ -388,6 +395,13 @@ proc pass_set_variable_addresses*(pass_runner: PassRunner, root: SequenceNode) =
       pass_runner.var_index += var_node.size + 1 # one more because size takes one field at the front
     else:
       echo "implement new variable and set its address"
+
+# Pass
+proc pass_static_list_get_set_polymorphism*(pass_runner: PassRunner, root: ASTNode) =
+  var list_getters = collect_other_nodes(root, "List-get")
+  var list_setters = collect_other_nodes(root, "List-set")
+  echo "getters: " & $list_getters.len
+  echo "setters: " & $list_setters.len
 
 
 # Pass
