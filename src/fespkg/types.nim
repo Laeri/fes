@@ -64,6 +64,7 @@ type
 
   ListNode* = ref object of ASTNode
     size*: int
+    element_type_data*: TypeData
 
   TypeData* = ref object of RootObj
     fes_type*: FESType

@@ -511,12 +511,12 @@ proc pass_init_list_sizes*(pass_runner: PassRunner, root: SequenceNode) =
 
 # Pass
 proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
-  # assumed it is called in this form: <var> <index> list-get
+  # assumed it is called in this form: <var> <index> List-get
   # replaces everything with ... var_base item]
   # which means stack is: ... var_base index] where index is in register A
   # we can use some indirect addressing mode as for structure member variable access
   var list_get = newDefineWordNode()
-  list_get.word_name = "list-get"
+  list_get.word_name = "List-get"
   var get_asm = newASMNode()
   get_asm.add(ASMCall(op: CLC))
   get_asm.add(ASMCall(op: ADC, param: "#$01"))
@@ -530,9 +530,9 @@ proc pass_gen_list_methods*(pass_runner: PassRunner, root: SequenceNode) =
   list_get.definition.add(get_asm)
   pass_runner.definitions[list_get.word_name] = list_get
   root.add(list_get)
-  # <list> <value> <index> list-set
+  # <list> <value> <index> List-set
   var list_set = newDefineWordNode()
-  list_set.word_name = "list-set"
+  list_set.word_name = "List-set"
   var set_asm = newASMNode()
   set_asm.add(ASMCall(op: CLC))
   set_asm.add(ASMCall(op: ADC, param: "#$01"))

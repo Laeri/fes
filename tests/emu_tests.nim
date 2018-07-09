@@ -370,20 +370,20 @@ input_t get-Input-ByteValue """)
 
   test "list: set one value":
     compile_and_run("""
-variable lst list-5
-lst 3 0 list-set""")
+variable lst List-Number-5
+lst 3 0 List-set""")
     check_memory(0x01, 3) # first element of a list holds its size
     check_memory(0x00, 5)
     
 
   test "list: set multiple values":
     compile_and_run("""
-variable lst list-5
-lst 3 0 list-set
-lst 4 1 list-set
-lst 5 2 list-set
-lst 6 3 list-set
-lst 7 4 list-set""")
+variable lst List-Number-5
+lst 3 0 List-set
+lst 4 1 List-set
+lst 5 2 List-set
+lst 6 3 List-set
+lst 7 4 List-set""")
     check_memory(0x01, 3) # first element of a list holds its size
     check_memory(0x02, 4)
     check_memory(0x03, 5)
@@ -393,10 +393,10 @@ lst 7 4 list-set""")
 
   test "list: size test":
     compile_and_run("""
-variable lst list-1
-variable lst2 list-2
-variable lst3 list-3
-variable lst4 list-4""")
+variable lst List-Number-1 
+variable lst2 List-Number-2
+variable lst3 List-Number-3
+variable lst4 List-Number-4""")
     check_memory(0x00, 1)
     check_memory(0x02, 2)
     check_memory(0x05, 3)
@@ -404,11 +404,25 @@ variable lst4 list-4""")
 
   test "list: get one value":
     compile_and_run("""
-variable lst list-1
-lst 10 0 list-set
-lst 0 list-get
+variable lst List-Number-1
+lst 10 0 List-set
+lst 0 List-get
 """)
     check_tos(10)
+
+  test "list: structs":
+    compile_and_run("""
+      struct Coords {
+        x Number
+        y Number
+      }
+      variable coords1 Coords
+      variable coords2 Coords
+      3 coords1 set-Coords-x
+      4 coords2 set-Coords-x
+      variable coord_list List-Coords-5
+      """)
+      
 
   test "mul: 2 * 3":
     compile_and_run("2 3 *")

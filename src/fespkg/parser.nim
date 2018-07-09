@@ -413,13 +413,19 @@ proc parse_sequence(parser: Parser): SequenceNode =
       root.add(asm_node)
       if asm_node.is_empty:
         parser.report(asm_node, warnMissingASMBody)
-    elif token.str_val.len >= 6  and token.str_val[0..4] == "list-" and token.str_val[5..(token.str_val.len - 1)].isInteger:
-      var list_node = ListNode()
-      var size_str = token.str_val[5..(token.str_val.len - 1)]
+    elif token.str_val.len >= 6 and token.str_val[0..4] == "List-" and not(token.str_val.contains("List-get")) and not(token.str_val.contains("List-set")):
+      var type_and_size = token.str_val[5..(token.str_val.len - 1)].split("-")
+      var el_type_str = type_and_size[0]
+      var size_str: string = type_and_size[1]
+      var list_node = newListNode()
+      list_node.element_type_data.name = el_type_str
       list_node.size = size_str.parseInt
-      parser.set_info(list_node)
+      if el_type_str == "Number":
+        list_node.element_type_data.fes_type = Number
+      else:
+        list_node.element_type_data.fes_type = Untyped_ptr
       root.add(list_node)
-      if parser.scanner.peek.str_val == "{":
+      if parser.scanner.has_next and parser.scanner.peek.str_val == "{":
         discard parser.scanner.next # discard opening {
         var init_list_node = parser.parse_init_list_values()
         parser.set_end_info(init_list_node)
@@ -529,7 +535,6 @@ proc parse_string*(parser: Parser, src: string, name: string) =
   parser.scanner.read_string(src, name)
   var root = parser.parse_sequence
   parser.root = root
-  #echo root.str
 
 proc parse_string*(parser: Parser, src: string) =
   var t = "TEST_NAME"

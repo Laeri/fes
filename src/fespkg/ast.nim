@@ -22,6 +22,11 @@ proc newASMNode*(): ASMNode =
   node.asm_calls = @[]
   return node
 
+proc newTypeData*(): TypeData =
+  result = TypeData()
+  result.name = "No TypeData Name"
+  result.fes_type = Number
+
 proc newASMNode*(calls: seq[ASMAction]): ASMNode =
   result = newASMNode()
   result.asm_calls = calls
@@ -42,10 +47,10 @@ proc newStructNode*(): StructNode =
   result = StructNode()
   result.members = @[]
 
-proc newTypeData*(): TypeData =
-  result = TypeData()
-  result.name = "No TypeData Name"
-  result.fes_type = Number
+proc newListNode*(): ListNode =
+  result = ListNode()
+  result.element_type_data = newTypeData()
+
 
 proc newStructMember*(): StructMember =
   result = StructMember()
