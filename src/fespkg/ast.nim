@@ -1,6 +1,23 @@
 import
   types
 
+method contains*(node: ASTNode, other: ASTNode): bool {.base.} =
+  return node == other
+
+method contains*(node: DefineWordNode, other: ASTNode): bool =
+  return node.definition.contains(other)
+
+method contains*(node: SequenceNode, other: ASTNode): bool =
+  for n in node.sequence:
+    if n.contains(other):
+      return true
+  return false
+
+method contains*(node: IfElseNode, other: ASTNode): bool =
+  return node.then_block.contains(other) or node.else_block.contains(other)
+
+method contains*(node: WhileNode, other: ASTNode): bool =
+  return node.condition_block.contains(other) or node.then_block.contains(other)
 
 proc newSequenceNode*(): SequenceNode =
   var node = SequenceNode()
@@ -83,10 +100,12 @@ proc find_index*[T](lst: seq[T], pred: (proc(el: T): bool)): int =
 method add*(node: ASTNode, other: ASTNode) {.base.} =
   echo "base add in ASTNode should not be called"
 
-method add*(node: SequenceNode, other: ASTNode) = 
+method add*(node: SequenceNode, other: ASTNode) =
+  assert(not(node.sequence.contains(other)))
   node.sequence.add(other)
 
 method add*(node: DefineWordNode, other: ASTNode) =
+  assert(not(node.definition.contains(other)))
   node.definition.add(other)
 
 method add*(node: ASMNode, asm_action: ASMAction) {.base.} = 
@@ -275,23 +294,6 @@ proc len*(node: SequenceNode): int =
 proc len*(node: DefineWordNode): int = 
   return node.definition.len
 
-method contains*(node: ASTNode, other: ASTNode): bool {.base.} =
-  return node == other
-
-method contains*(node: DefineWordNode, other: ASTNode): bool =
-  return node.definition.contains(other)
-
-method contains*(node: SequenceNode, other: ASTNode): bool =
-  for n in node.sequence:
-    if n.contains(other):
-      return true
-  return false
-
-method contains*(node: IfElseNode, other: ASTNode): bool =
-  return node.then_block.contains(other) or node.else_block.contains(other)
-
-method contains*(node: WhileNode, other: ASTNode): bool =
-  return node.condition_block.contains(other) or node.then_block.contains(other)
 
 method has_child*(node: ASTNode, other: ASTNode): bool {.base.} =
   false

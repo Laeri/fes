@@ -48,6 +48,9 @@ template check_sos*(check_val: uint8): untyped {.dirty.} =
   var sos: uint8 = nes.cpu.mem[second_of_stack_base_addr() + nes.cpu.x]
   check(sos == check_val)
 
+template print_ast*(): untyped {.dirty.} =
+  echo compiler.parser.root.str
+
 template print_tos*(): untyped {.dirty.} =
   nes.print_tos()
 

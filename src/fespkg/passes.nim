@@ -567,9 +567,9 @@ proc gen_list_set(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
   else:
     list_set.word_name = "List-set_16"
   var set_asm = newASMNode()
-  set_asm.add(ASMCall(op: STA, param: base_addr_addr_high_byte))
-  set_asm.add(ASMCall(op: LDA, param: "$0200,X"))
-  set_asm.add(ASMCall(op: STA, param: base_addr_addr))
+  set_asm.add(STA, base_addr_addr_high_byte)
+  set_asm.add(LDA, "$0200,X")
+  set_asm.add(STA, base_addr_addr)
   if el_size == 2:
     set_asm.add(INX)
     set_asm.add(INX)
@@ -579,13 +579,13 @@ proc gen_list_set(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
     set_asm.add(ADC, "$0200,X") # if element size is 2 we have to double the index
     set_asm.add(SEC)
     set_asm.add(SBC, "#$01")
+    set_asm.add(TAY)
   else:
     set_asm.add(INX)
     set_asm.add(INX)
     set_asm.add(LDA, "$0200,X")
-  set_asm.add(TAY)
+    set_asm.add(TAY)
   if el_size == 2:
-    set_asm.add(DEX)
     set_asm.add(DEX) # point to low byte of element
     set_asm.add(LDA, "$0200,X")
     set_asm.add(STA, indirect_with_y(base_addr_addr))
@@ -609,8 +609,6 @@ proc gen_list_set(pass_runner: PassRunner, root: SequenceNode, el_size: int) =
     set_asm.add(INX)
     set_asm.add(LDA, "$0200,X") # repopulate tos
     set_asm.add(INX)
-  list_set.definition.add(set_asm)
-
   list_set.definition.add(set_asm)
   pass_runner.definitions[list_set.word_name] = list_set
   root.add(list_set)

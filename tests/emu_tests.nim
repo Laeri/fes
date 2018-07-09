@@ -385,11 +385,11 @@ lst List-size""")
   test "list: set multiple values":
     compile_and_run("""
 variable lst List-Number-5
-0 3 lst List-set
-1 4 lst List-set
-2 5 lst List-set
-3 6 lst List-set
-4 7 lst List-set""")
+1 3 lst List-set
+2 4 lst List-set
+3 5 lst List-set
+4 6 lst List-set
+5 7 lst List-set""")
     check_memory(0x01, 3) # first element of a list holds its size
     check_memory(0x02, 4)
     check_memory(0x03, 5)
