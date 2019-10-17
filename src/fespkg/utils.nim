@@ -1,5 +1,5 @@
 import
-  math, sequtils, strutils, tables
+  math, strutils, tables
 
 
 var nes_transl_table*: Table[string, string] =

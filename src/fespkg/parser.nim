@@ -68,7 +68,7 @@ proc report*(parser: Parser, node: ASTNode, msg: MsgKind, msg_args: varargs[stri
   parser.set_end_info(node)
   parser.report(gen_error(node, msg, msg_args))
 
-proc create_asm_call(parser: Parser, op: string, param: string = nil): ASMCall =
+proc create_asm_call(parser: Parser, op: string, param: string = ""): ASMCall =
   if not(op.is_OPCODE):
     var debug_node = ASTNode()
     parser.set_begin_info(debug_node)

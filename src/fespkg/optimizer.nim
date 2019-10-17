@@ -45,7 +45,7 @@ method `$`(rule: NESPPRule): string {.base.}=
 proc bind_symbol(symbol: MatchAndBindSymbol, token: string) = 
   symbol.bound = token
 proc is_bound(symbol: MatchAndBindSymbol): bool =
-  return symbol.bound != nil
+  return symbol.bound != "" # nil strings != nil doesn't work anymore
 
 method `$`(matcher: ASMSymbol): string {.base.} =
   return "ASMSymbol" 
@@ -77,7 +77,7 @@ method match(symbol: MatchAnySymbol, token: string): bool =
   return true
 
 method match(symbol: MatchAndBindSymbol, token: string): bool =
-  if symbol.bound != nil:
+  if symbol.bound != "":
     return symbol.bound == token
   else:
     symbol.bound = token
@@ -205,7 +205,7 @@ method reset(matcher: ASMSymbol) {.base.} =
   discard
 method reset(matcher: MatchAndBindSymbol) =
   if matcher.is_bound:
-    matcher.bound = nil
+    matcher.bound = ""
 method reset(symbol: MatchAnySymbol) =
   discard
 method reset(symbol: ConcreteSymbol) =

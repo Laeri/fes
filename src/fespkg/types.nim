@@ -1,5 +1,5 @@
 import
-  terminal, strutils, tables
+  strutils, tables
 
 type
   FESCompiler* = ref object of RootObj
@@ -268,7 +268,7 @@ type
     END_RESULTS
 
 proc with_arg*(call: ASMCall): bool =
-  return call.param != nil
+  return call.param != "" # nil string != nil comparison doesn't work anymore
 
 proc to_LineRange*(slice: HSlice): LineRange =
   return LineRange(low: slice.a, high: slice.b)

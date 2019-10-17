@@ -1,5 +1,5 @@
 import
-  types, utils, strutils, tables, sequtils
+  types, strutils, tables
 
 
 proc newASMInfo*(op_mode: OP_MODE, op_length: int, op_time: int): ASMInfo =
@@ -8,7 +8,7 @@ proc newASMInfo*(op_mode: OP_MODE, op_length: int, op_time: int): ASMInfo =
 template asm_data*(op_mode: OP_MODE, op_length: int, op_time: int): ASMInfo =
   ASMInfo(mode: op_mode, len: op_length,time: op_time)
 
-proc newASMCall*(op: OPCODE, param: string = nil): ASMCall =
+proc newASMCall*(op: OPCODE, param: string = ""): ASMCall =
   result = ASMCall(op: op, param: param)
 
 var info_table* = newTable[OPCODE, TableRef[OP_MODE, ASMInfo]]()

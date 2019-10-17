@@ -165,7 +165,7 @@ proc prettyPrintError(handler: ErrorHandler, error: FError) =
   setForeGroundColor(ErrorColor)
   stdout.write(ErrorTitle)
   stdout.resetAttributes
-  stdout.writeln(msg)
+  stdout.writeLine(msg)
   stdout.flushFile
   echo "  " & error.file_name & ":" & $error.start_line & ":" & $error.start_column
   for line_pos in range_at_start.to_s():
@@ -186,7 +186,7 @@ proc printError(msg_k: MsgKind, params: varargs[string]) =
   setForeGroundColor(ErrorColor)
   stdout.write(ErrorTitle)
   stdout.resetAttributes
-  stdout.writeln(msg)
+  stdout.writeLine(msg)
   stdout.flushFile
 
 
@@ -195,7 +195,7 @@ proc printWarning(msg_k: MsgKind, params: varargs[string]) =
   setForeGroundColor(WarningColor)
   stdout.write(WarningTitle)
   stdout.resetAttributes
-  stdout.writeln(msg)
+  stdout.writeLine(msg)
   stdout.flushFile
 
 
@@ -204,7 +204,7 @@ proc printHint(msg_k: MsgKind, params: varargs[string]) =
   setForeGroundColor(HintColor)
   stdout.write(HintTitle)
   stdout.resetAttributes
-  stdout.writeln(msg)
+  stdout.writeLine(msg)
   stdout.flushFile
 
 
@@ -213,7 +213,7 @@ proc printResult(msg_k: MsgKind, params: varargs[string]) =
   setForeGroundColor(ResultColor)
   stdout.write(ResultTitle)
   stdout.resetAttributes
-  stdout.writeln(msg)
+  stdout.writeLine(msg)
   stdout.flushFile
 
 proc printMessage*(msg_k: MsgKind, params: varargs[string]) =
